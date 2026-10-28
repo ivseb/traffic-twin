@@ -92,7 +92,7 @@ slsa-verifier verify-artifact tt_X.Y.Z_linux_amd64.tar.gz \
   --provenance-path multiple.intoto.jsonl \
   --source-uri github.com/ivseb/traffic-twin --source-tag vX.Y.Z
 
-# 3. immagine
+# 3. immagine (serve cosign v3 o successivo: le firme sono nel formato nuovo)
 cosign verify ghcr.io/ivseb/traffic-twin:X.Y.Z \
   --certificate-identity-regexp '^https://github.com/ivseb/traffic-twin/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com
