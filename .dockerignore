@@ -27,3 +27,5 @@ sdk/
 *.sqlite-shm
 *.log
 site/
+# the console embeds the user manual (ui/src/pages/Manual.svelte)
+!docs/USER_GUIDE.md

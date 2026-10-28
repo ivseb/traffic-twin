@@ -198,8 +198,8 @@ func TestRuleCatalogIsFastOnALargeStore(t *testing.T) {
 		ada.json(200, "GET", "/api/v1/rules/catalog?group=small", nil, &cat)
 		took := time.Since(began)
 		t.Logf("%s: %s, %d services (%d events in the store)", name, took.Round(time.Millisecond), len(cat.Services), n)
-		if took > catalogBudget {
-			t.Errorf("%s of the catalog took %s on %d events (budget %s)", name, took, n, catalogBudget)
+		if took > budget(catalogBudget) {
+			t.Errorf("%s of the catalog took %s on %d events (budget %s)", name, took, n, budget(catalogBudget))
 		}
 		if round == 0 && len(cat.Services) == 0 {
 			t.Error("the small group has traffic but the catalog is empty")

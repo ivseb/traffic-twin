@@ -9,6 +9,8 @@ WORKDIR /src/ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci --no-audit --no-fund --ignore-scripts
 COPY ui/ ./
+# the console embeds the user manual
+COPY docs/USER_GUIDE.md /src/docs/USER_GUIDE.md
 # vite writes to ../internal/ui/dist, i.e. /src/internal/ui/dist
 RUN npm run build
 
@@ -20,7 +22,7 @@ ARG VERSION=dev
 ARG COMMIT=none
 ARG DATE=unknown
 WORKDIR /src
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 COPY cmd/ cmd/
 COPY internal/ internal/

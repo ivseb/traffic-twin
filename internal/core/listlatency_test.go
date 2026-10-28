@@ -72,8 +72,8 @@ func TestListEndpointsLatencyOnLargeStore(t *testing.T) {
 			worst = max(worst, time.Since(began))
 		}
 		t.Logf("%s: worst of 5 = %s", path, worst.Round(time.Microsecond))
-		if worst > listLatencyBudget {
-			t.Errorf("%s took %s on %d events (budget %s)", path, worst, n, listLatencyBudget)
+		if worst > budget(listLatencyBudget) {
+			t.Errorf("%s took %s on %d events (budget %s)", path, worst, n, budget(listLatencyBudget))
 		}
 		// The aggregates give the same answer as the scan.
 		want := map[string][]byte{"/api/v1/services": scanServices, "/api/v1/hosts": scanHosts}[path]
