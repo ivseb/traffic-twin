@@ -377,7 +377,7 @@ sdk/php/scripts/test.sh 8.4 php -d opcache.enable_cli=1 bench/overhead.php
 | `tests/Integration/EndToEndTest` | Server built-in PHP (app PSR-15 con Guzzle, script PHP semplice) + carrier + `tt-core` finto (TLS con la radice nella catena, mTLS, CSR vera): iscrizione con e senza CSR, policy, cattura, invio, interruttore, replay, revoca, rinnovo del certificato, rotazione e revoca delle chiavi, pin sbagliato, ripetizioni, SIGTERM |
 | `tests/Integration/PackageTest` | `composer install` da consumatore: nessuna dipendenza a runtime, `vendor/bin/tt-shipper` |
 
-Il `tt-core` finto è `tests/support/fake-core.php` (solo PHP: `openssl_csr_sign`, `stream_socket_server`
+Il `tt-core` finto è `tests/Support/fake-core.php` (solo PHP: `openssl_csr_sign`, `stream_socket_server`
 con TLS, firme Ed25519 con sodium); il suo certificato server ha SAN `localhost`.
 
 ## Limiti noti e deviazioni

@@ -29,9 +29,9 @@ final class EndToEndTest extends TestCase
         self::$core = new FakeCore();
         self::$carrierPort = self::freePort();
         self::$appPort = self::freePort();
-        self::$carrier = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$carrierPort, __DIR__ . '/../support/carrier.php']);
+        self::$carrier = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$carrierPort, __DIR__ . '/../Support/carrier.php']);
         // Each request is a fresh PHP request, like PHP-FPM: nothing is shared between them.
-        self::$app = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$appPort, __DIR__ . '/../support/app.php'], [
+        self::$app = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$appPort, __DIR__ . '/../Support/app.php'], [
             'TT_TEST_CARRIER_PORT' => (string) self::$carrierPort,
         ]);
         foreach ([self::$appPort, self::$carrierPort] as $port) {
@@ -148,7 +148,7 @@ final class EndToEndTest extends TestCase
     {
         // The app server was started without TT_STATE_DIR; restart it for this test's state dir.
         self::$app?->kill();
-        self::$app = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$appPort, __DIR__ . '/../support/app.php'], $this->env() + ['TT_TEST_CARRIER_PORT' => (string) self::$carrierPort]);
+        self::$app = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . self::$appPort, __DIR__ . '/../Support/app.php'], $this->env() + ['TT_TEST_CARRIER_PORT' => (string) self::$carrierPort]);
         $t0 = microtime(true);
         while (!@fsockopen('127.0.0.1', self::$appPort)) {
             if (microtime(true) - $t0 > 10) {
@@ -444,7 +444,7 @@ final class EndToEndTest extends TestCase
     {
         $this->shipperOnce();
         $port = self::freePort();
-        $srv = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . $port, __DIR__ . '/../support/native.php'], $this->env());
+        $srv = new Proc([PHP_BINARY, '-S', '127.0.0.1:' . $port, __DIR__ . '/../Support/native.php'], $this->env());
         try {
             $t0 = microtime(true);
             while (!@fsockopen('127.0.0.1', $port)) {

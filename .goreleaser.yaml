@@ -107,9 +107,9 @@ dockers_v2:
       org.opencontainers.image.version: "{{ .Version }}"
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.created: "{{ .CommitDate }}"
-    annotations:
-      "index:org.opencontainers.image.source": https://github.com/ivseb/traffic-twin
-      "index:org.opencontainers.image.licenses": Apache-2.0
+    # No "index:" annotations: buildx refuses them for the single-platform --load
+    # builds of a snapshot; ghcr.io links the package to the repository through the
+    # source label above.
     sbom: true
 
 # Keyless signature of the image index, by digest (never by tag).

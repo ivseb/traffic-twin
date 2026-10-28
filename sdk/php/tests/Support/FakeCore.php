@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace TrafficTwin\Tests\Support;
 
-/** Starts tests/support/fake-core.php and drives it through control.json. */
+/** Starts tests/Support/fake-core.php and drives it through control.json. */
 final class FakeCore
 {
     public string $dir;
@@ -18,7 +18,7 @@ final class FakeCore
     {
         $this->dir = sys_get_temp_dir() . '/tt-fakecore-' . bin2hex(random_bytes(4));
         mkdir($this->dir, 0700, true);
-        $this->proc = new Proc([PHP_BINARY, __DIR__ . '/../support/fake-core.php', $this->dir]);
+        $this->proc = new Proc([PHP_BINARY, __DIR__ . '/../Support/fake-core.php', $this->dir]);
         $t0 = microtime(true);
         while (!is_file($this->dir . '/info.json')) {
             if (microtime(true) - $t0 > 20 || !$this->proc->running()) {
