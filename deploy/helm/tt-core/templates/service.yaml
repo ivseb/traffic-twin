@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tt-core.fullname" . }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+    app.kubernetes.io/component: admin
+  {{- with .Values.service.admin.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.admin.type }}
+  selector:
+    {{- include "tt-core.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: admin
+      port: {{ include "tt-core.adminPort" . }}
+      targetPort: admin
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "tt-core.fullname" . }}-intake
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+    app.kubernetes.io/component: intake
+  {{- with .Values.service.intake.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.intake.type }}
+  selector:
+    {{- include "tt-core.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: intake
+      port: {{ include "tt-core.intakePort" . }}
+      targetPort: intake
+      protocol: TCP

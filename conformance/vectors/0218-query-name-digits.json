@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0218-query-name-digits",
+  "category": "query",
+  "description": "Query names with six or more consecutive digits collapse; five digits stay.",
+  "spec": ["sanitizer.md#8.3", "sanitizer.md#9.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/s",
+    "raw_query": "order_12345=a&order_123456=b&ref2026101900=c",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"order_12345\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:l8\",\"drop:str:l8\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

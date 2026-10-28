@@ -1,0 +1,495 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/schemas/policy.v1.schema.json",
+  "title": "traffic-twin author policy (tt.policy/v1)",
+  "description": "Author-facing policy, written in YAML. Compiled by tt-core into tt.policy.body/v1. Anything not listed is dropped. Cross-field checks are in docs/spec/policy.md section 1.4.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "policy_id",
+    "default",
+    "hmac",
+    "sampling"
+  ],
+  "properties": {
+    "format": {
+      "const": "tt.policy/v1"
+    },
+    "policy_id": {
+      "$ref": "#/$defs/policyId"
+    },
+    "default": {
+      "const": "drop"
+    },
+    "hmac": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kid",
+        "epoch"
+      ],
+      "properties": {
+        "kid": {
+          "type": "string",
+          "pattern": "^[a-z0-9]{1,8}$"
+        },
+        "epoch": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]{1,32}$"
+        },
+        "accept_kids": {
+          "type": "array",
+          "maxItems": 4,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9]{1,8}$"
+          }
+        },
+        "families": {
+          "type": "object",
+          "maxProperties": 64,
+          "description": "Spec v1.18: joinable HMAC domains. Every hmac(d) with d in a family compiles to hmac(<family>), so equal values give equal tokens across the joined fields. Author form only: the compiled body keeps its shape. Observe-safe (only hmac domains change); a domain is in at most one family; reserved domains (subject, sample, sample-trace, discovery) are refused.",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 16,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+            }
+          }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "$ref": "#/$defs/subjectSource"
+        }
+      }
+    },
+    "sampling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rate"
+      ],
+      "properties": {
+        "rate": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Converted to basis points with decimal arithmetic; must be an exact multiple of 0.0001."
+        },
+        "trust_baggage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Honour tt.s baggage only on services with match.internal = true."
+        },
+        "propagate_to": {
+          "type": "array",
+          "maxItems": 256,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/hostPort"
+          }
+        }
+      }
+    },
+    "segments": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "auto_words": {
+          "type": "boolean",
+          "default": false
+        },
+        "auto_words_expires_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "allow": {
+          "type": "array",
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9._~-]{1,64}$"
+          }
+        },
+        "hosts_allow": {
+          "type": "array",
+          "maxItems": 1024,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/hostPort"
+          }
+        }
+      },
+      "if": {
+        "properties": {
+          "auto_words": {
+            "const": true
+          }
+        },
+        "required": [
+          "auto_words"
+        ]
+      },
+      "then": {
+        "required": [
+          "auto_words_expires_at"
+        ]
+      }
+    },
+    "limits": {
+      "$ref": "#/$defs/limits"
+    },
+    "discovery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "enabled"
+      ],
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "expires_at"
+        ]
+      }
+    },
+    "hosts": {
+      "description": "Spec v1.5 (sanitizer.md 3.5): auto (default) emits host patterns for hosts without a matching base; off is the strict mode (host:unlisted).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "discovery": {
+          "enum": [
+            "auto",
+            "off"
+          ]
+        }
+      }
+    },
+    "global": {
+      "$ref": "#/$defs/scope"
+    },
+    "services": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/serviceName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/service"
+      }
+    }
+  },
+  "$defs": {
+    "policyId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+    },
+    "serviceName": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$"
+    },
+    "subjectSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "name"
+      ],
+      "properties": {
+        "from": {
+          "enum": [
+            "header",
+            "cookie"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$",
+          "description": "Header name (case-insensitive, compiled to lowercase) or cookie name."
+        },
+        "jwt_claim": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$",
+          "description": "Literal name of a top-level claim; a dot is part of the name, not a path."
+        },
+        "json_path": {
+          "type": "string",
+          "maxLength": 520,
+          "pattern": "^[A-Za-z0-9_-]{1,64}(\\.[A-Za-z0-9_-]{1,64}){0,7}$",
+          "description": "Spec v1.18: dotted path of members inside a header whose value is a JSON object (or base64/base64url of one); a non-empty string or a number at that path is the subject. Header only; excludes jwt_claim. Sources older than v1.18 (and, for now, every SDK but Go) reject a body with json_path and keep the previous policy."
+        }
+      },
+      "not": {
+        "required": [
+          "json_path",
+          "jwt_claim"
+        ]
+      },
+      "if": {
+        "required": [
+          "json_path"
+        ]
+      },
+      "then": {
+        "properties": {
+          "from": {
+            "const": "header"
+          }
+        }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_body_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16777216
+        },
+        "max_depth": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        },
+        "max_array": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1024
+        },
+        "max_keys": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 4096
+        },
+        "keep_max_bytes": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1024
+        }
+      }
+    },
+    "action": {
+      "type": "string",
+      "description": "drop | keep | code | graphql | hmac | hmac(<domain>) | bucket(num, [b0, ...]) | bucket(time, <unit>). Reserved domains (subject, sample, sample-trace, discovery) are rejected by tt-core, not by this schema. code (v1.11) is accepted by tt-core only on status/code-like names (docs/spec/policy.md 1.5). graphql (v1.14) is accepted by tt-core only on the GraphQL document of a request and on the names of an introspection result (docs/spec/policy.md 1.6). Patterns avoid lookahead so RE2-based validators work.",
+      "pattern": "^(drop|keep|code|graphql|hmac(\\([a-z][a-z0-9_-]{0,31}\\))?|bucket\\(num, ?\\[ ?-?(0|[1-9][0-9]*)(\\.[0-9]+)?( ?, ?-?(0|[1-9][0-9]*)(\\.[0-9]+)?){0,31} ?\\]\\)|bucket\\(time, ?(year|month|day|hour)\\))$"
+    },
+    "ttPath": {
+      "type": "string",
+      "pattern": "^\\$(\\.[A-Za-z_][A-Za-z0-9_-]{0,63}|\\.\\*|\\[\\*\\])*$"
+    },
+    "nameActionMap": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": {
+        "$ref": "#/$defs/keyName"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/action"
+      }
+    },
+    "headerActionMap": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]{1,64}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/action"
+      },
+      "maxProperties": 256
+    },
+    "bodyActionMap": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/ttPath"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/action"
+      },
+      "maxProperties": 1024
+    },
+    "part": {
+      "type": "object",
+      "description": "Rules of a service or global scope. Path parameter rules exist only in operations (opPart).",
+      "properties": {
+        "query": {
+          "$ref": "#/$defs/nameActionMap"
+        },
+        "headers": {
+          "$ref": "#/$defs/headerActionMap"
+        },
+        "cookies": {
+          "$ref": "#/$defs/nameActionMap"
+        },
+        "body": {
+          "$ref": "#/$defs/bodyActionMap"
+        }
+      },
+      "patternProperties": {
+        "^\\$": {
+          "$ref": "#/$defs/action"
+        }
+      },
+      "additionalProperties": false
+    },
+    "opPart": {
+      "type": "object",
+      "properties": {
+        "path": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/action"
+          }
+        },
+        "query": {
+          "$ref": "#/$defs/nameActionMap"
+        },
+        "headers": {
+          "$ref": "#/$defs/headerActionMap"
+        },
+        "cookies": {
+          "$ref": "#/$defs/nameActionMap"
+        },
+        "body": {
+          "$ref": "#/$defs/bodyActionMap"
+        }
+      },
+      "patternProperties": {
+        "^\\$": {
+          "$ref": "#/$defs/action"
+        }
+      },
+      "additionalProperties": false
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "$ref": "#/$defs/part"
+        },
+        "response": {
+          "$ref": "#/$defs/part"
+        },
+        "errors": {
+          "$ref": "#/$defs/part"
+        }
+      }
+    },
+    "opKey": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,16} /([A-Za-z0-9._~-]+|\\{[A-Za-z_][A-Za-z0-9_]{0,63}\\})?(/([A-Za-z0-9._~-]+|\\{[A-Za-z_][A-Za-z0-9_]{0,63}\\}))*$"
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "match"
+      ],
+      "properties": {
+        "match": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "inbound"
+              ],
+              "properties": {
+                "inbound": {
+                  "const": true
+                },
+                "internal": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Not reachable from the Internet; only here tt.s baggage may be trusted."
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "base"
+              ],
+              "properties": {
+                "base": {
+                  "type": "string",
+                  "pattern": "^https?://[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?(/[A-Za-z0-9._~-]{1,64})*$"
+                }
+              }
+            }
+          ]
+        },
+        "request": {
+          "$ref": "#/$defs/part"
+        },
+        "response": {
+          "$ref": "#/$defs/part"
+        },
+        "errors": {
+          "$ref": "#/$defs/part"
+        },
+        "ops": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/opKey"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "request": {
+                "$ref": "#/$defs/opPart"
+              },
+              "response": {
+                "$ref": "#/$defs/opPart"
+              }
+            }
+          }
+        }
+      }
+    },
+    "hostPort": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]{1,253}(:[0-9]{1,5})?$"
+    },
+    "keyName": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$"
+    }
+  }
+}

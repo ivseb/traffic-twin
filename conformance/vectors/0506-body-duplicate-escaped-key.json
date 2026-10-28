@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0506-body-duplicate-escaped-key",
+  "category": "body",
+  "description": "\"a\" and \"\\u0061\" are the same key: last wins.",
+  "spec": ["sanitizer.md#9.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJhIjoxLCJcdTAwNjEiOiJzdHIifQ==",
+      "text": "{\"a\":1,\"\\u0061\":\"str\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"a\":\"drop:str:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l32\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

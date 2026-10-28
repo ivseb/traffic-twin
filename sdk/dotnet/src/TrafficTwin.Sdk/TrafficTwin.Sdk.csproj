@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>TrafficTwin.Sdk</RootNamespace>
+    <AssemblyName>TrafficTwin.Sdk</AssemblyName>
+    <PackageId>TrafficTwin.Sdk</PackageId>
+    <Description>traffic-twin capture SDK for .NET: sanitizes HTTP exchanges in-process and exports only shapes, HMAC tokens and policy-allowed values. Zero runtime dependencies.</Description>
+    <PackageTags>traffic-twin;http;capture;sanitizer;opentelemetry</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <InternalsVisibleTo Include="TrafficTwin.Sdk.AspNetCore" />
+    <InternalsVisibleTo Include="TrafficTwin.Sdk.Tests" />
+    <InternalsVisibleTo Include="TrafficTwin.Bench" />
+  </ItemGroup>
+</Project>

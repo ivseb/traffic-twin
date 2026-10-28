@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0117-path-formats",
+  "category": "path",
+  "description": "Recognized formats in path segments.",
+  "spec": ["sanitizer.md#4.2", "sanitizer.md#6.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/550e8400-e29b-41d4-a716-446655440000/2026-10-19/192.168.0.1/184/deadbeefdeadbeef0011/mario.rossi%40example.com/2026-10-19T10%3A00%3A00Z",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:uuid}/{drop:str:date}/{drop:str:ipv4}/{drop:str:digits}/{drop:str:hex}/{drop:str:email}/{drop:str:datetime}\",\"req\":{\"path\":\"/{drop:str:uuid}/{drop:str:date}/{drop:str:ipv4}/{drop:str:digits}/{drop:str:hex}/{drop:str:email}/{drop:str:datetime}\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0610-format-hex",
+  "category": "formats",
+  "description": "hex: 16 or more hex digits, any case.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiJkZWFkYmVlZmRlYWRiZWVmIiwidjAxIjoiREVBREJFRUZkZWFkYmVlZjAwIiwidjAyIjoiZGVhZGJlZWZkZWFkYmVlIiwidjAzIjoiZGVhZGJlZWZkZWFkYmVlZyJ9",
+      "text": "{\"v00\":\"deadbeefdeadbeef\",\"v01\":\"DEADBEEFdeadbeef00\",\"v02\":\"deadbeefdeadbee\",\"v03\":\"deadbeefdeadbeeg\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:hex\",\"v01\":\"drop:str:hex\",\"v02\":\"drop:str:l32\",\"v03\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

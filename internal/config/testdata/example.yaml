@@ -1,0 +1,125 @@
+# Example tt-core configuration. Every key is optional; the values below
+# are the defaults unless marked "example".
+admin:
+  addr: 127.0.0.1:7070          # loopback only; any other address requires tls
+  tls:
+    cert_file: ""
+    key_file: ""
+  http:
+    max_body_bytes: 1048576
+    read_header_timeout: 5s
+    read_timeout: 15s
+    write_timeout: 30s
+    idle_timeout: 60s
+  shutdown_timeout: 10s
+
+intake:
+  addr: 0.0.0.0:4318            # example; empty disables the intake listener
+  tls:                          # always required: the intake is never plaintext
+    cert_file: /etc/tt/intake.crt   # example
+    key_file: /etc/tt/intake.key    # example
+    client_ca_file: /etc/tt/sources-ca.pem  # example; optional when fleet supplies the CA
+    managed: false
+  http:
+    max_body_bytes: 1048576
+    read_header_timeout: 5s
+    read_timeout: 15s
+    write_timeout: 30s
+    idle_timeout: 60s
+
+storage:
+  path: data/tt-core.db         # put it on an encrypted volume
+
+auth:
+  session:
+    idle_timeout: 30m
+    absolute_timeout: 12h
+  local:
+    enabled: true
+  oidc:
+    enabled: true                                   # example
+    issuer_url: https://idp.example/realms/tt       # example
+    client_id: tt-core                              # example
+    client_secret_file: ""                          # or TT_CORE_AUTH_OIDC_CLIENT_SECRET
+    redirect_url: https://tt-core.example:7070/api/v1/auth/oidc/callback  # example
+    # Approval step-up client (keyguard's TT_KEYGUARD_OIDC_AUDIENCE); its redirect
+    # URL is .../api/v1/auth/oidc/stepup/callback. Must differ from client_id.
+    approval_client_id: tt-approve                  # example
+    approval_client_secret_file: ""                 # or TT_CORE_AUTH_OIDC_APPROVAL_CLIENT_SECRET
+    scopes: [openid, profile, email]
+    roles_claim: groups                             # example
+    role_mapping:                                   # example
+      tt-admins: [admin]
+      tt-operators: [operator]
+      tt-reviewers: [rule-reviewer]
+      tt-approvers: [policy-approver]
+      tt-auditors: [auditor]
+  rate_limit:
+    requests_per_minute: 10
+    burst: 5
+
+log:
+  level: info
+  format: json
+
+keyguard:
+  url: https://keyguard.internal:7443          # example; or unix:///run/tt/keyguard.sock (same host, tests only)
+  client_cert_file: /etc/tt/tt-core-client.crt # example; pinned by keyguard (TT_KEYGUARD_CLIENT_PINS)
+  client_key_file: /etc/tt/tt-core-client.key  # example
+  ca_file: /etc/tt/keyguard-ca.pem             # example; ca_file and/or server_pin
+  server_pin: sha256:0000000000000000000000000000000000000000000000000000000000000000  # example
+  timeout: 2m
+
+fleet:
+  public_url: https://tt-core.internal:4318    # example; default https://localhost:<port> on a loopback intake
+  server_names: []                             # default: host of public_url
+  ca_dir: ""                                   # default: fleet-ca next to the database
+  client_cert_ttl: 168h
+  heartbeat_interval: 30s
+  policy_poll_interval: 60s
+  policy_max_age: 24h
+  policy_validity: 720h
+  enroll_rate_limit:
+    ip: {requests_per_minute: 60, burst: 30}
+    token: {requests_per_minute: 120, burst: 60}
+  observe:                                     # observe phase (policy.md 7): identifiers masked without approval
+    enabled: true
+    after: 15m                                 # derive the observe version at the latest this long after the start
+    min_events: 200                            # ...or as soon as this many calls were seen
+    interval: 1m                               # how often tt-core checks
+
+contract:
+  snapshot_window: 24h
+  grace: 5m
+  min_samples: 20
+  k_min: 20
+  keep_snapshots: 400
+
+drift:
+  webhook_allow: [hooks.example]               # example; empty: no webhook destination allowed
+  webhook_allow_http: false
+  notify_non_breaking: true
+
+miner:
+  schedule: 6h                                 # 0 disables the scheduled run
+  window: 336h
+  k_min: 20
+  max_events: 5000000
+  min_birth_share: 0.6                          # entity accepted when >= 60% of its objects were seen being created (restarts do not drop it)
+  # candidate_max_events: 0                    # rules 1.9: groups above this many events get no candidates below k (0: default 2000000; -1: off)
+  stale_runs: 3                                 # an approved rule goes stale only after this many consecutive bad runs
+
+world:
+  k_min: 20
+  profile_window: 720h
+  locale: it
+
+gate:
+  k_min: 20
+  valid_days: 30
+  pii_detectors: true                          # cannot be turned off
+
+retention:
+  events: 720h
+  purge_interval: 1h
+  exports: 24h

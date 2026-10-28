@@ -1,0 +1,73 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2314-xml-soapaction-fragment",
+  "category": "xml",
+  "description": "SOAPAction urn:shop#Renew: the name after the last /, # or : if it follows the name rule.",
+  "spec": ["sanitizer.md#22.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "text/xml; charset=utf-8"],
+      ["SOAPAction", "urn:shop#Renew"]
+    ],
+    "req_body": {
+      "b64": "PGEvPg==",
+      "text": "<a/>"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"a\":\"drop:str:l8\"},\"ct\":\"text/xml\",\"fmt\":\"xml\",\"headers\":{\"content-type\":[\"drop:str:l32\"],\"soapaction\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"l8\",\"soap_action\":\"Renew\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

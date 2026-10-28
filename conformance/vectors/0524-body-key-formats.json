@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0524-body-key-formats",
+  "category": "body",
+  "description": "Keys that pass the regex but are uuid, hex or jwt still collapse.",
+  "spec": ["sanitizer.md#9.3", "sanitizer.md#6.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJhYmNkZWZhYmNkZWZhYmNkIjoxLCJhYmNkZWZhYmNkZWZhYmMiOjIsImE1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMCI6MywiZXlKaGJHY2lPaUpJVXpJMU5pSjkuZXlKemRXSWlPaUl4SW4wLmMybG4iOjQsIkRlYWRiZWVmIjo1fQ==",
+      "text": "{\"abcdefabcdefabcd\":1,\"abcdefabcdefabc\":2,\"a50e8400-e29b-41d4-a716-446655440000\":3,\"eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln\":4,\"Deadbeef\":5}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"Deadbeef\":\"drop:int\",\"abcdefabcdefabc\":\"drop:int\",\"{*}\":[\"drop:int\",\"drop:int\",\"drop:int\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

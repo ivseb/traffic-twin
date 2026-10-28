@@ -1,0 +1,124 @@
+#!/usr/bin/env node
+// Copies the repository's Markdown documentation into the Italian reference
+// area of the site (site/it/docs/), so docs/ stays the single source of truth.
+// Runs before every `vitepress dev` / `vitepress build` (see package.json).
+//
+// For each page it:
+//   - adds front matter with the page title and the source path (used by the
+//     edit-on-GitHub link);
+//   - rewrites relative links: links between copied pages point to the
+//     generated pages, links to any other repository file or directory become
+//     GitHub URLs on the main branch (anchors are kept);
+//   - escapes text that Vue would compile (`{{`) and html-like text that is
+//     not real HTML (`<gruppo>`), outside code spans and fenced code blocks.
+//
+// Only Node built-ins.
+
+import fs from 'node:fs'
+import path from 'node:path'
+import { docPages, GITHUB_BRANCH, GITHUB_REPO, OUT_DIR, REPO_ROOT, SITE_DIR } from './docs-map.mjs'
+
+// HTML tags that may legitimately appear in the docs' prose. Anything else
+// that looks like a tag (`<pack_id>`, `<gruppo>`) is escaped.
+const HTML_TAGS = new Set([
+  'a', 'abbr', 'b', 'br', 'code', 'del', 'details', 'div', 'em', 'hr', 'i', 'img', 'kbd', 'li', 'ol',
+  'p', 'pre', 's', 'small', 'span', 'strong', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'th',
+  'thead', 'tr', 'u', 'ul'
+])
+
+const pages = docPages()
+const bySource = new Map(pages.map((p) => [p.src, p]))
+const warnings = []
+
+function githubUrl(repoPath, isDir) {
+  const kind = isDir ? 'tree' : 'blob'
+  return `${GITHUB_REPO}/${kind}/${GITHUB_BRANCH}/${repoPath}`
+}
+
+function rewriteTarget(target, page) {
+  if (/^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith('#') || target.startsWith('//')) return target
+  const hashAt = target.indexOf('#')
+  const rawPath = hashAt >= 0 ? target.slice(0, hashAt) : target
+  const hash = hashAt >= 0 ? target.slice(hashAt) : ''
+  if (rawPath === '') return target
+  const decoded = decodeURI(rawPath)
+  const resolved = path.posix.normalize(
+    decoded.startsWith('/') ? decoded.slice(1) : path.posix.join(path.posix.dirname(page.src), decoded)
+  ).replace(/\/$/, '')
+  if (resolved.startsWith('..')) {
+    warnings.push(`${page.src}: link outside the repository left as is: ${target}`)
+    return target
+  }
+  const linked = bySource.get(resolved)
+  if (linked) {
+    let rel = path.posix.relative(path.posix.dirname(page.out), linked.out)
+    if (!rel.startsWith('.')) rel = `./${rel}`
+    return rel + hash
+  }
+  const abs = path.join(REPO_ROOT, resolved)
+  if (!fs.existsSync(abs)) warnings.push(`${page.src}: link to a missing repository path: ${target}`)
+  const isDir = fs.existsSync(abs) && fs.statSync(abs).isDirectory()
+  return githubUrl(resolved, isDir) + hash
+}
+
+// Rewrites one line of prose (outside fenced code). Code spans are set
+// aside first so that nothing inside them is touched.
+function rewriteProse(line, page) {
+  const spans = []
+  let text = line.replace(/(`+)([\s\S]*?[^`])\1(?!`)/g, (m) => {
+    spans.push(m)
+    return `\u0000${spans.length - 1}\u0000`
+  })
+  // [text](target "title") and ![alt](target)
+  text = text.replace(/(!?\[[^\]]*\])\(([^)\s]+)(\s+"[^"]*")?\)/g, (m, label, target, title = '') =>
+    `${label}(${rewriteTarget(target, page)}${title})`
+  )
+  // Vue interpolation outside code.
+  text = text.replace(/\{\{/g, '&#123;&#123;')
+  // html-like text that is not a known tag; autolinks (<https://...>) stay.
+  text = text.replace(/<(\/?)([A-Za-z][\w.:-]*)([^<>]*)>/g, (m, slash, name, rest) => {
+    if (/^[a-z][a-z0-9+.-]*:/i.test(name + rest) || /@/.test(name + rest)) return m
+    if (HTML_TAGS.has(name.toLowerCase())) return m
+    return `&lt;${slash}${name}${rest}&gt;`
+  })
+  return text.replace(/\u0000(\d+)\u0000/g, (m, i) => spans[Number(i)])
+}
+
+function transform(source, page) {
+  const lines = source.split('\n')
+  const out = []
+  let fence = null // the opening fence marker while inside a fenced block
+  for (const line of lines) {
+    const m = line.match(/^\s*(`{3,}|~{3,})/)
+    if (fence) {
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length && line.trim() === m[1]) fence = null
+      out.push(line)
+      continue
+    }
+    if (m) {
+      fence = m[1]
+      out.push(line)
+      continue
+    }
+    out.push(rewriteProse(line, page))
+  }
+  // JSON strings are valid YAML scalars.
+  const front = ['---', `title: ${JSON.stringify(page.label)}`, `source: ${JSON.stringify(page.src)}`, '---', ''].join('\n')
+  return front + out.join('\n')
+}
+
+const outRoot = path.join(SITE_DIR, OUT_DIR)
+fs.rmSync(outRoot, { recursive: true, force: true })
+for (const page of pages) {
+  const src = fs.readFileSync(path.join(REPO_ROOT, page.src), 'utf8')
+  const dest = path.join(outRoot, page.out)
+  fs.mkdirSync(path.dirname(dest), { recursive: true })
+  fs.writeFileSync(dest, transform(src, page))
+}
+fs.writeFileSync(
+  path.join(outRoot, 'README.txt'),
+  'Generated by site/scripts/sync-docs.mjs from the repository Markdown files. Do not edit: edit the sources.\n'
+)
+
+for (const w of warnings) console.warn(`sync-docs: warning: ${w}`)
+console.log(`sync-docs: ${pages.length} pages written to site/${OUT_DIR}`)

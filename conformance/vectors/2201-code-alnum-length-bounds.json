@@ -1,0 +1,88 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2201-code-alnum-length-bounds",
+  "category": "code-alnum",
+  "description": "Length bounds 1..16 bytes: the empty string and 17 bytes leave as shapes; 1 and 16 as keep:.",
+  "spec": ["sanitizer.md#5.6"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders/{id}",
+            "response": {
+              "body": [
+                {
+                  "path": "$.*.code",
+                  "action": {
+                    "action": "code",
+                    "shape": "alnum"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJhIjp7ImNvZGUiOiIifSwiYiI6eyJjb2RlIjoiNyJ9LCJjIjp7ImNvZGUiOiIxMjM0NTY3ODkwQUJDREVGIn0sImQiOnsiY29kZSI6IjEyMzQ1Njc4OTBBQkNERUZHIn0sImUiOnsiY29kZSI6Ii4ifX0=",
+      "text": "{\"a\":{\"code\":\"\"},\"b\":{\"code\":\"7\"},\"c\":{\"code\":\"1234567890ABCDEF\"},\"d\":{\"code\":\"1234567890ABCDEFG\"},\"e\":{\"code\":\".\"}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/{id}\",\"req\":{\"path\":\"/orders/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"a\":{\"code\":\"drop:str:l8\"},\"b\":{\"code\":\"keep:7\"},\"c\":{\"code\":\"keep:1234567890ABCDEF\"},\"d\":{\"code\":\"drop:str:l32\"},\"e\":{\"code\":\"keep:.\"}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0525-body-lone-surrogate-key",
+  "category": "body",
+  "description": "A key with a lone surrogate is dynamic and collapses.",
+  "spec": ["sanitizer.md#9.3", "sanitizer.md#9.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJcdWQ4MDAiOiJ4Iiwib2siOjF9",
+      "text": "{\"\\ud800\":\"x\",\"ok\":1}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"ok\":\"drop:int\",\"{*}\":[\"drop:str:l8\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l32\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

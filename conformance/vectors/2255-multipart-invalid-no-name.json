@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2255-multipart-invalid-no-name",
+  "category": "multipart",
+  "description": "Malformed multipart (a part without name): the whole body is trunc:invalid-multipart.",
+  "spec": ["sanitizer.md#22.3"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/uploads",
+    "req_headers": [
+      ["Content-Type", "multipart/form-data; boundary=----ttBoundary7MA4YWxk"]
+    ],
+    "req_body": {
+      "b64": "LS0tLS0tdHRCb3VuZGFyeTdNQTRZV3hrDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IGZpbGVuYW1lPSJhLnR4dCINCg0KeA0KLS0tLS0tdHRCb3VuZGFyeTdNQTRZV3hrLS0=",
+      "text": "------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; filename=\"a.txt\"\u000d\u000a\u000d\u000ax\u000d\u000a------ttBoundary7MA4YWxk--"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":\"trunc:invalid-multipart\",\"ct\":\"multipart/form-data\",\"fmt\":\"multipart\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

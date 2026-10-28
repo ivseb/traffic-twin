@@ -1,0 +1,88 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $eg := .Values.networkPolicy.egress }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tt-core.fullname" . }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "tt-core.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    {{- with .Values.networkPolicy.ingress.intake.from }}
+    - from:
+        {{- toYaml . | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: {{ include "tt-core.intakePort" $ }}
+    {{- end }}
+    {{- with .Values.networkPolicy.ingress.admin.from }}
+    - from:
+        {{- toYaml . | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: {{ include "tt-core.adminPort" $ }}
+    {{- end }}
+    {{- if .Values.mockManager.enabled }}
+    # The managed mocks fetch their pack and report (mock token, /api/v1/mock-agent only).
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ default .Release.Namespace .Values.mockManager.namespace }}
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: tt-mock
+      ports:
+        - protocol: TCP
+          port: {{ include "tt-core.adminPort" $ }}
+    {{- end }}
+  # Everything not listed is denied. There is no rule for the Internet: tt-core never calls out
+  # except to keyguard and to the allow-listed alert webhooks (THREAT_MODEL M11).
+  egress:
+    {{- if $eg.dns.enabled }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml $eg.dns.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml $eg.dns.podSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml $eg.keyguard.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml $eg.keyguard.podSelector | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: {{ include "tt-core.keyguardPort" $ | int }}
+    {{- /* One list (values.webhooks) drives both drift.webhook_allow in core.yaml and these rules. */}}
+    {{- range .Values.webhooks }}
+    {{- if .cidr }}
+    - to:
+        - ipBlock:
+            cidr: {{ .cidr | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .port | default 443 }}
+    {{- end }}
+    {{- end }}
+    {{- if and .Values.mockManager.enabled .Values.mockManager.apiServer.cidr }}
+    # The Kubernetes API, to start and stop the mocks (mockManager).
+    - to:
+        - ipBlock:
+            cidr: {{ .Values.mockManager.apiServer.cidr | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.mockManager.apiServer.port | int }}
+    {{- end }}
+    {{- with $eg.extra }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

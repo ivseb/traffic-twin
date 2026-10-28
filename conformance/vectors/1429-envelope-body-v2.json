@@ -1,0 +1,45 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1429-envelope-body-v2",
+  "category": "refusal",
+  "description": "Signed body with format tt.policy.body/v2: policy_rejected.",
+  "spec": ["policy.md#4"],
+  "policy_envelope": {
+    "format": "tt.policy.compiled/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "hash": "sha256:7132393b7ed4e249df8d00df8c2cf4ac657ade0b529cdd418a5ddc4569c97848",
+    "body_b64": "eyJjcmVhdGVkX2F0IjoiMjAyNi0xMC0yMFQwODowMDowMFoiLCJmb3JtYXQiOiJ0dC5wb2xpY3kuYm9keS92MiIsImdsb2JhbCI6e30sImhtYWMiOnsiYWNjZXB0X2tpZHMiOltdLCJlcG9jaCI6IjIwMjYtMTAiLCJraWQiOiJrMSJ9LCJpc3N1ZWRfc2VxIjoxLCJsaW1pdHMiOnsia2VlcF9tYXhfYnl0ZXMiOjY0LCJtYXhfYXJyYXkiOjMyLCJtYXhfYm9keV9ieXRlcyI6MTA0ODU3NiwibWF4X2RlcHRoIjozMiwibWF4X2tleXMiOjI1Nn0sIm5vdF9hZnRlciI6IjIwMjYtMTEtMTlUMDg6MDA6MDBaIiwicG9saWN5X2lkIjoicC1jb25mb3JtYW5jZSIsInNhbXBsaW5nIjp7InByb3BhZ2F0ZV90byI6W10sInJhdGVfYnAiOjEwMDAwLCJ0cnVzdF9iYWdnYWdlIjpmYWxzZX0sInNlZ21lbnRzIjp7ImFsbG93IjpbXSwiYXV0b193b3JkcyI6ZmFsc2UsImhvc3RzX2FsbG93IjpbXX0sInNlcnZpY2VzIjpbXSwidGFyZ2V0cyI6eyJncm91cHMiOlsic2hvcCJdfSwidmVyc2lvbiI6MX0",
+    "signature": {
+      "alg": "Ed25519",
+      "kid": "fleet-test-1",
+      "sig": "xSKUVCzj8qBiQvMrrus5ZtmCmgYxIo8_rrAR7JSJKBAT9Ft7RxxB5QQph2mU1HxxGGL_7hB51NgngGeaFrTwAw"
+    }
+  },
+  "fleet_keys": {
+    "fleet-test-1": "JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0"
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJvcmRlcklkIjoiT1JELTIwMjYtMDAwMTg0In0=",
+      "text": "{\"orderId\":\"ORD-2026-000184\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "policy_rejected"
+  }
+}

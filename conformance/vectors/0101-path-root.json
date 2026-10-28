@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0101-path-root",
+  "category": "path",
+  "description": "raw_path \"/\" sanitizes to \"/\".",
+  "spec": ["sanitizer.md#4.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

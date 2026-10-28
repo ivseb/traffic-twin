@@ -1,0 +1,111 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "shop-api", "version": "2026-10-19" },
+  "paths": {
+    "/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "x-tt-entity": "order",
+        "x-tt-latency-ms": { "p50": 120, "p95": 400, "p99": 900 },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderRequest" },
+              "examples": {
+                "created": { "value": { "customerId": "CUS-SYN-0007", "sku": "SKU-1", "qty": 1 } },
+                "unknown-sku": { "value": { "customerId": "CUS-SYN-0007", "sku": "SKU-NOPE", "qty": 1 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" },
+                "examples": {
+                  "created": { "value": { "id": "ORD-SYN-0050", "customerId": "CUS-SYN-0007", "status": "CREATED" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "unknown-sku": { "value": { "error": { "code": "UNKNOWN_SKU", "message": "unknown sku" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "operationId": "getOrder",
+        "x-tt-entity": "order",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" },
+                "examples": {
+                  "created": { "value": { "id": "ORD-SYN-0050", "customerId": "CUS-SYN-0007", "status": "CREATED" } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "not-found": { "value": { "error": { "code": "ORDER_NOT_FOUND", "message": "no such order" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Order": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string", "x-tt-value": { "kind": "id", "domain": "order", "len_class": "l32" } },
+          "customerId": { "type": "string" },
+          "status": { "type": "string", "enum": ["CREATED", "CANCELLED"] }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "required": ["customerId", "sku", "qty"],
+        "properties": { "customerId": { "type": "string" }, "sku": { "type": "string" }, "qty": { "type": "integer" } }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code"],
+            "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

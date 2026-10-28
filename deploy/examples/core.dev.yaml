@@ -1,0 +1,33 @@
+# tt-core on a single host, for a trial or a test installation.
+# keyguard runs on the same host on a Unix socket: NOT a production layout
+# (whoever reads tt-core's host can then reach the keys).
+#
+#   tt keyguard -socket /var/lib/tt/keyguard.sock      (environment: keyguard.dev.env)
+#   tt core -config core.dev.yaml
+#
+# `tt dev up` does all of this in one process with generated keys.
+admin:
+  addr: 127.0.0.1:7070            # loopback only
+  tls:                            # optional on loopback; Safari drops Secure cookies over plain http
+    cert_file: /var/lib/tt/tls/admin-tls.crt
+    key_file: /var/lib/tt/tls/admin-tls.key
+
+intake:
+  addr: 127.0.0.1:4318            # sources on this host only
+  tls:
+    managed: true                 # certificate from the Fleet CA, pinned by enrollment tokens
+
+storage:
+  path: /var/lib/tt/tt-core.db    # put it on an encrypted volume
+
+keyguard:
+  url: unix:///var/lib/tt/keyguard.sock
+
+# fleet.public_url defaults to https://localhost:4318 for a loopback intake.
+
+miner:
+  schedule: 1h                    # mine often during a trial
+
+log:
+  level: info
+  format: text

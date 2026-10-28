@@ -1,0 +1,31 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0336-headers-name-rule",
+  "category": "headers",
+  "description": "Header names that are uuid, hex or digits, or hold six consecutive digits, collapse; five digits stay.",
+  "spec": ["sanitizer.md#8.0", "sanitizer.md#9.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["x-12345", "a"],
+      ["x-123456", "b"],
+      ["deadbeefdeadbeef", "c"],
+      ["12345", "d"],
+      ["550e8400-e29b-41d4-a716-446655440000", "e"],
+      ["x-req-2026", "f"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"x-12345\":[\"drop:str:l8\"],\"x-req-2026\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:l32\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

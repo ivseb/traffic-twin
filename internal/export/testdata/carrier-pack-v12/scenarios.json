@@ -1,0 +1,36 @@
+{
+  "format": "tt.scenarios/v1",
+  "scenarios": [
+    {
+      "id": "shipment-cancelled",
+      "name": "Shipment cancelled",
+      "description": "The shipment is cancelled after creation.",
+      "customer": "CUS-SYN-0007",
+      "seed": 42,
+      "outcomes": [ { "rule": "r-0007", "outcome": "cancelled", "times": 1 } ]
+    },
+    {
+      "id": "never-shipped",
+      "name": "Shipment never visible",
+      "customer": "CUS-SYN-0008",
+      "outcomes": [ { "rule": "r-0007", "outcome": "never-shipped" } ]
+    },
+    {
+      "id": "tracking-down",
+      "name": "Tracking unavailable",
+      "archetype": "arch-03",
+      "faults": { "mode": "custom", "rules": [ { "service": "shipping-ext", "op": "GET /v1/shipments", "status": 503, "p": 1, "times": 1 } ] }
+    },
+    {
+      "id": "flaky-network",
+      "name": "Flaky network",
+      "faults": {
+        "mode": "custom",
+        "rules": [
+          { "service": "shipping-ext", "op": "GET /v1/shipments", "net_error": "tls", "p": 1 },
+          { "service": "shipping-ext", "op": "GET /v1/shipments", "status": 503, "p": 0.5 }
+        ]
+      }
+    }
+  ]
+}

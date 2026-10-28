@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0512-body-plus-json",
+  "category": "body",
+  "description": "application/problem+json and vendor +json types are parsed as JSON.",
+  "spec": ["sanitizer.md#9.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 404,
+    "resp_headers": [
+      ["Content-Type", "application/problem+json"]
+    ],
+    "resp_body": {
+      "b64": "eyJ0eXBlIjoiYWJvdXQ6YmxhbmsiLCJ0aXRsZSI6Ik5vdCBGb3VuZCIsImRldGFpbCI6Ik9yZGVyIE9SRC0xIG5vdCBmb3VuZCJ9",
+      "text": "{\"type\":\"about:blank\",\"title\":\"Not Found\",\"detail\":\"Order ORD-1 not found\"}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"body\":{\"detail\":\"drop:str:l32\",\"title\":\"drop:str:l32\",\"type\":\"drop:str:l32\"},\"ct\":\"application/problem+json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

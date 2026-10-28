@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.github.ivseb.traffictwin</groupId>
+    <artifactId>sdk-parent</artifactId>
+    <version>0.1.0</version>
+  </parent>
+  <artifactId>sdk-servlet-javax</artifactId>
+  <name>traffic-twin SDK: javax.servlet filter</name>
+  <description>The servlet capture filter for the javax.servlet namespace (Servlet 3.1/4.0: Tomcat 8.5-9, Jetty 9-10, WildFly up to 26). Generated from the jakarta variant of the sdk module.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+    </dependency>
+
+    <!-- Test only. -->
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty10.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>${jetty10.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+</project>

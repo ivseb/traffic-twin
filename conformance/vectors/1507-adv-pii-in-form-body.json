@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1507-adv-pii-in-form-body",
+  "category": "adversarial",
+  "description": "PII in form bodies (names and values).",
+  "spec": ["sanitizer.md#9.1", "sanitizer.md#13"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/s",
+    "req_headers": [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ],
+    "req_body": {
+      "b64": "bWFyaW8ucm9zc2klNDBleGFtcGxlLmNvbT0xJmNhcmQ9NDExMTExMTExMTExMTExMSZjdnY9MTIz",
+      "text": "mario.rossi%40example.com=1&card=4111111111111111&cvv=123"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"card\":[\"drop:str:digits\"],\"cvv\":[\"drop:str:digits\"],\"{*}\":[\"drop:str:digits\"]},\"ct\":\"application/x-www-form-urlencoded\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

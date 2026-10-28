@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/schemas/event.v1.schema.json",
+  "title": "traffic-twin sanitized exchange event (tt.http.exchange/v1, revision 1.1)",
+  "description": "Body of an OTLP log record (stringValue, canonical JSON, at most 512 KiB). Every free string must belong to the token grammar defined in docs/spec/sanitizer.md section 6. Policy-dependent checks (keep only where a keep rule applies, etc.) are in docs/spec/event.md section 5.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "policy", "source", "ts", "latency_ms", "dir", "service", "op", "route_source", "sampled_by", "req"],
+  "properties": {
+    "schema": { "const": "tt.http.exchange/v1" },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "hash"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+        "version": { "type": "integer", "minimum": 1 },
+        "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "version", "id"],
+      "properties": {
+        "kind": { "enum": ["sdk-node", "sdk-python", "sdk-java", "sdk-dotnet", "sdk-go", "sdk-php", "egress", "obi", "import-har", "import-otlp"] },
+        "version": { "$ref": "#/$defs/semver" },
+        "id": { "type": "string", "pattern": "^src-[0-9A-Za-z]{1,32}$" }
+      }
+    },
+    "ts": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z$" },
+    "latency_ms": { "type": "integer", "minimum": 0 },
+    "dir": { "enum": ["inbound", "outbound"] },
+    "service": { "$ref": "#/$defs/serviceRef" },
+    "op": { "type": "string", "maxLength": 2100, "pattern": "^([A-Z]{1,16}|OTHER) /[!-~]*$" },
+    "route_source": { "enum": ["framework", "policy", "raw"] },
+    "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+    "net_error": { "enum": ["timeout", "reset", "refused", "dns", "tls", "other"] },
+    "subject": { "$ref": "#/$defs/hmacToken" },
+    "sampled_by": { "enum": ["baggage", "subject", "trace", "random", "inherited"] },
+    "trace_id": { "type": "string", "pattern": "^[0-9a-f]{32}$" },
+    "span_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "parent_span_id": { "type": "string", "pattern": "^[0-9a-f]{16}$" },
+    "req": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "maxLength": 3500,
+          "pattern": "^/$|^(/([A-Za-z0-9._~-]{1,64}|\\{(drop:[a-z0-9:]{1,24}|keep:[A-Za-z0-9._~-]{1,64}|tk1:[a-z0-9]{1,8}:[A-Za-z0-9_-]{22}|num:[!-z|~]{1,80}|time:[0-9T-]{4,13}|trunc)\\}))+$"
+        },
+        "query": { "$ref": "#/$defs/multiMap" },
+        "headers": { "$ref": "#/$defs/multiMap" },
+        "cookies": { "$ref": "#/$defs/multiMap" },
+        "ct": { "$ref": "#/$defs/contentType" },
+        "size": { "$ref": "#/$defs/lenClass" },
+        "body": { "$ref": "#/$defs/value" },
+        "fmt": { "$ref": "#/$defs/bodyFormat" },
+        "xmlns": { "$ref": "#/$defs/xmlns" },
+        "soap_action": { "type": "string", "pattern": "^([A-Za-z_][A-Za-z0-9_.-]{0,63}|\\{\\*\\})$" }
+      }
+    },
+    "resp": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "headers": { "$ref": "#/$defs/multiMap" },
+        "cookies": { "$ref": "#/$defs/multiMap" },
+        "ct": { "$ref": "#/$defs/contentType" },
+        "size": { "$ref": "#/$defs/lenClass" },
+        "body": { "$ref": "#/$defs/value" },
+        "fmt": { "$ref": "#/$defs/bodyFormat" },
+        "xmlns": { "$ref": "#/$defs/xmlns" }
+      }
+    },
+    "disc": {
+      "type": "object",
+      "maxProperties": 4096,
+      "propertyNames": { "maxLength": 256, "pattern": "^(req|resp)\\.(body|query|headers|cookies|path)([.\\[][!-~]{0,250})?$" },
+      "additionalProperties": { "type": "string", "pattern": "^tkd:[A-Za-z0-9_-]{6}$" }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "required": ["net_error"] },
+      "then": { "not": { "anyOf": [ { "required": ["status"] }, { "required": ["resp"] } ] } },
+      "else": { "required": ["status"] }
+    }
+  ],
+  "$defs": {
+    "semver": { "type": "string", "maxLength": 64, "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$" },
+    "serviceRef": {
+      "type": "string",
+      "maxLength": 518, "pattern": "^([a-z0-9][a-z0-9._-]{0,62}|host:[a-z0-9.-]{1,253}(:[0-9]{1,5})?|host:(\\{\\*\\}|[a-z0-9-]{1,63})(\\.(\\{\\*\\}|[a-z0-9-]{1,63}))*(:[0-9]{1,5})?|host:ip:(private|public)(:[0-9]{1,5})?|host:invalid|host:unlisted)$"
+    },
+    "lenClass": { "enum": ["l8", "l32", "l128", "l1024", "lmax"] },
+    "contentType": { "type": "string", "pattern": "^([a-z0-9.+-]{1,64}/[a-z0-9.+-]{1,64}|invalid)$" },
+    "hmacToken": { "type": "string", "pattern": "^tk1:[a-z0-9]{1,8}:[A-Za-z0-9_-]{22}$" },
+    "token": {
+      "type": "string",
+      "anyOf": [
+        {
+          "maxLength": 1100,
+          "anyOf": [
+            { "pattern": "^drop:(null|bool|int|dec|bytes|str:(invalid|uuid|jwt|email|datetime|date|url|ipv4|phone|digits|hex|l8|l32|l128|l1024|lmax)|(obj|arr|bytes):(l8|l32|l128|l1024|lmax))$" },
+            { "pattern": "^drop:doc:(pdf|png|jpeg|gif|webp|ole|zip|docx|xlsx|pptx):(l1k|l16k|l128k|l1m|l8m|lmax)$" },
+            { "pattern": "^drop:file:(pdf|png|jpeg|gif|webp|ole|zip|docx|xlsx|pptx|text|csv|json|xml|bin):(l1k|l16k|l128k|l1m|l8m|lmax)$" },
+            { "pattern": "^keep:" },
+            { "pattern": "^tk1:[a-z0-9]{1,8}:[A-Za-z0-9_-]{22}$" },
+            { "pattern": "^num:(<|>=)?-?[0-9][0-9.e+-]*$" },
+            { "pattern": "^time:[0-9]{4}(-[0-9]{2}(-[0-9]{2}(T[0-9]{2})?)?)?$" },
+            { "pattern": "^trunc:(depth|invalid-json|invalid-xml|invalid-multipart|size|(n|keys):(l8|l32|l128|l1024|lmax))$" }
+          ]
+        },
+        { "description": "v1.14: shape of a GraphQL document or name of an introspection result (docs/spec/sanitizer.md 5.7)", "maxLength": 32772, "pattern": "^gql:[A-Za-z0-9_!$&():=@\\[\\]{}|. ?*]+$" }
+      ]
+    },
+    "bodyFormat": { "description": "Spec v1.19 (sanitizer.md 22.1): how the body was read when it is not JSON, a form or a shape.", "enum": ["xml", "soap11", "soap12", "multipart"] },
+    "xmlns": {
+      "description": "Spec v1.19 (sanitizer.md 22.2 point 9): tt-path of an element -> pattern of its namespace, where the namespace changes.",
+      "type": "object",
+      "maxProperties": 65,
+      "propertyNames": { "maxLength": 4300, "pattern": "^(\\$(\\.([A-Za-z_][A-Za-z0-9_.-]{0,63}|\\*)(\\[\\*\\])?)+|\\{trunc\\})$" },
+      "additionalProperties": { "type": "string", "maxLength": 1600, "pattern": "^(ns:(\\{none\\}|([!-?A-z|~]|\\{\\*\\})+)|trunc:keys:(l8|l32|l128|l1024|lmax))$" }
+    },
+    "multiMap": {
+      "type": "object",
+      "maxProperties": 65,
+      "propertyNames": { "pattern": "^([A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}|\\{\\*\\}|\\{trunc\\})$" },
+      "additionalProperties": {
+        "type": "array",
+        "maxItems": 1025,
+        "items": { "$ref": "#/$defs/token" }
+      }
+    },
+    "value": {
+      "anyOf": [
+        { "$ref": "#/$defs/token" },
+        { "type": "number" },
+        { "type": "boolean" },
+        { "type": "null" },
+        { "type": "array", "items": { "$ref": "#/$defs/value" } },
+        {
+          "type": "object",
+          "propertyNames": { "pattern": "^(@?[A-Za-z_][A-Za-z0-9_.-]{0,63}|#text|\\{\\*\\}|\\{trunc\\})$" },
+          "additionalProperties": { "$ref": "#/$defs/value" }
+        }
+      ]
+    }
+  }
+}

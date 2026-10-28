@@ -1,0 +1,194 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2027-graphql-gate-closed-no-request-rule",
+  "category": "graphql",
+  "description": "Without a graphql rule in the request the gate is closed: response graphql rules give shapes.",
+  "spec": ["sanitizer.md#5.7", "policy.md#1.6"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "orders-graph",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /graphql",
+            "request": {
+              "body": [
+                {
+                  "path": "$.variables.id",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                }
+              ]
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.data.__schema.directives[*].locations[*]",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.directives[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.mutationType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.queryType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].enumValues[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].args[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "orders-graph",
+    "method": "POST",
+    "raw_path": "/graphql",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJxdWVyeSI6InsgX19zY2hlbWEgeyB0eXBlcyB7IG5hbWUgfSB9IH0ifQ==",
+      "text": "{\"query\":\"{ __schema { types { name } } }\"}"
+    },
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJkYXRhIjp7Il9fc2NoZW1hIjp7InR5cGVzIjpbeyJuYW1lIjoiUXVlcnkifV19fX0=",
+      "text": "{\"data\":{\"__schema\":{\"types\":[{\"name\":\"Query\"}]}}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /graphql\",\"req\":{\"body\":{\"query\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/graphql\",\"size\":\"l128\"},\"resp\":{\"body\":{\"data\":{\"__schema\":{\"types\":[{\"name\":\"drop:str:l8\"}]}}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"orders-graph\"}"
+  }
+}

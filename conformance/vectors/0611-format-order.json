@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0611-format-order",
+  "category": "formats",
+  "description": "Detection order: uuid, jwt, email, datetime, date, url, ipv4, phone, digits, hex.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiIxMjM0NTY3ODkwMTIzNDU2IiwidjAxIjoiMDEyMzQ1Njc4OWFiY2RlZiIsInYwMiI6Imh0dHBzOi8vYUBiLmV4YW1wbGUiLCJ2MDMiOiIyMDI2LTEwLTE5IiwidjA0IjoiKzEyMzQ1NjciLCJ2MDUiOiIxMjM0NTY3IiwidjA2IjoiMS4yLjMuNCIsInYwNyI6ImV5SmFAYi5leGFtcGxlIiwidjA4IjoiMDAwMDAwMDAtMDAwMC0wMDAwLTAwMDAtMDAwMDAwMDAwMDAwIn0=",
+      "text": "{\"v00\":\"1234567890123456\",\"v01\":\"0123456789abcdef\",\"v02\":\"https://a@b.example\",\"v03\":\"2026-10-19\",\"v04\":\"+1234567\",\"v05\":\"1234567\",\"v06\":\"1.2.3.4\",\"v07\":\"eyJa@b.example\",\"v08\":\"00000000-0000-0000-0000-000000000000\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:digits\",\"v01\":\"drop:str:hex\",\"v02\":\"drop:str:url\",\"v03\":\"drop:str:date\",\"v04\":\"drop:str:phone\",\"v05\":\"drop:str:digits\",\"v06\":\"drop:str:ipv4\",\"v07\":\"drop:str:email\",\"v08\":\"drop:str:uuid\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

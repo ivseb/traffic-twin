@@ -1,0 +1,315 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "shipping-ext",
+    "version": "2026-10-19"
+  },
+  "paths": {
+    "/v1/shipments": {
+      "get": {
+        "operationId": "listShipments",
+        "x-tt-observed": {
+          "calls": 58210,
+          "first_seen": "2026-10-05",
+          "last_seen": "2026-10-19"
+        },
+        "x-tt-latency-ms": {
+          "p50": 80,
+          "p95": 215,
+          "p99": 323
+        },
+        "x-tt-entity": "shipment",
+        "parameters": [
+          {
+            "name": "orderId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Shipments of the order",
+            "x-tt-frequency": 0.988,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShipmentList"
+                },
+                "examples": {
+                  "empty": {
+                    "value": {
+                      "items": []
+                    }
+                  },
+                  "in-transit": {
+                    "value": {
+                      "items": [
+                        {
+                          "orderId": "ORD-SYN-0100",
+                          "shipmentId": "SHP-SYN-0100",
+                          "status": "IN_TRANSIT"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Carrier unavailable",
+            "x-tt-frequency": 0.012,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "carrier-unavailable": {
+                    "value": {
+                      "error": {
+                        "code": "CARRIER_UNAVAILABLE",
+                        "message": "carrier is not reachable"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createShipment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShipmentRequest"
+              },
+              "examples": {
+                "accepted": {
+                  "value": {
+                    "orderId": "ORD-SYN-0050",
+                    "parcels": 1,
+                    "service": "STANDARD"
+                  }
+                },
+                "carrier-unavailable": {
+                  "value": {
+                    "orderId": "ORD-SYN-0077",
+                    "parcels": 1,
+                    "service": "STANDARD"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shipment"
+                },
+                "examples": {
+                  "accepted": {
+                    "value": {
+                      "orderId": "ORD-SYN-0050",
+                      "shipmentId": "SHP-SYN-0102",
+                      "status": "PENDING"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Carrier unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "carrier-unavailable": {
+                    "value": {
+                      "error": {
+                        "code": "CARRIER_UNAVAILABLE",
+                        "message": "carrier is not reachable"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/shipments/{shipmentId}": {
+      "get": {
+        "operationId": "getShipment",
+        "x-tt-entity": "shipment",
+        "parameters": [
+          {
+            "name": "shipmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shipment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Shipment"
+                },
+                "examples": {
+                  "in-transit": {
+                    "value": {
+                      "orderId": "ORD-SYN-0100",
+                      "shipmentId": "SHP-SYN-0100",
+                      "status": "IN_TRANSIT"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown shipment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "not-found": {
+                    "value": {
+                      "error": {
+                        "code": "SHIPMENT_NOT_FOUND",
+                        "message": "no such shipment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Shipment": {
+        "type": "object",
+        "required": [
+          "shipmentId",
+          "orderId",
+          "status"
+        ],
+        "properties": {
+          "shipmentId": {
+            "type": "string",
+            "x-tt-value": {
+              "kind": "id",
+              "domain": "shipment",
+              "len_class": "l32"
+            }
+          },
+          "orderId": {
+            "type": "string",
+            "x-tt-value": {
+              "kind": "id",
+              "domain": "order",
+              "len_class": "l32"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "CREATED",
+              "IN_TRANSIT",
+              "DELIVERED",
+              "CANCELLED"
+            ]
+          },
+          "cancelReason": {
+            "type": "string",
+            "x-tt-presence": 0.04
+          }
+        }
+      },
+      "ShipmentList": {
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Shipment"
+            }
+          }
+        }
+      },
+      "ShipmentRequest": {
+        "type": "object",
+        "required": [
+          "orderId"
+        ],
+        "properties": {
+          "orderId": {
+            "type": "string"
+          },
+          "parcels": {
+            "type": "integer"
+          },
+          "service": {
+            "type": "string",
+            "enum": [
+              "STANDARD",
+              "EXPRESS"
+            ]
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

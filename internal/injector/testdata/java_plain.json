@@ -1,0 +1,18 @@
+{
+  "apiVersion": "admission.k8s.io/v1",
+  "kind": "AdmissionReview",
+  "request": {
+    "uid": "11111111-0000-4000-8000-000000000005",
+    "kind": {"group": "", "version": "v1", "kind": "Pod"},
+    "namespace": "ledger",
+    "operation": "CREATE",
+    "object": {
+      "metadata": {
+        "name": "ledger-plain",
+        "namespace": "ledger",
+        "annotations": {"traffic-twin.io/inject": "java"}
+      },
+      "spec": {"containers": [{"name": "ledger", "image": "registry.example/ledger:5.2"}]}
+    }
+  }
+}

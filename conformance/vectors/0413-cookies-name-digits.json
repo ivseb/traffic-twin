@@ -1,0 +1,26 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0413-cookies-name-digits",
+  "category": "cookies",
+  "description": "Cookie names with six or more consecutive digits collapse.",
+  "spec": ["sanitizer.md#8.2", "sanitizer.md#9.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Cookie", "cart_12345=a; cart_123456=b"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"cookies\":{\"cart_12345\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:l8\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,29 @@
+# Only what the Dockerfile copies is needed; keep the build context small and
+# free of local data or secrets.
+.git
+.github
+.claude
+.idea
+.vscode
+**/.DS_Store
+
+bin/
+dist/
+**/node_modules/
+ui/.vite/
+internal/ui/dist/*
+!internal/ui/dist/.gitkeep
+
+docs/
+demo/
+sdk/
+*.md
+!README.md
+
+.env
+*.env
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log
+site/

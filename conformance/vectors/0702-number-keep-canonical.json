@@ -1,0 +1,83 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0702-number-keep-canonical",
+  "category": "numbers",
+  "description": "keep on numbers emits the canonical form computed from the lexeme.",
+  "spec": ["sanitizer.md#5.3", "sanitizer.md#10.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "body": [
+            {
+              "path": "$[*]",
+              "action": {
+                "action": "keep"
+              }
+            }
+          ]
+        },
+        "ops": []
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "WzAsLTAsMTAsMS4wLDEuNTAsMTVlLTEsLTAuMCwxRTMsMWUrMywtMS41RS0zLDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MCwxZTIxLDFlMjAsMTIzZTE4LDEyMzRlMTgsMC4wMDAwMDEsMC4wMDAwMDAxLDEuNWUtNywwLjAwMTUsMTAwZS0yLDBlMTAsLTBlLTUsMWU0MDAsLTFlLTQwMCwwLjVlMSw5MDA3MTk5MjU0NzQwOTkzLDAuMSwtMTIzLjQ1NmUrMl0=",
+      "text": "[0,-0,10,1.0,1.50,15e-1,-0.0,1E3,1e+3,-1.5E-3,123456789012345678901234567890,1e21,1e20,123e18,1234e18,0.000001,0.0000001,1.5e-7,0.0015,100e-2,0e10,-0e-5,1e400,-1e-400,0.5e1,9007199254740993,0.1,-123.456e+2]"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":[0,0,10,1,1.5,1.5,0,1000,1000,-0.0015,1.2345678901234567890123456789e+29,1e+21,100000000000000000000,123000000000000000000,1.234e+21,0.000001,1e-7,1.5e-7,0.0015,1,0,0,1e+400,-1e-400,5,9007199254740993,0.1,-12345.6],\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

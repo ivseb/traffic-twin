@@ -1,0 +1,105 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0653-length-classes-containers",
+  "category": "length-classes",
+  "description": "Collapsed containers use the class of the element / key count.",
+  "spec": ["sanitizer.md#6.2", "sanitizer.md#5.1"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "body": [
+          {
+            "path": "$.a0",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.a4",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.a9",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.o0",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.o1",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.o5",
+            "action": {
+              "action": "drop"
+            }
+          }
+        ]
+      }
+    },
+    "services": []
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJvMCI6e30sIm8xIjp7ImEiOjF9LCJvNSI6eyJhIjoxLCJiIjoyLCJjIjozLCJkIjo0LCJlIjo1fSwiYTAiOltdLCJhNCI6WzEsMiwzLDRdLCJhOSI6WzEsMiwzLDQsNSw2LDcsOCw5XX0=",
+      "text": "{\"o0\":{},\"o1\":{\"a\":1},\"o5\":{\"a\":1,\"b\":2,\"c\":3,\"d\":4,\"e\":5},\"a0\":[],\"a4\":[1,2,3,4],\"a9\":[1,2,3,4,5,6,7,8,9]}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"a0\":\"drop:arr:l8\",\"a4\":\"drop:arr:l8\",\"a9\":\"drop:arr:l32\",\"o0\":\"drop:obj:l8\",\"o1\":\"drop:obj:l8\",\"o5\":\"drop:obj:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,86 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+/**
+ * tt-shipper: the long-running half of the traffic-twin PHP SDK.
+ *
+ * Enrolls the source, keeps the heartbeat and the signed policy up to date, writes the state
+ * file that PHP workers read before capturing, and ships the local spool to tt-core over mTLS.
+ * See sdk/php/README.md. Configuration is read from the environment (TT_STATE_DIR, TT_ENROLL_URL,
+ * TT_ENROLL_TOKEN, TT_SERVICE_NAME, TT_HMAC_KEY / TT_HMAC_KEY_FILE, ...).
+ *
+ *   tt-shipper            run until SIGTERM/SIGINT
+ *   tt-shipper --once     one cycle (enroll, heartbeat, policy, ship) and exit; for cron or tests
+ *   tt-shipper status     print the current status.json state and exit
+ */
+
+foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../autoload.php', __DIR__ . '/../src/autoload.php'] as $autoload) {
+    if (is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+use TrafficTwin\Config;
+use TrafficTwin\Shipper\Shipper;
+use TrafficTwin\State\Store;
+use TrafficTwin\Version;
+
+if (PHP_SAPI !== 'cli') {
+    fwrite(STDERR, "tt-shipper must run from the command line\n");
+    exit(2);
+}
+$args = array_slice($argv, 1);
+if (in_array('--help', $args, true) || in_array('-h', $args, true)) {
+    fwrite(STDOUT, "usage: tt-shipper [--once] [--verbose] | status | --version\n");
+    exit(0);
+}
+if (in_array('--version', $args, true)) {
+    fwrite(STDOUT, Version::SDK . "\n");
+    exit(0);
+}
+$config = Config::fromEnv();
+if ($config->stateDir === null) {
+    fwrite(STDERR, "tt-shipper: TT_STATE_DIR is required\n");
+    exit(2);
+}
+if (in_array('status', $args, true)) {
+    $st = (new Store($config->stateDir))->readJson('status.json');
+    fwrite(STDOUT, $st === null ? "no status\n" : json_encode($st, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+    exit($st === null ? 1 : 0);
+}
+foreach (['openssl', 'sodium'] as $ext) {
+    if (!extension_loaded($ext)) {
+        fwrite(STDERR, "tt-shipper: ext-$ext is required\n");
+        exit(2);
+    }
+}
+$verbose = $config->debug || in_array('--verbose', $args, true);
+$shipper = new Shipper($config, $verbose ? static function (string $m): void {
+    fwrite(STDERR, '[tt-shipper] ' . $m . "\n");
+} : null);
+if (!$shipper->secureDirs()) {
+    fwrite(STDERR, "tt-shipper: TT_STATE_DIR (or the spool directory) is not private and cannot be narrowed to 0700 by this user\n");
+    exit(2);
+}
+if (!$shipper->lock()) {
+    fwrite(STDERR, "tt-shipper: another instance is running on this state directory\n");
+    exit(3);
+}
+if (in_array('--once', $args, true)) {
+    $shipper->runOnce();
+    fwrite(STDOUT, 'state=' . $shipper->state() . "\n");
+    exit(0);
+}
+if (function_exists('pcntl_async_signals')) {
+    pcntl_async_signals(true);
+    $stop = static function () use ($shipper): void {
+        $shipper->stop();
+    };
+    pcntl_signal(SIGTERM, $stop);
+    pcntl_signal(SIGINT, $stop);
+}
+$shipper->run();
+exit(0);

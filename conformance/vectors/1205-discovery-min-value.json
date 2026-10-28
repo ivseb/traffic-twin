@@ -1,0 +1,91 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1205-discovery-min-value",
+  "category": "discovery",
+  "description": "One token per path: the leaf with the smallest canonical bytes (\"10\" < \"9\").",
+  "spec": ["sanitizer.md#15"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": true,
+      "allow": [],
+      "hosts_allow": [],
+      "auto_words_expires_at": "2026-10-26T10:00:00Z"
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "headers": {
+          "content-type": {
+            "action": "keep"
+          }
+        },
+        "body": [
+          {
+            "path": "$.meta",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.status",
+            "action": {
+              "action": "keep"
+            }
+          }
+        ]
+      }
+    },
+    "services": [],
+    "discovery": {
+      "enabled": true,
+      "expires_at": "2026-10-26T10:00:00Z"
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2IjpbOSwiMTAiLDkuMCwiYiJdfQ==",
+      "text": "{\"v\":[9,\"10\",9.0,\"b\"]}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"disc\":{\"req.body.v[*]\":\"tkd:d4ThNA\"},\"op\":\"POST /orders\",\"req\":{\"body\":{\"v\":[\"drop:int\",\"drop:str:digits\",\"drop:dec\",\"drop:str:l8\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"keep:application/json\"]},\"path\":\"/orders\",\"size\":\"l32\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

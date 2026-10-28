@@ -1,0 +1,501 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/conformance/schema/vector.v1.schema.json",
+  "title": "traffic-twin sanitizer conformance vector (tt.conformance.vector/v1, sanitizer revision 1.1)",
+  "description": "One test case: an exchange, a compiled policy, HMAC key material and the exact expected result. See conformance/format.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "id",
+    "category",
+    "description",
+    "spec",
+    "now",
+    "input",
+    "expected"
+  ],
+  "properties": {
+    "format": {
+      "const": "tt.conformance.vector/v1"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "category": {
+      "enum": [
+        "default-drop",
+        "path",
+        "query",
+        "headers",
+        "cookies",
+        "body",
+        "formats",
+        "length-classes",
+        "numbers",
+        "hmac",
+        "actions",
+        "rules",
+        "limits",
+        "routing",
+        "discovery",
+        "subject-sampling",
+        "refusal",
+        "adversarial",
+        "canonical",
+        "encoding",
+        "framework",
+        "event-size",
+        "keys",
+        "hosts",
+        "code",
+        "graphql",
+        "code-alnum",
+        "xml",
+        "multipart",
+        "docs",
+        "large-body"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "spec": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "pattern": "^(sanitizer|policy|event|hardening)\\.md#[0-9]+(\\.[0-9]+)*$"
+      }
+    },
+    "ambiguities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^A-[A-Z0-9-]+$"
+      }
+    },
+    "policy": {
+      "$ref": "#/$defs/policyBody"
+    },
+    "policy_ref": {
+      "type": "string",
+      "pattern": "^policies/[a-z0-9-]+\\.json$"
+    },
+    "policy_envelope": {
+      "type": "object"
+    },
+    "fleet_keys": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9._-]{1,64}$"
+      },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_-]{43}$"
+      }
+    },
+    "source_group": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+      "description": "Group assigned to the source at enrollment, checked against targets.groups."
+    },
+    "last_issued_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "issued_seq of the last policy the source accepted; absent = 0."
+    },
+    "min_issued_seq": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "min_issued_seq of the last heartbeat; absent = 0."
+    },
+    "hmac_key": {
+      "type": "string",
+      "description": "Content of TT_HMAC_KEY: one or more <kid>:<base64url-nopad> lines separated by \\n (a trailing \\r per line and empty lines are ignored)."
+    },
+    "now": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?Z$",
+      "description": "Source clock: not_after, auto_words and discovery expiry."
+    },
+    "input": {
+      "$ref": "#/$defs/input"
+    },
+    "expected": {
+      "$ref": "#/$defs/expected"
+    }
+  },
+  "allOf": [
+    {
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "policy",
+              "policy_ref"
+            ]
+          },
+          {
+            "required": [
+              "policy",
+              "policy_envelope"
+            ]
+          },
+          {
+            "required": [
+              "policy_ref",
+              "policy_envelope"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "policy_envelope"
+        ]
+      },
+      "then": {
+        "required": [
+          "fleet_keys"
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "policy"
+            ]
+          },
+          {
+            "required": [
+              "policy_ref"
+            ]
+          },
+          {
+            "required": [
+              "policy_envelope"
+            ]
+          }
+        ]
+      },
+      "then": {
+        "required": [
+          "source_group"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "policyBody": {
+      "description": "A tt.policy.body/v1 document. Refusal vectors may hold bodies that a source must reject, so only the outer shape is checked here.",
+      "type": "object",
+      "required": [
+        "format"
+      ]
+    },
+    "bytes": {
+      "description": "A byte string: a JSON string stands for its UTF-8 encoding; {\"b64\"} holds arbitrary bytes in standard base64 with padding. `text`, when present, is informative and equals the UTF-8 decoding of b64.",
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "b64"
+          ],
+          "properties": {
+            "b64": {
+              "type": "string",
+              "pattern": "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$"
+            },
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      ]
+    },
+    "headers": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/$defs/bytes"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "bodyTotal": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 0
+        },
+        {
+          "const": "unknown"
+        }
+      ]
+    },
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "dir",
+        "method",
+        "raw_path",
+        "req_headers"
+      ],
+      "properties": {
+        "dir": {
+          "enum": [
+            "inbound",
+            "outbound"
+          ]
+        },
+        "service_name": {
+          "type": "string"
+        },
+        "url_base": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "raw_path": {
+          "$ref": "#/$defs/bytes"
+        },
+        "raw_query": {
+          "$ref": "#/$defs/bytes"
+        },
+        "framework": {
+          "enum": [
+            "express",
+            "koa",
+            "fastify",
+            "flask",
+            "fastapi",
+            "django",
+            "spring",
+            "jaxrs",
+            "aspnetcore",
+            "gin",
+            "chi",
+            "nethttp",
+            "laravel",
+            "symfony"
+          ]
+        },
+        "framework_route": {
+          "type": "string"
+        },
+        "trace_id": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{32}$"
+        },
+        "inherited": {
+          "type": "boolean"
+        },
+        "req_headers": {
+          "$ref": "#/$defs/headers"
+        },
+        "req_body": {
+          "$ref": "#/$defs/bytes"
+        },
+        "req_body_total": {
+          "$ref": "#/$defs/bodyTotal"
+        },
+        "req_body_consumed": {
+          "type": "boolean"
+        },
+        "req_body_decoded": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599
+        },
+        "net_error": {
+          "enum": [
+            "timeout",
+            "reset",
+            "refused",
+            "dns",
+            "tls",
+            "other"
+          ]
+        },
+        "resp_headers": {
+          "$ref": "#/$defs/headers"
+        },
+        "resp_body": {
+          "$ref": "#/$defs/bytes"
+        },
+        "resp_body_total": {
+          "$ref": "#/$defs/bodyTotal"
+        },
+        "resp_body_consumed": {
+          "type": "boolean"
+        },
+        "resp_body_decoded": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "dir": {
+                "const": "inbound"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "service_name"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "dir": {
+                "const": "outbound"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "url_base"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "net_error"
+            ]
+          },
+          "then": {
+            "not": {
+              "required": [
+                "status"
+              ]
+            }
+          },
+          "else": {
+            "required": [
+              "status"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "framework_route"
+            ]
+          },
+          "then": {
+            "required": [
+              "framework"
+            ]
+          }
+        },
+        {
+          "if": {
+            "required": [
+              "inherited"
+            ]
+          },
+          "then": {
+            "properties": {
+              "dir": {
+                "const": "outbound"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "expected": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outcome",
+            "canonical"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "event"
+            },
+            "canonical": {
+              "type": "string",
+              "pattern": "^\\{[ -~]*\\}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outcome",
+            "sampled_by"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "not_sampled"
+            },
+            "sampled_by": {
+              "enum": [
+                "baggage",
+                "subject",
+                "trace",
+                "random",
+                "inherited"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "outcome",
+            "code"
+          ],
+          "properties": {
+            "outcome": {
+              "const": "refused"
+            },
+            "code": {
+              "enum": [
+                "no_policy",
+                "policy_rejected",
+                "expired_policy",
+                "key_missing",
+                "key_mismatch"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  }
+}

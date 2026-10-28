@@ -1,0 +1,30 @@
+{
+ "format":"tt.policy/v1","policy_id":"p-demo","default":"drop",
+ "hmac":{"kid":"k1","epoch":"2026-10"},
+ "identity":{"subject":{"from":"header","name":"authorization","jwt_claim":"sub"}},
+ "sampling":{"rate":1},
+ "segments":{"allow":["v1"]},
+ "global":{"request":{"headers":{"content-type":"keep"}},"response":{"headers":{"content-type":"keep"}},
+   "errors":{"body":{"$.error.code":"keep"}}},
+ "services":{
+  "shop-api":{"match":{"inbound":true},"ops":{
+    "POST /orders":{"request":{"body":{"$.items[*].sku":"keep","$.items[*].qty":"keep"}},"response":{
+      "$.id":"hmac(order)","$.customerId":"hmac(customer)","$.shipmentId":"hmac(shipment)","$.status":"keep",
+      "$.currency":"keep","$.total":"bucket(num, [0, 50, 100, 250])","$.createdAt":"bucket(time, hour)"}},
+    "GET /orders/{id}":{"request":{"path":{"id":"hmac(order)"}},"response":{
+      "$.id":"hmac(order)","$.customerId":"hmac(customer)","$.shipmentId":"hmac(shipment)","$.status":"keep",
+      "$.currency":"keep","$.total":"bucket(num, [0, 50, 100, 250])","$.createdAt":"bucket(time, hour)"}},
+    "GET /orders/{id}/shipment":{"request":{"path":{"id":"hmac(order)"}},"response":{
+      "$.orderId":"hmac(order)","$.shipmentId":"hmac(shipment)","$.status":"keep","$.updatedAt":"bucket(time, hour)",
+      "$.eta":"bucket(time, day)","$.cancelReason":"keep"}},
+    "GET /customers/{id}/orders":{"request":{"path":{"id":"hmac(customer)"}},"response":{
+      "$.customerId":"hmac(customer)","$.count":"keep","$.items[*].id":"hmac(order)","$.items[*].status":"keep",
+      "$.items[*].currency":"keep","$.items[*].total":"bucket(num, [0, 50, 100, 250])","$.items[*].createdAt":"bucket(time, hour)"}}}},
+  "shipping-ext":{"match":{"base":"https://api.carrier.example"},"ops":{
+    "POST /v1/shipments":{"request":{"body":{"$.orderId":"hmac(order)","$.service":"keep"}},"response":{
+      "$.shipmentId":"hmac(shipment)","$.orderId":"hmac(order)","$.status":"keep","$.service":"keep","$.createdAt":"bucket(time, hour)"}},
+    "GET /v1/shipments":{"request":{"query":{"orderId":"hmac(order)"}},"response":{
+      "$.items[*].shipmentId":"hmac(shipment)","$.items[*].orderId":"hmac(order)","$.items[*].status":"keep",
+      "$.items[*].service":"keep","$.items[*].updatedAt":"bucket(time, hour)","$.items[*].eta":"bucket(time, day)",
+      "$.items[*].cancelReason":"keep"}}}}
+ }}

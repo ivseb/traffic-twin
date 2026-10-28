@@ -1,0 +1,101 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1124-route-path-keep-grammar",
+  "category": "routing",
+  "description": "keep on a path parameter applies only to values matching [A-Za-z0-9._~-]{1,64}; others are dropped.",
+  "spec": ["sanitizer.md#4.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /codes/{a}/{b}/{c}",
+            "request": {
+              "path": {
+                "a": {
+                  "action": "keep"
+                },
+                "b": {
+                  "action": "keep"
+                },
+                "c": {
+                  "action": "keep"
+                }
+              }
+            }
+          },
+          {
+            "op": "GET /days/{d}/{t}",
+            "request": {
+              "path": {
+                "d": {
+                  "action": "bucket",
+                  "kind": "time",
+                  "unit": "day"
+                },
+                "t": {
+                  "action": "bucket",
+                  "kind": "time",
+                  "unit": "day"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/codes/ABC-1.x~y/a%20b/x%40y.example",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /codes/{a}/{b}/{c}\",\"req\":{\"path\":\"/codes/{keep:ABC-1.x~y}/{drop:str:l8}/{drop:str:email}\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

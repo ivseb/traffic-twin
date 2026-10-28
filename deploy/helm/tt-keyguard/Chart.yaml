@@ -1,0 +1,11 @@
+apiVersion: v2
+name: tt-keyguard
+description: "traffic-twin keyguard, the zone-B key custodian (HMAC keys, policy and pack signing). Install it in a namespace of its own; it accepts only tt-core and makes no outbound calls."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+home: https://github.com/ivseb/traffic-twin
+sources:
+  - https://github.com/ivseb/traffic-twin
+keywords: [traffic-twin, keyguard]

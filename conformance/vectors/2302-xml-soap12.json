@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2302-xml-soap12",
+  "category": "xml",
+  "description": "SOAP 1.2: fmt soap12 and the operation name from the action parameter of the content type.",
+  "spec": ["sanitizer.md#22.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "application/soap+xml; charset=utf-8; action=\"urn:shop-example:quotes:2#Quote\""]
+    ],
+    "req_body": {
+      "b64": "PGVudjpFbnZlbG9wZSB4bWxuczplbnY9Imh0dHA6Ly93d3cudzMub3JnLzIwMDMvMDUvc29hcC1lbnZlbG9wZSI+PGVudjpCb2R5PjxtOlF1b3RlIHhtbG5zOm09InVybjpzaG9wLWV4YW1wbGU6cXVvdGVzOjIiPjxtOmFtb3VudD4xMDA8L206YW1vdW50PjwvbTpRdW90ZT48L2VudjpCb2R5PjwvZW52OkVudmVsb3BlPg==",
+      "text": "<env:Envelope xmlns:env=\"http://www.w3.org/2003/05/soap-envelope\"><env:Body><m:Quote xmlns:m=\"urn:shop-example:quotes:2\"><m:amount>100</m:amount></m:Quote></env:Body></env:Envelope>"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"Envelope\":{\"Body\":{\"Quote\":{\"amount\":\"drop:str:digits\"}}}},\"ct\":\"application/soap+xml\",\"fmt\":\"soap12\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"l1024\",\"soap_action\":\"Quote\",\"xmlns\":{\"$.Envelope\":\"ns:http://www.w3.org/2003/05/soap-envelope\",\"$.Envelope.Body.Quote\":\"ns:urn:shop-example:quotes:2\"}},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

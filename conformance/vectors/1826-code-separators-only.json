@@ -1,0 +1,87 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1826-code-separators-only",
+  "category": "code",
+  "description": "The shape allows separators only (\"--\", \"__\", \"-_\"): they leave like any code.",
+  "spec": ["sanitizer.md#5.6", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders/{id}",
+            "response": {
+              "body": [
+                {
+                  "path": "$.*.status",
+                  "action": {
+                    "action": "code"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJhIjp7InN0YXR1cyI6Ii0tIn0sImIiOnsic3RhdHVzIjoiX18ifSwiYyI6eyJzdGF0dXMiOiItXyJ9LCJkIjp7InN0YXR1cyI6Ii0ifX0=",
+      "text": "{\"a\":{\"status\":\"--\"},\"b\":{\"status\":\"__\"},\"c\":{\"status\":\"-_\"},\"d\":{\"status\":\"-\"}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/{id}\",\"req\":{\"path\":\"/orders/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"a\":{\"status\":\"keep:--\"},\"b\":{\"status\":\"keep:__\"},\"c\":{\"status\":\"keep:-_\"},\"d\":{\"status\":\"drop:str:l8\"}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

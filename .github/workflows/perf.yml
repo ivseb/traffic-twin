@@ -1,0 +1,53 @@
+name: perf
+
+# Large-dataset performance run (test/perf/ttperf, docs/PERFORMANCE.md): a
+# reduced dataset (scale "ci": 300k events, 50 services, 2000 host patterns,
+# 200 sources, a year of snapshots, 100k audit entries), every GET endpoint
+# of the admin API and every background job. The job fails when a budget of
+# test/perf/budgets.json is exceeded. Weekly and on demand only: it takes a
+# few minutes and its numbers depend on the runner.
+on:
+  schedule:
+    - cron: "41 5 * * 1" # Mondays, 05:41 UTC
+  workflow_dispatch:
+    inputs:
+      scale:
+        description: "dataset: smoke, ci or full (full needs ~20 GB of disk and a large runner)"
+        required: false
+        default: ci
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perf-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  perf:
+    name: perf (dataset, endpoints, jobs, budgets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+      - name: perf run
+        env:
+          PERF_SCALE: ${{ github.event.inputs.scale || 'ci' }}
+        run: make perf PERF_SCALE="$PERF_SCALE" PERF_OUT="$RUNNER_TEMP/perf-report"
+      - name: report
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/perf-report.md" ]; then cat "$RUNNER_TEMP/perf-report.md" >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f "$RUNNER_TEMP/perf-report.violations.json" ]; then
+            {
+              echo '### Budget violations'
+              echo '```'
+              cat "$RUNNER_TEMP/perf-report.violations.json"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi

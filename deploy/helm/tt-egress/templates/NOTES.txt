@@ -1,0 +1,21 @@
+tt-egress {{ .Chart.AppVersion }} installed as {{ include "tt-egress.fullname" . }} in {{ .Release.Namespace }}.
+
+Point the application at it: the base URL of an external service becomes
+  http://{{ include "tt-egress.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}/<alias>
+{{- if not .Values.upstreams }}
+
+WARNING: upstreams is empty: tt-egress refuses to start without at least one upstream.
+{{- end }}
+{{- if not .Values.enroll.url }}
+
+NOTE: enroll.url is empty: the proxy only forwards, it captures nothing.
+{{- else if not .Values.enroll.tokenSecret.name }}
+
+WARNING: enroll.tokenSecret.name is empty: the proxy cannot enroll.
+{{- end }}
+{{- if .Values.sidecar.enabled }}
+
+Sidecar snippet (container and volumes to add to the pod of the application, which then calls
+http://{{ .Values.sidecar.listen }}/<alias>):
+  kubectl -n {{ .Release.Namespace }} get configmap {{ include "tt-egress.fullname" . }}-sidecar -o jsonpath='{.data.snippet\.yaml}'
+{{- end }}

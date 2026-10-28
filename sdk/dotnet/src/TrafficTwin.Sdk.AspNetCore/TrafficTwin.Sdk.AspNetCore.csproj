@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>TrafficTwin.Sdk.AspNetCore</RootNamespace>
+    <AssemblyName>TrafficTwin.Sdk.AspNetCore</AssemblyName>
+    <PackageId>TrafficTwin.Sdk.AspNetCore</PackageId>
+    <Description>ASP.NET Core integration of the traffic-twin SDK: inbound middleware, IHttpClientFactory handler and hosted service.</Description>
+    <PackageTags>traffic-twin;aspnetcore;middleware;http</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../TrafficTwin.Sdk/TrafficTwin.Sdk.csproj" />
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <InternalsVisibleTo Include="TrafficTwin.Sdk.Tests" />
+  </ItemGroup>
+</Project>

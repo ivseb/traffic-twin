@@ -1,0 +1,26 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1511-adv-set-cookie-attributes",
+  "category": "adversarial",
+  "description": "set-cookie attributes (Domain, Path) never leave.",
+  "spec": ["sanitizer.md#8.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Set-Cookie", "sid=1; Domain=mario-rossi.example; Path=/customers/mario.rossi@example.com"]
+    ]
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"cookies\":{\"sid\":[\"drop:str:digits\"]},\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

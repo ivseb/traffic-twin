@@ -1,0 +1,93 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0914-drop-containers",
+  "category": "actions",
+  "description": "Explicit drop on containers collapses them without visiting children.",
+  "spec": ["sanitizer.md#5.1", "sanitizer.md#6.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "body": [
+          {
+            "path": "$.addr",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.items",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.leaf",
+            "action": {
+              "action": "drop"
+            }
+          },
+          {
+            "path": "$.n",
+            "action": {
+              "action": "drop"
+            }
+          }
+        ]
+      }
+    },
+    "services": []
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJhZGRyIjp7InN0cmVldCI6IlZpYSBSb21hIDEiLCJjaXR5IjoiVG9yaW5vIn0sIml0ZW1zIjpbMSwyLDMsNCw1XSwibGVhZiI6IngiLCJuIjp7fX0=",
+      "text": "{\"addr\":{\"street\":\"Via Roma 1\",\"city\":\"Torino\"},\"items\":[1,2,3,4,5],\"leaf\":\"x\",\"n\":{}}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"addr\":\"drop:obj:l8\",\"items\":\"drop:arr:l8\",\"leaf\":\"drop:str:l8\",\"n\":\"drop:obj:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,4 @@
+shop/node_modules
+*.md
+smoke.sh
+docker-compose.yml

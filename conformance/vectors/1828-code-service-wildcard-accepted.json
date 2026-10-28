@@ -1,0 +1,89 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1828-code-service-wildcard-accepted",
+  "category": "code",
+  "description": "code on $.items[*].status and $.*.state in a service rule is accepted (H2 is about global rules).",
+  "spec": ["sanitizer.md#5.6", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "response": {
+          "body": [
+            {
+              "path": "$.*.state",
+              "action": {
+                "action": "code"
+              }
+            },
+            {
+              "path": "$.items[*].status",
+              "action": {
+                "action": "code"
+              }
+            }
+          ]
+        },
+        "ops": []
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJpdGVtcyI6W3sic3RhdHVzIjoiT1BFTiJ9XSwieCI6eyJzdGF0ZSI6ImRvbmUifX0=",
+      "text": "{\"items\":[{\"status\":\"OPEN\"}],\"x\":{\"state\":\"done\"}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/{drop:str:digits}\",\"req\":{\"path\":\"/{drop:str:l8}/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"items\":[{\"status\":\"keep:OPEN\"}],\"x\":{\"state\":\"keep:done\"}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

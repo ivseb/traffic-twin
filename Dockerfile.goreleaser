@@ -1,0 +1,17 @@
+# syntax=docker/dockerfile:1
+#
+# Image assembled by goreleaser (dockers_v2) from the binaries it already built:
+# the build context holds <os>/<arch>/tt for every platform of the image.
+# For a build from source use the Dockerfile at the repository root instead.
+# The base image is pinned by digest, like in the main Dockerfile: bump tag and
+# digest together.
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:d62067879de890a1def9da0e7766b7d20810a5e5555cef8506b752437d7a3e88
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/tt /usr/local/bin/tt
+USER nonroot:nonroot
+EXPOSE 7070
+ENTRYPOINT ["/usr/local/bin/tt"]
+# Mount the configuration (deploy/examples/core.production.yaml) and the
+# certificates; tt-core refuses a non-loopback listener without TLS and
+# needs a separate tt keyguard (keyguard.url).
+CMD ["core", "-config", "/etc/tt/core.yaml"]

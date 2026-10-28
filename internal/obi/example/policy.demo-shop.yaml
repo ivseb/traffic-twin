@@ -1,0 +1,83 @@
+# Policy di esempio per l'app della demo (demo/): lo shop come servizio in
+# ingresso e il corriere come servizio esterno. Dati inventati.
+#
+# Da incollare nella UI di tt-core (pagina Policy) e far approvare. Il corriere
+# della demo risponde in HTTP semplice dentro la rete di Docker, quindi la base
+# è http://carrier:8080 (non https://api.carrier.example).
+format: tt.policy/v1
+policy_id: p-demo-shop
+default: drop
+
+hmac:
+  kid: k1
+  epoch: "2026-10"
+
+identity:
+  subject: { from: header, name: authorization, jwt_claim: sub }
+
+sampling:
+  rate: 1          # demo: tutto il traffico; in produzione 0.05 o meno
+
+global:
+  request:
+    headers: { content-type: keep }
+  response:
+    headers: { content-type: keep }
+  errors:
+    body:
+      $.error.code: keep
+
+services:
+  shop-api:
+    match: { inbound: true }
+    ops:
+      "POST /orders":
+        request:
+          body:
+            $.items[*].qty: bucket(num, [0, 2, 4, 11])
+            $.shippingAddress.country: keep
+        response:
+          $.id: hmac(order)
+          $.status: keep
+          $.total: bucket(num, [0, 50, 100, 250])
+          $.shipmentId: hmac(shipment)
+      "GET /orders/{id}":
+        request:
+          path: { id: hmac(order) }
+        response:
+          $.id: hmac(order)
+          $.status: keep
+      "GET /orders/{id}/shipment":
+        request:
+          path: { id: hmac(order) }
+        response:
+          $.orderId: hmac(order)
+          $.shipmentId: hmac(shipment)
+          $.status: keep
+      "GET /customers/{id}/orders":
+        request:
+          path: { id: hmac(customer) }
+        response:
+          $.customerId: hmac(customer)
+          $.count: bucket(num, [0, 1, 5, 20])
+          $.items[*].id: hmac(order)
+          $.items[*].status: keep
+
+  carrier:
+    match: { base: "http://carrier:8080" }
+    ops:
+      "POST /v1/shipments":
+        request:
+          body:
+            $.orderId: hmac(order)
+            $.service: keep
+        response:
+          $.shipmentId: hmac(shipment)
+          $.status: keep
+      "GET /v1/shipments":
+        request:
+          query: { orderId: hmac(order) }
+        response:
+          $.items[*].orderId: hmac(order)
+          $.items[*].shipmentId: hmac(shipment)
+          $.items[*].status: keep

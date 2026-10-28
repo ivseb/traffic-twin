@@ -1,0 +1,39 @@
+{{- if eq .Values.tls.mode "certManager" }}
+{{- $full := include "tt-injector.fullname" . }}
+{{- $ns := .Release.Namespace }}
+{{- $issuer := .Values.tls.certManager.issuerRef }}
+{{- if not $issuer.name }}
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ $full }}-selfsigned
+  labels:
+    {{- include "tt-injector.labels" . | nindent 4 }}
+spec:
+  selfSigned: {}
+---
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $full }}
+  labels:
+    {{- include "tt-injector.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "tt-injector.tlsSecretName" . }}
+  duration: {{ mul (int .Values.tls.validityDays) 24 }}h
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages: [digital signature, key encipherment, server auth]
+  dnsNames:
+    - {{ $full }}
+    - {{ $full }}.{{ $ns }}
+    - {{ $full }}.{{ $ns }}.svc
+    - {{ $full }}.{{ $ns }}.svc.cluster.local
+  issuerRef:
+    name: {{ default (printf "%s-selfsigned" $full) $issuer.name }}
+    kind: {{ $issuer.kind }}
+    group: {{ $issuer.group }}
+{{- end }}

@@ -1,0 +1,91 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2322-xml-container-drop",
+  "category": "xml",
+  "description": "An explicit drop on an element collapses it like a JSON object.",
+  "spec": ["sanitizer.md#22.2", "sanitizer.md#5.0"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "body": [
+            {
+              "path": "$.Envelope.Header",
+              "action": {
+                "action": "drop"
+              }
+            }
+          ]
+        },
+        "ops": []
+      }
+    ],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "text/xml; charset=utf-8"]
+    ],
+    "req_body": {
+      "b64": "PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4KPHNvYXA6RW52ZWxvcGUgeG1sbnM6c29hcD0iaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvc29hcC9lbnZlbG9wZS8iIHhtbG5zOnhzaT0iaHR0cDovL3d3dy53My5vcmcvMjAwMS9YTUxTY2hlbWEtaW5zdGFuY2UiPgogIDxzb2FwOkhlYWRlcj48QXV0aEhlYWRlciB4bWxucz0iaHR0cDovL3dzLnNob3AuZXhhbXBsZS9wb2xpY3kvdjIiPjxUb2tlbj5zM2NyM3QtVDBrM248L1Rva2VuPjwvQXV0aEhlYWRlcj48L3NvYXA6SGVhZGVyPgogIDxzb2FwOkJvZHk+CiAgICA8R2V0T3JkZXIgeG1sbnM9Imh0dHA6Ly93cy5zaG9wLmV4YW1wbGUvcG9saWN5L3YyIj4KICAgICAgPG9yZGVyTnVtYmVyPk9SRC0yMDI2LTAwMDE4NDwvb3JkZXJOdW1iZXI+CiAgICAgIDxpdGVtQ29kZT4wMDAwMTIzNDUwPC9pdGVtQ29kZT4KICAgICAgPGFzT2YgeHNpOm5pbD0idHJ1ZSIvPgogICAgPC9HZXRPcmRlcj4KICA8L3NvYXA6Qm9keT4KPC9zb2FwOkVudmVsb3BlPgo=",
+      "text": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\u000a<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\u000a  <soap:Header><AuthHeader xmlns=\"http://ws.shop.example/policy/v2\"><Token>s3cr3t-T0k3n</Token></AuthHeader></soap:Header>\u000a  <soap:Body>\u000a    <GetOrder xmlns=\"http://ws.shop.example/policy/v2\">\u000a      <orderNumber>ORD-2026-000184</orderNumber>\u000a      <itemCode>0000123450</itemCode>\u000a      <asOf xsi:nil=\"true\"/>\u000a    </GetOrder>\u000a  </soap:Body>\u000a</soap:Envelope>\u000a"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"Envelope\":{\"Body\":{\"GetOrder\":{\"asOf\":{\"@nil\":\"drop:str:l8\"},\"itemCode\":\"drop:str:digits\",\"orderNumber\":\"drop:str:l32\"}},\"Header\":\"drop:obj:l8\"}},\"ct\":\"text/xml\",\"fmt\":\"soap11\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"l1024\",\"xmlns\":{\"$.Envelope\":\"ns:http://schemas.xmlsoap.org/soap/envelope/\",\"$.Envelope.Body.GetOrder\":\"ns:http://ws.shop.example/policy/v2\",\"$.Envelope.Header.AuthHeader\":\"ns:http://ws.shop.example/policy/v2\"}},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

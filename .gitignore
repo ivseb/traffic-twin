@@ -1,0 +1,38 @@
+# build output
+/tt
+/bin/
+/dist/
+node_modules/
+*.log
+
+# performance harness reports (make perf)
+/perf-report*
+
+# local data
+/tt-dev/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.env
+
+# UI build output embedded into the binary (only the placeholder is tracked)
+/internal/ui/dist/*
+!/internal/ui/dist/.gitkeep
+/ui/.vite/
+
+# Go tooling
+/coverage.out
+*.test
+
+# editors and OS
+.idea/
+.vscode/
+.claude/
+.DS_Store
+
+# documentation site (site/): dependencies, build output and the reference
+# pages generated from docs/ by site/scripts/sync-docs.mjs
+/site/node_modules/
+/site/.vitepress/dist/
+/site/.vitepress/cache/
+/site/it/docs/

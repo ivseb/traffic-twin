@@ -1,0 +1,139 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+#
+# Release configuration for the tt binary.
+# - Static, cgo-free builds with version metadata injected via -ldflags.
+# - SBOM for every archive, generated with syft.
+# - Keyless signing of the checksum file with cosign (Sigstore). Keyless
+#   signing needs an OIDC identity, i.e. a CI job with `id-token: write`;
+#   it is not meant to be run from a laptop.
+# - Multi-arch container image (linux/amd64, linux/arm64) on ghcr.io, built from
+#   the very same binaries as the archives (Dockerfile.goreleaser), with a
+#   buildx SBOM attestation, and signed by digest with cosign (keyless).
+#
+# Run by .github/workflows/release.yml on a v* tag; see RELEASING.md.
+# Dry run without publishing or signing:
+#   goreleaser release --snapshot --clean --skip=publish,sign,sbom,before
+#
+# Verify a release:
+#   cosign verify-blob \
+#     --bundle checksums.txt.sigstore.json \
+#     --certificate-identity-regexp 'https://github.com/ivseb/traffic-twin/.*' \
+#     --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+#     checksums.txt
+#   sha256sum --ignore-missing -c checksums.txt
+version: 2
+
+project_name: traffic-twin
+
+before:
+  hooks:
+    # The UI is embedded into the binary, so it must be built first.
+    - make ui
+
+builds:
+  - id: tt
+    main: ./cmd/tt
+    binary: tt
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{ .Version }} -X main.commit={{ .ShortCommit }} -X main.date={{ .CommitDate }}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+archives:
+  - id: tt
+    ids: [tt]
+    name_template: "tt_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files:
+      - LICENSE
+      - NOTICE
+      - README.md
+
+checksum:
+  name_template: checksums.txt
+  algorithm: sha256
+
+sboms:
+  - id: archive-sbom
+    cmd: syft
+    artifacts: archive
+    documents:
+      - "{{ .ArtifactName }}.sbom.spdx.json"
+    args: ["$artifact", "--output", "spdx-json=$document"]
+
+signs:
+  - id: cosign-keyless
+    cmd: cosign
+    artifacts: checksum
+    signature: "${artifact}.sigstore.json"
+    args:
+      - sign-blob
+      - --bundle=${signature}
+      - ${artifact}
+      - --yes
+    output: true
+
+# The image is assembled from the binaries built above (no second compilation),
+# so the container runs exactly what the archives contain. The self-contained
+# Dockerfile at the repository root is for `docker build` by hand.
+dockers_v2:
+  - id: image
+    ids: [tt]
+    dockerfile: Dockerfile.goreleaser
+    images:
+      - ghcr.io/ivseb/traffic-twin
+    tags:
+      - "{{ .Version }}"
+      # Pre-releases (v1.2.0-rc.1) never move "latest" or the major.minor tags.
+      - "{{ if not .Prerelease }}{{ .Major }}.{{ .Minor }}{{ end }}"
+      - "{{ if not .Prerelease }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      org.opencontainers.image.title: traffic-twin
+      org.opencontainers.image.description: "Observes traffic through sanitizing sources and builds contracts and mocks from it"
+      org.opencontainers.image.source: https://github.com/ivseb/traffic-twin
+      org.opencontainers.image.url: https://github.com/ivseb/traffic-twin
+      org.opencontainers.image.licenses: Apache-2.0
+      org.opencontainers.image.version: "{{ .Version }}"
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.created: "{{ .CommitDate }}"
+    annotations:
+      "index:org.opencontainers.image.source": https://github.com/ivseb/traffic-twin
+      "index:org.opencontainers.image.licenses": Apache-2.0
+    sbom: true
+
+# Keyless signature of the image index, by digest (never by tag).
+docker_signs:
+  - id: cosign-image
+    cmd: cosign
+    artifacts: images # includes the dockers_v2 images (multi-platform index, signed by digest)
+    args:
+      - sign
+      - --yes
+      - ${artifact}@${digest}
+    output: true
+
+changelog:
+  use: git
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  github:
+    owner: ivseb
+    name: traffic-twin
+  draft: true
+  prerelease: auto

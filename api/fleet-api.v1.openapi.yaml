@@ -1,0 +1,336 @@
+openapi: 3.1.0
+info:
+  title: traffic-twin Fleet API (source-facing)
+  version: 1.3.0
+  description: |
+    Endpoints used by capture sources (SDKs, tt-egress, adapters) to enroll and stay managed, served by tt-core.
+    Administration of tokens, groups, sources and policies is in `admin-api.v1.openapi.yaml` (under `/api/v1/fleet/`);
+    the two files do not overlap.
+
+    - **Enrollment** uses a token over server-authenticated TLS. The token embeds the CA pin
+      (`tte_<secret>.<pin>`), where `pin` is base64url(SHA-256(DER of the tt-core **root** CA certificate)).
+      tt-core MUST include the root certificate in the TLS chain it presents, so the source can pin it before
+      trusting the server, without prior configuration.
+    - Two token kinds: **one-time** (default, single use, short expiry) and **group** (long-lived, many uses,
+      revocable; meant for replicated deployments whose pods enroll at start).
+    - The `service_name` declared by the source must be one of the names allowed for the token's group;
+      the assigned name is then fixed in the certificate and checked by the intake.
+    - Every other call uses **mTLS** with the client certificate obtained at enrollment.
+    - Before capturing anything a source MUST send one heartbeat (kill switch state, `min_issued_seq`).
+    - Kill switch, sampling override, signing key rotation and revocation reach sources through the heartbeat response.
+    - The HMAC key never travels through Fleet (docs/spec/sanitizer.md section 7.1).
+    - Errors are `{"code", "message"}` with a stable code; messages never echo request values. Besides the codes listed
+      per operation, a wrong method is `405 method_not_allowed` (with `Allow`) and an unknown path `404 not_found`.
+    - `/fleet/v1/enroll` is rate-limited (v1.3): per client address (IPv6 clients grouped by /64) and per token (keyed
+      by the hash of the whole token string). Defaults: 60 per minute with a burst of 30 per address, 120 per minute
+      with a burst of 60 per token; configurable with `fleet.enroll_rate_limit.{ip,token}`, a negative rate disables
+      the limit. Replicated deployments enrolling many pods at once should stagger or use a group token.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: https://tt-core.internal:4318
+    description: |
+      The tt-core **intake listener**: one source-facing port (default 4318) for both OTLP intake (`/v1/logs`)
+      and these Fleet endpoints. TLS is always on. `/fleet/v1/enroll` is served without a client certificate;
+      every other route requires a verified client certificate. The admin/UI listener (default 7070) serves
+      no source endpoint.
+tags:
+  - name: source
+    description: Calls made by capture sources.
+paths:
+  /fleet/v1/enroll:
+    post:
+      tags: [source]
+      operationId: enroll
+      summary: Enroll
+      security: []
+      description: |
+        Exchanges an enrollment token for a client certificate. Sources that can build a PKCS#10 CSR send `csr`
+        (preferred; the private key never leaves the source). Dependency-free SDKs that cannot build a CSR omit it:
+        tt-core then generates the key pair in memory, returns `client_key` once over this TLS channel and
+        MUST NOT persist it.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [token, source]
+              properties:
+                token: { type: string, pattern: "^tte_[A-Za-z0-9_-]{32,128}\\.[A-Za-z0-9_-]{43}$" }
+                csr: { type: string, maxLength: 8192, description: 'PEM PKCS#10 with an Ed25519 or ECDSA P-256 key.' }
+                source: { $ref: "#/components/schemas/SourceInfo" }
+      responses:
+        "201":
+          description: Enrolled.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Enrollment" }
+        "400":
+          description: 'bad_request: malformed JSON, wrong Content-Type, unknown field or body over 16 KiB.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "401":
+          description: 'Token unknown, expired, revoked or exhausted (codes token_unknown, token_expired, token_revoked, token_exhausted). A token minted for another tt-core or CA pin is token_unknown.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: 'service_not_allowed: service_name is not allowed for the token''s group.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: 'Invalid input: invalid_token (malformed), invalid_source, invalid_csr (invalid, too large or unsupported key type), kind_mismatch (source kind differs from the token kind).'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429":
+          description: 'rate_limited: too many enrollment attempts from this address or with this token; retry after Retry-After seconds.'
+          headers:
+            Retry-After: { schema: { type: integer, minimum: 1 }, description: Seconds to wait. }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "503":
+          description: 'no_signing_keys: tt-core has not obtained the policy signing keys from keyguard yet; retry.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /fleet/v1/policy:
+    get:
+      tags: [source]
+      operationId: getPolicy
+      summary: Get policy
+      security: [ { mtls: [] } ]
+      description: Returns the signed compiled policy assigned to this source's group. Sources poll it; `If-None-Match` avoids transfers.
+      parameters:
+        - name: If-None-Match
+          in: header
+          schema: { type: string, description: 'Quoted policy hash, e.g. "sha256:3f7a..."' }
+      responses:
+        "200":
+          description: Current policy.
+          headers:
+            ETag:
+              schema: { type: string }
+              description: 'The quoted policy hash. The response is never cacheable (`Cache-Control: no-store`).'
+          content:
+            application/json:
+              schema: { $ref: "../schemas/policy-compiled.v1.schema.json" }
+        "304": { description: 'Unchanged.' }
+        "403": { description: 'Source revoked (source_revoked) or certificate without a source identity (no_source_identity).', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "404": { description: 'no_policy: no policy assigned to the group yet; the source must not capture.', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /fleet/v1/heartbeat:
+    post:
+      tags: [source]
+      operationId: heartbeat
+      summary: Heartbeat
+      security: [ { mtls: [] } ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Heartbeat" }
+      responses:
+        "200":
+          description: Commands for the source.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HeartbeatResponse" }
+        "400": { description: 'bad_request: not JSON, wrong Content-Type, body over 64 KiB or trailing data. Unknown fields are accepted (forward compatibility).', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "403": { description: 'source_revoked (the source must stop capturing, drop its queues and persist the stop), source_mismatch (source_id differs from the certificate) or no_source_identity.', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "422": { description: 'invalid_heartbeat: unknown state, incomplete or negative counters, more than 20 last_errors, malformed error code or oversized policy reference.', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+  /fleet/v1/renew:
+    post:
+      tags: [source]
+      operationId: renewCertificate
+      summary: Renew certificate
+      security: [ { mtls: [] } ]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                csr: { type: string, maxLength: 8192 }
+      responses:
+        "200":
+          description: New certificate (and key when no CSR was sent; never persisted by tt-core).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [client_cert, not_after]
+                properties:
+                  client_cert: { type: string }
+                  client_key: { type: string }
+                  not_after: { type: string, format: date-time }
+        "400": { description: 'bad_request.', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "403": { description: 'Source revoked (source_revoked).', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+        "422": { description: 'invalid_csr.', content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } } }
+components:
+  securitySchemes:
+    mtls:
+      type: mutualTLS
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+    SourceKind:
+      enum: [sdk-node, sdk-python, sdk-java, sdk-dotnet, sdk-go, sdk-php, egress, obi, import-har, import-otlp]
+    Semver:
+      type: string
+      maxLength: 64
+      pattern: "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+    SourceInfo:
+      type: object
+      additionalProperties: false
+      required: [kind, version, service_name]
+      properties:
+        kind: { $ref: "#/components/schemas/SourceKind" }
+        version: { $ref: "#/components/schemas/Semver" }
+        service_name:
+          type: string
+          pattern: "^[a-z0-9][a-z0-9._-]{0,62}$"
+          description: Must be one of the names allowed for the token's group (lowercase; the onboarding UI proposes it from OTEL_SERVICE_NAME).
+        instance: { type: string, maxLength: 128, description: 'Pod or host name, informational.' }
+        runtime:
+          type: object
+          additionalProperties: false
+          properties:
+            lang: { type: string, maxLength: 32 }
+            lang_version: { type: string, maxLength: 64 }
+            os: { type: string, maxLength: 32 }
+            arch: { type: string, maxLength: 32 }
+        hmac_kids:
+          type: array
+          maxItems: 8
+          items: { type: string, pattern: "^[a-z0-9]{1,8}$" }
+          description: kids of the local HMAC keys, if present.
+    SigningKey:
+      type: object
+      required: [kid, alg, public_key]
+      properties:
+        kid: { type: string, pattern: "^[A-Za-z0-9._-]{1,64}$" }
+        alg: { const: Ed25519 }
+        public_key: { type: string, pattern: "^[A-Za-z0-9_-]{43}$", description: 'Raw 32-byte key, base64url without padding.' }
+    Enrollment:
+      type: object
+      required: [source_id, group, service_name, client_cert, ca_chain, policy_signing_keys, intake_url, fleet_url, policy_max_age_s, heartbeat_interval_s, policy_poll_interval_s]
+      properties:
+        source_id: { type: string, pattern: "^src-[0-9A-Za-z]{1,32}$", description: 'Also the SAN of the client certificate.' }
+        group: { type: string, pattern: "^[a-z0-9][a-z0-9-]{0,62}$" }
+        service_name: { type: string, pattern: "^[a-z0-9][a-z0-9._-]{0,62}$", description: 'Assigned name; the source must use it as service for inbound events.' }
+        client_cert: { type: string, description: 'PEM' }
+        client_key: { type: string, description: 'PEM PKCS#8, only when no CSR was sent; keep in memory or in a 0600 file.' }
+        ca_chain: { type: string, description: 'PEM, including the root that matches the token pin.' }
+        not_after: { type: string, format: date-time }
+        policy_signing_keys:
+          type: array
+          minItems: 1
+          items: { $ref: "#/components/schemas/SigningKey" }
+        intake_url: { type: string, format: uri, examples: ["https://tt-core.internal:4318/v1/logs"] }
+        fleet_url: { type: string, format: uri, examples: ["https://tt-core.internal:4318"], description: "Base URL of the Fleet source endpoints (same listener as the intake)." }
+        policy_max_age_s: { type: integer, default: 86400 }
+        heartbeat_interval_s: { type: integer, default: 30 }
+        policy_poll_interval_s: { type: integer, default: 60 }
+    Heartbeat:
+      type: object
+      required: [source_id, state, counters]
+      properties:
+        source_id: { type: string }
+        state: { enum: [starting, capturing, no_policy, policy_rejected, expired_policy, key_missing, key_mismatch, killed] }
+        policy:
+          type: object
+          properties:
+            id: { type: string }
+            version: { type: integer }
+            issued_seq: { type: integer }
+            hash: { type: string }
+        counters:
+          type: object
+          description: Monotonic counters since process start.
+          required: [exchanges_seen, exchanges_sampled, events_sent, events_dropped_queue, events_rejected, send_errors, sanitizer_errors]
+          properties:
+            exchanges_seen: { type: integer }
+            exchanges_sampled: { type: integer }
+            events_sent: { type: integer }
+            events_dropped_queue: { type: integer }
+            events_rejected: { type: integer }
+            send_errors: { type: integer }
+            sanitizer_errors: { type: integer }
+        overhead_us:
+          type: object
+          description: Time spent in tt per exchange, microseconds.
+          properties:
+            p50: { type: integer }
+            p99: { type: integer }
+        queue:
+          type: object
+          properties:
+            events: { type: integer }
+            bytes: { type: integer }
+        last_errors:
+          type: array
+          maxItems: 20
+          items:
+            type: object
+            required: [code, at]
+            properties:
+              code: { type: string, maxLength: 64, description: 'Error code only; never payload values.' }
+              at: { type: string, format: date-time }
+        runtime:
+          type: object
+          description: Same shape as `SourceInfo.runtime`; ignored when a field is over its length limit.
+          properties:
+            lang: { type: string, maxLength: 32 }
+            lang_version: { type: string, maxLength: 64 }
+            os: { type: string, maxLength: 32 }
+            arch: { type: string, maxLength: 32 }
+        signing_kids:
+          type: array
+          maxItems: 32
+          description: 'Kids of the policy signing keys the source trusts now (pinned at enrollment or through add_signing_keys, minus revoked), sorted. tt-core refuses to revoke an old key until enough recently seen sources list the new one (policy.md 3.1). When absent (older sources) tt-core keeps the last known value, initially the keys handed out at enrollment.'
+          items: { type: string, pattern: "^[A-Za-z0-9._-]{1,64}$" }
+    HeartbeatResponse:
+      type: object
+      required: [next_heartbeat_s, kill, min_issued_seq]
+      properties:
+        next_heartbeat_s: { type: integer }
+        kill: { type: boolean, description: 'When true the source stops capturing, drops its queues and persists the state until a later heartbeat says false.' }
+        min_issued_seq: { type: integer, minimum: 0, description: 'The source must reject any policy with a lower issued_seq (protects fresh sources from replayed old policies).' }
+        policy_current:
+          type: [object, "null"]
+          description: The policy the source should be running; fetch it when different.
+          properties:
+            policy_id: { type: string }
+            version: { type: integer }
+            issued_seq: { type: integer }
+            hash: { type: string }
+        sampling_override_bp: { type: [integer, "null"], minimum: 0, maximum: 10000, description: 'Can only lower the policy rate, never raise it.' }
+        renew_before: { type: [string, "null"], format: date-time }
+        add_signing_keys:
+          type: array
+          description: 'New policy signing keys, each endorsed by an already pinned, non-revoked key. Repeated at every heartbeat (also keys the source already pinned, which it skips) and ordered so that an endorser comes before the keys it endorses. A source applies revoke_signing_keys FIRST: a key endorsed by a kid revoked in the same response is refused.'
+          items:
+            type: object
+            required: [kid, alg, public_key, endorsed_by, endorsement]
+            properties:
+              kid: { type: string }
+              alg: { const: Ed25519 }
+              public_key: { type: string }
+              endorsed_by: { type: string }
+              endorsement: { type: string, description: 'Ed25519 signature by endorsed_by over "tt-fleet-key/v1" || 0x00 || kid || 0x00 || public_key bytes, base64url.' }
+        revoke_signing_keys:
+          type: array
+          description: kids the source must stop trusting immediately. Revocation only removes trust, so it needs no endorsement.
+          items: { type: string }

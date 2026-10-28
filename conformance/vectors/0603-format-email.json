@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0603-format-email",
+  "category": "formats",
+  "description": "email: local part 1..64, at least two domain labels of 1..63.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiJtYXJpby5yb3NzaUBleGFtcGxlLmNvbSIsInYwMSI6ImFAYi5jIiwidjAyIjoiYUBiIiwidjAzIjoieHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eEBzaG9wLmV4YW1wbGUiLCJ2MDQiOiJ4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eEBzaG9wLmV4YW1wbGUiLCJ2MDUiOiJhQGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZC5leGFtcGxlIiwidjA2IjoiYUBkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkZGRkLmV4YW1wbGUiLCJ2MDciOiJtYXJpbyByb3NzaUBleGFtcGxlLmNvbSIsInYwOCI6ImErdGFnJXhAc2hvcC0xLmV4YW1wbGUiLCJ2MDkiOiJhQGIuLmV4YW1wbGUiLCJ2MTAiOiJAc2hvcC5leGFtcGxlIn0=",
+      "text": "{\"v00\":\"mario.rossi@example.com\",\"v01\":\"a@b.c\",\"v02\":\"a@b\",\"v03\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@shop.example\",\"v04\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx@shop.example\",\"v05\":\"a@ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.example\",\"v06\":\"a@dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd.example\",\"v07\":\"mario rossi@example.com\",\"v08\":\"a+tag%x@shop-1.example\",\"v09\":\"a@b..example\",\"v10\":\"@shop.example\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:email\",\"v01\":\"drop:str:email\",\"v02\":\"drop:str:l8\",\"v03\":\"drop:str:email\",\"v04\":\"drop:str:l128\",\"v05\":\"drop:str:email\",\"v06\":\"drop:str:l128\",\"v07\":\"drop:str:l32\",\"v08\":\"drop:str:email\",\"v09\":\"drop:str:l32\",\"v10\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

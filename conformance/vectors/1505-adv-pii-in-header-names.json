@@ -1,0 +1,29 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1505-adv-pii-in-header-names",
+  "category": "adversarial",
+  "description": "Header names with \"@\" or spaces collapse; token-like names are kept as names (allowed by section 13).",
+  "spec": ["sanitizer.md#8.0", "sanitizer.md#13"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["x-mario.rossi@example.com", "1"],
+      ["X-Giulia Neri", "2"],
+      ["x-ok", "3"],
+      ["x-3912345678", "4"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"x-ok\":[\"drop:str:digits\"],\"{*}\":[\"drop:str:l8\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1341-sampling-inherited-off",
+  "category": "subject-sampling",
+  "description": "Outbound inside an unsampled inbound exchange: not captured.",
+  "spec": ["sanitizer.md#12"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "outbound",
+    "url_base": "https://api.carrier.example",
+    "method": "GET",
+    "raw_path": "/v1/rates",
+    "inherited": false,
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "not_sampled",
+    "sampled_by": "inherited"
+  }
+}

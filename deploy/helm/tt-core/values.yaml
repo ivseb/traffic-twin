@@ -1,0 +1,248 @@
+# tt-core: intake, analysis, review UI and publication gate (zone B, production network).
+#
+# tt-core keeps its state in one SQLite file: it always runs as a single replica
+# (a StatefulSet with one PVC). It makes no outbound calls except to tt keyguard
+# and to the alert webhooks you allow below; the NetworkPolicy enforces it.
+
+# -- Container image. `tag` defaults to the chart appVersion; `digest` (sha256:...) wins over the tag.
+image:
+  repository: ghcr.io/ivseb/traffic-twin
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+# -- Secrets for a private registry.
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # -- Create a ServiceAccount. The pod never calls the Kubernetes API, so its token is not mounted.
+  create: true
+  name: ""
+  annotations: {}
+
+# -- tt-core configuration (internal/config, reference: deploy/examples/core.production.yaml), rendered into the
+# config.yaml ConfigMap. tt-core is strict: unknown keys make it refuse to start. Only what differs from the
+# defaults of tt-core is listed; add any other section here (contract, miner, world, gate, retention, ...).
+# The paths must match the mounts of this chart (/etc/tt/tls, /data).
+#
+# The chart fills in, and these win over what you write here:
+#   keyguard.*                  from the `keyguard` block below
+#   drift.webhook_allow         from `webhooks` below (the same list drives the NetworkPolicy)
+#   fleet.public_url/server_names  from the intake Service, when empty
+config:
+  admin:
+    # The admin API and UI. Listening outside loopback requires TLS (tls.existingSecret / certManager).
+    addr: ":7070"
+    tls:
+      cert_file: /etc/tt/tls/tls.crt
+      key_file: /etc/tt/tls/tls.key
+  intake:
+    # OTLP intake and Fleet endpoints for the sources (SDKs, tt-egress). Always mTLS. `managed`: the server
+    # certificate is issued by the Fleet CA (pinned by the enrollment tokens), no Secret needed.
+    addr: ":4318"
+    tls:
+      managed: true
+  storage:
+    path: /data/tt-core.db
+  fleet:
+    # Leave public_url empty to use https://<release>-intake.<ns>.svc.cluster.local:<intake port>.
+    public_url: ""
+    server_names: []
+    # The Fleet CA (fleet-ca.crt / fleet-ca.key, mode 0600): on the data volume, so it survives restarts.
+    # Without persistence it is lost at every restart and every source must enroll again.
+    ca_dir: /data/fleet-ca
+  drift:
+    webhook_allow_http: false
+    notify_non_breaking: true
+  auth:
+    local:
+      enabled: true
+    oidc:
+      enabled: false
+  log:
+    level: info
+    format: json
+
+tls:
+  # -- Existing Secret (type kubernetes.io/tls) with tls.crt and tls.key, used by both listeners.
+  # Its certificate must be valid for the two Service names (the sources pin the CA through the
+  # enrollment token). Empty means "<release>-tt-core-tls": created by cert-manager when
+  # certManager.enabled, otherwise by you before the pod can start.
+  existingSecret: ""
+  certManager:
+    # -- Ask cert-manager for the certificate instead (needs the cert-manager CRDs).
+    enabled: false
+    issuerRef:
+      name: ""
+      kind: Issuer
+      group: cert-manager.io
+    # -- Extra DNS names; the Service names (short, .ns, .ns.svc, .ns.svc.cluster.local) are always added.
+    dnsNames: []
+    duration: 2160h
+    renewBefore: 360h
+
+# -- OIDC client secret, read from the environment variable TT_CORE_AUTH_OIDC_CLIENT_SECRET.
+# Set config.auth.oidc.* too. Leave empty to not mount it.
+oidcClientSecret:
+  existingSecret: ""
+  key: client-secret
+
+persistence:
+  # -- Keep it on an encrypted volume (StorageClass with encryption): the store is personal data (THREAT_MODEL B3).
+  enabled: true
+  size: 10Gi
+  storageClassName: ""
+  accessModes: [ReadWriteOnce]
+  # -- Use a PVC you created instead of a volumeClaimTemplate (then deletion of the release never deletes it).
+  existingClaim: ""
+  annotations: {}
+
+service:
+  admin:
+    type: ClusterIP
+    annotations: {}
+  intake:
+    type: ClusterIP
+    annotations: {}
+
+# -- Deny-all egress except DNS, keyguard and the allowed webhooks (THREAT_MODEL M11, G9).
+networkPolicy:
+  enabled: true
+  ingress:
+    # -- Who may reach the intake (sources). Default: any pod of any namespace of the cluster.
+    # Narrow it with namespaceSelector/podSelector peers.
+    intake:
+      from:
+        - namespaceSelector: {}
+    # -- Who may reach the admin API and UI. Default: the pods of this namespace only; add your ingress controller.
+    admin:
+      from:
+        - podSelector: {}
+  egress:
+    dns:
+      # -- Allow DNS lookups to kube-dns (needed to resolve keyguard and webhook hosts).
+      enabled: true
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    keyguard:
+      # -- Where keyguard runs. These selectors are the only in-cluster destination allowed.
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: tt-keyguard
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: tt-keyguard
+    # -- Raw extra egress rules (NetworkPolicyEgressRule), for example an OIDC identity provider.
+    extra: []
+
+# -- Alert webhooks tt-core may call (config drift.webhook_allow AND the NetworkPolicy egress, from this one list).
+# host: name as used in the webhook URL; port: default 443 (written into webhook_allow only when different);
+# cidr: the addresses behind it, which is what a NetworkPolicy can match (no cidr: allowed by tt-core, blocked by the network).
+# Empty: no webhook can be configured and nothing leaves the cluster.
+webhooks: []
+#  - {host: alerts.tt.internal, port: 443, cidr: 10.20.30.40/32}
+
+# -- tt-core as a client of tt keyguard (config keyguard.*). tt-core holds only its own TLS identity, never a key of keyguard.
+keyguard:
+  url: https://tt-keyguard.tt-keyguard.svc.cluster.local:7443
+  # -- Secret (kubernetes.io/tls) with tt-core's client certificate (tls.crt, tls.key), mounted at /etc/tt/keyguard-client.
+  # keyguard pins its SPKI (TT_KEYGUARD_CLIENT_PINS). Required: keyguard always authenticates tt-core.
+  clientTLSSecret: tt-core-keyguard-client
+  # -- Also use ca.crt of that Secret to verify keyguard's certificate chain and host name (config keyguard.ca_file).
+  # At least one of caFromSecret and serverPin is required.
+  caFromSecret: true
+  # -- Optional sha256:<hex SPKI> pin of keyguard's server certificate (`tt keyguard pin keyguard.crt`).
+  serverPin: ""
+  timeout: 2m
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    memory: 1Gi
+
+# Probes use the admin listener (HTTPS, the kubelet does not verify the certificate).
+probes:
+  liveness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+topologySpreadConstraints: []
+priorityClassName: ""
+terminationGracePeriodSeconds: 30
+
+# -- Mocks started from the console ("Prepara e avvia il mock" on the Mock page), in a namespace of this cluster.
+# tt-core then talks to the Kubernetes API with its service account (token mounted) and a Role in that namespace
+# only (Secret, Service, Deployment, OpenShift Route). Off: the Mock page explains how to run the mock container or
+# the tt-mock chart yourself, with a mock token.
+mockManager:
+  enabled: false
+  # -- Namespace of the mocks (default: the release namespace). The Role and RoleBinding are created there.
+  namespace: ""
+  # -- URL of tt-core seen from the mock pods. Default: https://<release>.<namespace>.svc.cluster.local:<admin port>
+  # (the admin certificate must be valid for that name).
+  consoleURL: ""
+  # -- Give the mocks ca.crt of the TLS Secret (cert-manager writes it) to verify tt-core: config mock.console_ca_file.
+  consoleCAFromTLSSecret: false
+  # -- auto: an OpenShift Route when the cluster has routes; on; off (cluster-internal URL only).
+  route: auto
+  # -- Mock image (default: the image of this chart).
+  image: ""
+  # -- ServiceAccount of the mock pods (they mount no token). Empty: the namespace default.
+  serviceAccount: ""
+  resources:
+    cpuRequest: 50m
+    memoryRequest: 64Mi
+    cpuLimit: ""
+    memoryLimit: 512Mi
+  # -- The Kubernetes API server for the NetworkPolicy egress rule: the address of the endpoints of the `kubernetes`
+  # Service (kubectl get endpoints kubernetes -n default). Empty: add the rule yourself in networkPolicy.egress.extra.
+  apiServer:
+    cidr: ""
+    port: 6443
+  # -- NetworkPolicy of the managed mock pods: egress only to DNS and to tt-core's admin port (THREAT_MODEL M11).
+  networkPolicy:
+    enabled: true
+    ingress:
+      # -- Who may call the mocks on port 8480. Empty: anyone (the tests, the OpenShift router).
+      from: []
+    egress:
+      # -- Raw extra egress rules, for example the ingress controller when consoleURL is not the in-cluster Service.
+      extra: []
+
+# -- Extra environment variables / volumes (for example an encrypted-volume sidecar).
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []

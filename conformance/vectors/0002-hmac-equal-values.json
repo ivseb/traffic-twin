@@ -1,0 +1,110 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0002-hmac-equal-values",
+  "category": "hmac",
+  "description": "Reference token of sanitizer.md 7.3 (key k1 = 0x00..0x1f, epoch 2026-10, domain order, value ORD-2026-000184): the same value in a query parameter and in a response body field yields the same token.",
+  "spec": ["sanitizer.md#7.2", "sanitizer.md#7.3", "sanitizer.md#5.4", "sanitizer.md#8.3"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /v1/shipments",
+            "request": {
+              "query": {
+                "orderId": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              }
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.items[*].orderId",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                },
+                {
+                  "path": "$.items[*].shipmentId",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "shipment"
+                  }
+                },
+                {
+                  "path": "$.items[*].status",
+                  "action": {
+                    "action": "keep"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/v1/shipments",
+    "raw_query": "orderId=ORD-2026-000184",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJpdGVtcyI6W3sib3JkZXJJZCI6Ik9SRC0yMDI2LTAwMDE4NCIsInNoaXBtZW50SWQiOiJTSFAtNzcxMjAiLCJzdGF0dXMiOiJJTl9UUkFOU0lUIn1dfQ==",
+      "text": "{\"items\":[{\"orderId\":\"ORD-2026-000184\",\"shipmentId\":\"SHP-77120\",\"status\":\"IN_TRANSIT\"}]}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /v1/shipments\",\"req\":{\"path\":\"/v1/shipments\",\"query\":{\"orderId\":[\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\"]},\"size\":\"l8\"},\"resp\":{\"body\":{\"items\":[{\"orderId\":\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\",\"shipmentId\":\"tk1:k1:pKbZw5s3GttOENTQc6UMdw\",\"status\":\"keep:IN_TRANSIT\"}]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

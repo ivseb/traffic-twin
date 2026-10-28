@@ -1,0 +1,19 @@
+{
+  "apiVersion": "admission.k8s.io/v1",
+  "kind": "AdmissionReview",
+  "request": {
+    "uid": "11111111-0000-4000-8000-000000000017",
+    "kind": {"group": "", "version": "v1", "kind": "Pod"},
+    "namespace": "shop",
+    "operation": "CREATE",
+    "object": {
+      "metadata": {
+        "generateName": "orders-84c9d7f6b5-",
+        "namespace": "shop",
+        "annotations": {"traffic-twin.io/inject": "dotnet"},
+        "ownerReferences": [{"apiVersion": "apps/v1", "kind": "ReplicaSet", "name": "orders-84c9d7f6b5", "uid": "x"}]
+      },
+      "spec": {"containers": [{"name": "orders", "image": "registry.example/orders:7", "env": [{"name": "DOTNET_STARTUP_HOOKS", "value": "/otel-dotnet-auto/net/OpenTelemetry.AutoInstrumentation.StartupHook.dll"}, {"name": "ASPNETCORE_HOSTINGSTARTUPASSEMBLIES", "value": "Contoso.Diagnostics"}]}]}
+    }
+  }
+}

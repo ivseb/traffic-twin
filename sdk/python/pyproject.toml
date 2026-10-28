@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "traffic-twin"
+version = "0.1.0"
+description = "traffic-twin capture SDK for Python: sanitizes HTTP exchanges in process and exports them to tt-core over mTLS."
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+authors = [{ name = "traffic-twin maintainers" }]
+keywords = ["traffic-twin", "http", "capture", "sanitizer", "opentelemetry", "mtls"]
+requires-python = ">=3.9"
+# No runtime dependencies: the standard library only (policy.md 4).
+dependencies = []
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: System :: Monitoring",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/ivseb/traffic-twin"
+Documentation = "https://github.com/ivseb/traffic-twin/tree/main/sdk/python#readme"
+Repository = "https://github.com/ivseb/traffic-twin"
+Issues = "https://github.com/ivseb/traffic-twin/issues"
+Changelog = "https://github.com/ivseb/traffic-twin/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+traffic_twin = ["bootstrap/sitecustomize.py", "py.typed"]

@@ -1,0 +1,56 @@
+{{- if and .Values.mockManager.enabled .Values.networkPolicy.enabled .Values.mockManager.networkPolicy.enabled }}
+{{- $ns := default .Release.Namespace .Values.mockManager.namespace }}
+{{- $np := .Values.mockManager.networkPolicy }}
+# The mocks tt-core starts (mockManager) only fetch their pack from the console and report to it:
+# egress to DNS and to tt-core's admin port only (THREAT_MODEL M11). Ingress on 8480 stays open to the
+# tests (and the OpenShift router) unless mockManager.networkPolicy.ingress.from narrows it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tt-core.fullname" . }}-managed-mocks
+  namespace: {{ $ns }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: tt-mock
+      app.kubernetes.io/managed-by: tt-core
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8480
+      {{- with $np.ingress.from }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  egress:
+    {{- if .Values.networkPolicy.egress.dns.enabled }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml .Values.networkPolicy.egress.dns.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml .Values.networkPolicy.egress.dns.podSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    # The console: the tt-core pods of this release, admin port.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Release.Namespace }}
+          podSelector:
+            matchLabels:
+              {{- include "tt-core.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ include "tt-core.adminPort" . }}
+    {{- with $np.egress.extra }}
+    # Extra rules, for example the ingress controller or router when mockManager.consoleURL points there.
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+{{- end }}

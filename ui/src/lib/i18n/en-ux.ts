@@ -1,0 +1,30 @@
+import type { UxKey } from './it-ux';
+
+// English texts of the usability pass 3 (see it-ux.ts).
+export const enUx: Record<UxKey, string> = {
+  'wiz.source.groupPlaceholder': 'e.g. your-app-name',
+  'wiz.source.groupUse': 'Use “{name}”',
+  'wiz.source.groupExists': 'A group “{group}” already exists: if you go on you use its policy. If it belongs to another team, pick another name.',
+  'wiz.tokenMeta.title': 'You already generated a token',
+  'wiz.tokenMeta.active': 'Token for group “{group}” created at {at}, expires at {until}.',
+  'wiz.tokenMeta.expired': 'Token for group “{group}” created at {at}, expired at {until}.',
+  'wiz.tokenMeta.why': 'The secret of a token is shown only once: the server keeps just its fingerprint and cannot give it back, so it cannot be shown again here. If you did not copy it, or you are in another tab or browser, generate a new one: the previous token expires at its own time anyway.',
+  'wiz.tokenMeta.regenerate': 'Generate a new token',
+  'wiz.tokenMeta.dismiss': 'Dismiss',
+  'wiz.install.times': 'Token created at {at}, expires at {until}.',
+  'wiz.install.reload': 'If you reload the page in this tab the token stays here; in another tab or browser it cannot be seen again (the server does not keep it): generate a new one.',
+  'wiz.draft.accumulate': 'Changes pile up in draft v{v} until you send it.',
+  'wiz.draft.accumulateWhy': 'What you choose here (user, sampling, fields, simulated hosts) is added to that draft: one new version with everything is made and v{v} becomes superseded. Approve once, at the end.',
+  'wiz.draft.see': 'Open the draft',
+  'wiz.draft.once': 'Pick the user, the sampling and the fields on this page: they go together in a single draft, so the policy changes version only once.',
+  'wiz.draft.editing': 'You are editing draft v{v}: sending again makes a new version that replaces it and has everything. No approval is lost: v{v} has none yet.',
+  'wiz.draft.edit': 'Edit the draft',
+  'wiz.draft.update': 'Update the draft (replaces v{v})',
+  'wiz.draft.approved': 'The draft already has approvals: editing it would cancel them. Approve or reject it from Sources > Policy.',
+  'appr.who': 'Who can approve:',
+  'appr.whoNote': 'Ask one of them. It takes {n, plural, one {# approval} other {# approvals from different people}}; the proposer does not count.',
+  'appr.noneListed': 'No user has the Policy approver role: ask an administrator to give it to someone (or to approve it themselves, with a reason).',
+  'appr.askAdmin': 'ask an administrator: they can see who holds the Policy approver role and can approve themselves with a reason.',
+  'appr.link': 'Link to the draft:',
+  'appr.copyLink': 'Copy the link to the draft',
+};

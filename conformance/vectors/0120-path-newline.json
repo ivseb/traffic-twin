@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0120-path-newline",
+  "category": "path",
+  "description": "A decoded newline stops the auto_words match (whole-input regex, 0.1): /orders%0A is dropped.",
+  "spec": ["sanitizer.md#0.1", "sanitizer.md#4.2"],
+  "policy_ref": "policies/auto-words.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders%0A/orders",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/orders\",\"req\":{\"path\":\"/{drop:str:l8}/orders\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0912-bucket-time-invalid-dates",
+  "category": "actions",
+  "description": "Calendar-invalid values fall back to drop (their regex shape).",
+  "spec": ["sanitizer.md#5.5", "sanitizer.md#6.3"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "body": [
+          {
+            "path": "$[*]",
+            "action": {
+              "action": "bucket",
+              "kind": "time",
+              "unit": "day"
+            }
+          }
+        ]
+      }
+    },
+    "services": []
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "WyIyMDI2LTAyLTI5IiwiMjAyOC0wMi0yOSIsIjIwMjYtMTMtMDEiLCIyMDI2LTA0LTMxIiwiMjAyNi0xMC0xOVQyNDowMDowMFoiLCIyMDI2LTEwLTE5VDEwOjYwOjAwWiIsIjIwMjYtMTAtMTlUMTA6MDA6NjBaIiwiMjAyNi0wMC0xMCIsIjIwMjYtMTAtMDAiLCIxOTAwLTAyLTI5IiwiMjAwMC0wMi0yOSIsIjAwMDAtMDEtMDEiLCIwMDAxLTAxLTAxIiwiMDAwMS0wMS0wMVQwMDozMDowMCswMTowMCIsIjk5OTktMTItMzFUMjM6MzA6MDAtMDE6MDAiLCIyMDI2LTEwLTE5VDEwOjAwOjAwKzIzOjU5IiwiMjAyNi0xMC0xOVQxMDowMDowMCsyNDowMCIsIjIwMjYtMTAtMTlUMTA6MDA6MDAtMDA6NjAiXQ==",
+      "text": "[\"2026-02-29\",\"2028-02-29\",\"2026-13-01\",\"2026-04-31\",\"2026-10-19T24:00:00Z\",\"2026-10-19T10:60:00Z\",\"2026-10-19T10:00:60Z\",\"2026-00-10\",\"2026-10-00\",\"1900-02-29\",\"2000-02-29\",\"0000-01-01\",\"0001-01-01\",\"0001-01-01T00:30:00+01:00\",\"9999-12-31T23:30:00-01:00\",\"2026-10-19T10:00:00+23:59\",\"2026-10-19T10:00:00+24:00\",\"2026-10-19T10:00:00-00:60\"]"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":[\"drop:str:date\",\"time:2028-02-29\",\"drop:str:date\",\"drop:str:date\",\"drop:str:datetime\",\"drop:str:datetime\",\"drop:str:datetime\",\"drop:str:date\",\"drop:str:date\",\"drop:str:date\",\"time:2000-02-29\",\"drop:str:date\",\"time:0001-01-01\",\"drop:str:datetime\",\"drop:str:datetime\",\"time:2026-10-18\",\"drop:str:datetime\",\"drop:str:datetime\"],\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

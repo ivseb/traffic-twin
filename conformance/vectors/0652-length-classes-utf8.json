@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0652-length-classes-utf8",
+  "category": "length-classes",
+  "description": "Length classes count UTF-8 bytes, not characters.",
+  "spec": ["sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "WyJcdTAwZThcdTAwZThcdTAwZThcdTAwZTgiLCJcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZTgiLCJcdWQ4M2RcdWRlMDBcdWQ4M2RcdWRlMDAiLCJcdWQ4M2RcdWRlMDBcdWQ4M2RcdWRlMDBcdWQ4M2RcdWRlMDAiLCJcdTIwYWNcdTIwYWNcdTIwYWMiLCJcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWNcdTIwYWMiLCJcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZTgiLCJcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZThcdTAwZTgiXQ==",
+      "text": "[\"\\u00e8\\u00e8\\u00e8\\u00e8\",\"\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\",\"\\ud83d\\ude00\\ud83d\\ude00\",\"\\ud83d\\ude00\\ud83d\\ude00\\ud83d\\ude00\",\"\\u20ac\\u20ac\\u20ac\",\"\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\\u20ac\",\"\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\",\"\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\\u00e8\"]"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":[\"drop:str:l8\",\"drop:str:l32\",\"drop:str:l8\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l128\",\"drop:str:l32\",\"drop:str:l128\"],\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

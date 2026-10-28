@@ -1,0 +1,80 @@
+# traffic-twin demo: an invented e-commerce (shop) that ships through an
+# invented external carrier, driven by fake customers (loadgen).
+#
+#   loadgen ──HTTP──▶ shop ──HTTP──▶ carrier        (ground truth: carrier/truth.json)
+#
+# Everything is configurable through environment variables (see README.md).
+
+name: tt-demo
+
+x-clock: &clock
+  # Shared simulated clock: sim = SIM_EPOCH + (now - CLOCK_ANCHOR) * TIME_SCALE.
+  TIME_SCALE: ${TIME_SCALE:-60}                  # simulated seconds per real second
+  SIM_EPOCH: ${SIM_EPOCH:-2026-10-19T06:00:00Z}
+  CLOCK_ANCHOR: ${CLOCK_ANCHOR:-}                # unix seconds; empty = today 00:00 UTC
+  SEED: ${SEED:-42}
+
+services:
+  carrier:
+    build: .
+    image: tt-demo-go:local
+    command: ["carrier"]
+    environment:
+      <<: *clock
+      PORT: "8080"
+    ports:
+      - "${CARRIER_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD", "carrier", "-probe", "http://localhost:8080/__health"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  shop:
+    build: ./shop
+    image: tt-demo-shop:local
+    environment:
+      <<: *clock
+      PORT: "3000"
+      # ── tt-egress slot ───────────────────────────────────────────────────
+      # The shop reaches the carrier only through this base URL. To capture
+      # the outbound traffic, put tt-egress in between (service below) and run
+      #   CARRIER_BASE_URL=http://tt-egress:9090 docker compose up
+      CARRIER_BASE_URL: ${CARRIER_BASE_URL:-http://carrier:8080}
+    ports:
+      - "${SHOP_PORT:-3000}:3000"
+    depends_on:
+      carrier:
+        condition: service_healthy
+
+  # Placeholder: tt-egress does not exist yet. Image name and flags are
+  # illustrative; only the wiring (shop -> tt-egress -> carrier) is the point.
+  # tt-egress:
+  #   image: traffic-twin:local
+  #   command: ["tt", "egress", "--listen", ":9090", "--upstream", "http://carrier:8080"]
+  #   depends_on: [carrier]
+
+  loadgen:
+    image: tt-demo-go:local
+    command: ["loadgen"]
+    environment:
+      <<: *clock
+      SHOP_BASE_URL: http://shop:3000
+      CUSTOMERS: ${CUSTOMERS:-2000}
+      MAX_RPS: ${MAX_RPS:-300}
+      DURATION: ${DURATION:-0s}                  # 0s = run until stopped
+    depends_on:
+      shop:
+        condition: service_healthy
+    restart: "no"
+
+  # Checks /__truth of carrier and shop against the ground truth.
+  #   docker compose run --rm truthcheck
+  truthcheck:
+    image: tt-demo-go:local
+    command: ["truthcheck"]
+    profiles: ["tools"]
+    environment:
+      CARRIER_TRUTH_URL: http://carrier:8080
+      SHOP_TRUTH_URL: http://shop:3000
+    depends_on: [carrier, shop]

@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2412-normal-body-unchanged",
+  "category": "large-body",
+  "description": "A body within max_body_bytes keeps max_array, not the large caps.",
+  "spec": ["sanitizer.md#22.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 3,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 200000,
+      "large_array": 6,
+      "large_nested_array": 2
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJpdGVtcyI6W3siaWQiOiJQLTAwMDAwMCIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDAxIiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDIiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwMyIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDA0IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDUiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwNiIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDA3IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDgiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwOSIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn1dLCJ0b3RhbCI6MTB9",
+      "text": "{\"items\":[{\"id\":\"P-000000\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000001\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000002\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000003\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000004\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000005\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000006\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000007\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000008\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000009\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"}],\"total\":10}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/{drop:str:digits}\",\"req\":{\"path\":\"/{drop:str:l8}/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"items\":[{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},\"trunc:n:l32\"],\"total\":\"drop:int\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"lmax\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

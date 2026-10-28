@@ -1,0 +1,6 @@
+*
+!test/redteam/frameworks/php
+!sdk/php
+sdk/php/vendor
+sdk/php/tests
+sdk/php/bench

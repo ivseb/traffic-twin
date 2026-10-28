@@ -1,0 +1,18 @@
+tt-keyguard {{ .Chart.AppVersion }} installed as {{ include "tt-keyguard.fullname" . }} in {{ .Release.Namespace }}.
+
+Reachable only from tt-core, at https://{{ include "tt-keyguard.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+(set it as keyguard.url in the tt-core chart).
+{{- if not .Values.clientPins }}
+
+WARNING: clientPins is empty: keyguard refuses to start without the pin of tt-core's client certificate
+(`tt keyguard pin tt-core-client.crt`).
+{{- end }}
+
+Secrets the pod waits for (create them with kubectl, never through Helm values):
+  {{ include "tt-keyguard.tlsSecret" . }}   tls.crt, tls.key
+  {{ include "tt-keyguard.keysSecret" . }}  {{ .Values.keys.hmacKeysKey }}, {{ .Values.keys.policySigningKey }}, {{ .Values.keys.packSigningKey }}
+{{- if .Values.keys.installer.enabled }}
+
+The key installer init container runs as root with CAP_CHOWN only: label the namespace
+pod-security.kubernetes.io/enforce=baseline (not restricted).
+{{- end }}

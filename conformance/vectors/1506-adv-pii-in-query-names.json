@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1506-adv-pii-in-query-names",
+  "category": "adversarial",
+  "description": "PII as query names collapses into {*}.",
+  "spec": ["sanitizer.md#8.3", "sanitizer.md#13"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/s",
+    "raw_query": "mario.rossi%40example.com&%2B390212345678=1&4111111111111111=2",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"{*}\":[\"drop:str:email\",\"drop:str:digits\",\"drop:str:digits\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

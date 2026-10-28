@@ -1,0 +1,36 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0521-body-response-and-request",
+  "category": "body",
+  "description": "Request and response bodies are sanitized independently.",
+  "spec": ["sanitizer.md#9"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJxIjoieCJ9",
+      "text": "{\"q\":\"x\"}"
+    },
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "WzEsInR3byJd",
+      "text": "[1,\"two\"]"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /\",\"req\":{\"body\":{\"q\":\"drop:str:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/\",\"size\":\"l32\"},\"resp\":{\"body\":[\"drop:int\",\"drop:str:l8\"],\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l32\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

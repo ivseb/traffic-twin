@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <RootNamespace>TrafficTwin.Sdk.Tests</RootNamespace>
+    <NoWarn>$(NoWarn);xUnit1051;CS8002;CS0649;CS0414</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.10" />
+    <!-- test-only: WebApplicationFactory for the zero-code (hosting startup) tests -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
+    <!-- test-only: coexistence with the OpenTelemetry .NET SDK -->
+    <PackageReference Include="OpenTelemetry" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.InMemory" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.9.0" />
+    <ProjectReference Include="../../src/TrafficTwin.Sdk/TrafficTwin.Sdk.csproj" />
+    <ProjectReference Include="../../src/TrafficTwin.Sdk.AspNetCore/TrafficTwin.Sdk.AspNetCore.csproj" />
+    <!-- An ordinary application that knows nothing about traffic-twin (WebApplicationFactory<Program>, and a real Kestrel process). -->
+    <ProjectReference Include="../TrafficTwin.TestApp/TrafficTwin.TestApp.csproj" />
+    <!-- Built so it can be published next to the tests (the DOTNET_STARTUP_HOOKS folder). -->
+    <ProjectReference Include="../../src/TrafficTwin.StartupHook/TrafficTwin.StartupHook.csproj" ReferenceOutputAssembly="false" />
+    <None Include="TestData/**" CopyToOutputDirectory="PreserveNewest" LinkBase="TestData" />
+  </ItemGroup>
+
+  <!-- Self-contained folders for the process tests: testapp/ (the application alone) and hook/ (hook + SDK + ASP.NET Core integration). -->
+  <Target Name="PublishZeroCodeFixtures" AfterTargets="Build">
+    <PropertyGroup>
+      <FixturesDir>$([System.IO.Path]::GetFullPath('$(OutDir)'))</FixturesDir>
+    </PropertyGroup>
+    <MSBuild Projects="../TrafficTwin.TestApp/TrafficTwin.TestApp.csproj" Targets="Publish" Properties="NoBuild=true;PublishDir=$(FixturesDir)testapp/" />
+    <MSBuild Projects="../../src/TrafficTwin.StartupHook/TrafficTwin.StartupHook.csproj" Targets="Publish" Properties="NoBuild=true;PublishDir=$(FixturesDir)hook/" />
+  </Target>
+</Project>

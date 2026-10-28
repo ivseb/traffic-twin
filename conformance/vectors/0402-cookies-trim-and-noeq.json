@@ -1,0 +1,26 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0402-cookies-trim-and-noeq",
+  "category": "cookies",
+  "description": "Parts are trimmed of spaces and tabs; parts without \"=\" are ignored.",
+  "spec": ["sanitizer.md#8.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Cookie", " flag ;\u0009a=1\u0009;;  b=two ; =anon"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"cookies\":{\"a\":[\"drop:str:digits\"],\"b\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:l8\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

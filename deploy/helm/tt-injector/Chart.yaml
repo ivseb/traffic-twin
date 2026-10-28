@@ -1,0 +1,11 @@
+apiVersion: v2
+name: tt-injector
+description: "traffic-twin tt injector, a mutating admission webhook that adds the SDK to pods annotated traffic-twin.io/inject. failurePolicy Ignore: it never blocks an application deployment."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+home: https://github.com/ivseb/traffic-twin
+sources:
+  - https://github.com/ivseb/traffic-twin
+keywords: [traffic-twin, webhook, injection]

@@ -1,0 +1,28 @@
+{
+  "apiVersion": "admission.k8s.io/v1",
+  "kind": "AdmissionReview",
+  "request": {
+    "uid": "11111111-0000-4000-8000-000000000003",
+    "kind": {"group": "", "version": "v1", "kind": "Pod"},
+    "namespace": "billing",
+    "operation": "CREATE",
+    "object": {
+      "metadata": {
+        "name": "billing-0",
+        "namespace": "billing",
+        "labels": {"app": "Billing_API"},
+        "annotations": {
+          "traffic-twin.io/inject": "python",
+          "traffic-twin.io/container-names": "web, ghost",
+          "traffic-twin.io/enroll-secret": "billing-tt-enroll"
+        }
+      },
+      "spec": {
+        "containers": [
+          {"name": "web", "image": "registry.example/billing:3.1", "env": [{"name": "PYTHONPATH", "value": "/app/lib"}]},
+          {"name": "worker", "image": "registry.example/billing:3.1"}
+        ]
+      }
+    }
+  }
+}

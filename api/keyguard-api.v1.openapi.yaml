@@ -1,0 +1,490 @@
+openapi: 3.1.0
+info:
+  title: traffic-twin keyguard API
+  version: 1.5.0
+  description: |
+    Internal API of `tt keyguard` (docs/spec/keyguard.md). Only tt-core may call it: over a Unix socket, or over
+    mTLS with tt-core's pinned client certificate. keyguard holds the HMAC keys, the policy signing key and the pack
+    signing key; no endpoint ever returns a key, a token or a candidate string.
+
+    Authentication is the transport's job: there is no token or header to present. Request bodies are
+    `application/json` and strict (unknown fields rejected) unless an operation says otherwise.
+
+    **Errors.** `{"code", "message"}` with a stable code and a fixed message; some errors add fields named in the
+    operation (for example `reverse_hmac` on a refused pack). `429` answers carry `Retry-After: 1`. An unknown path is
+    `404 not_found`. Every refusal of a signing or match operation is also an entry of keyguard's audit log and,
+    where docs/spec/keyguard.md §5 says so, an alert.
+
+    **Approval modes (v1.3).** Responses of the signing operations report how the approvals were satisfied:
+    `standard` (the usual quorum), `single` (an opening change accepted with one approval because the installation
+    sets `TT_KEYGUARD_OPENING_APPROVALS=1`) or `admin` (a single admin approval with a reason). The mode is not part of
+    the signed bytes.
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+servers:
+  - url: https://tt-keyguard.internal:9443
+security:
+  - mtls: []
+tags:
+  - name: tokens
+    description: Feed of real tokens from the intake.
+  - name: match
+    description: Reverse-HMAC check.
+  - name: policy
+    description: Policy signing and renewal.
+  - name: pack
+    description: Twin pack verification and signing.
+  - name: info
+    description: Public keys, status, health and audit.
+paths:
+  /keyguard/v1/tokens:
+    post:
+      tags: [tokens]
+      operationId: addTokens
+      summary: Feed real tokens
+      description: Append-only feed from the intake. keyguard inserts the tokens into the Bloom filter of their epoch and `kid`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [epoch, tokens]
+              properties:
+                epoch: { type: string, pattern: "^[A-Za-z0-9._-]{1,32}$" }
+                tokens:
+                  type: array
+                  maxItems: 100000
+                  items: { type: string, pattern: "^tk1:[a-z0-9]{1,8}:[A-Za-z0-9_-]{22}$" }
+      responses:
+        "204": { description: 'Added.' }
+        "400":
+          description: 'invalid_request (malformed epoch or token, missing field) or batch_too_large (more than 100 000 tokens).'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/match:
+    post:
+      tags: [match]
+      operationId: match
+      summary: Reverse-HMAC check
+      description: |
+        For each candidate, computes the tokens for every kid, epoch and domain of the given policies (plus the
+        `subject` domain) and tests the real-token filters. Returns one boolean per candidate. The policies are
+        resolved from the bodies keyguard itself signed, never from a description sent by tt-core. Rate-limited
+        (default one call per second, 10 000 candidates per call, 5 000 000 per day); every positive is audited and
+        raises the alert `match.positive`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [policies, candidates]
+              properties:
+                policies:
+                  type: array
+                  minItems: 1
+                  maxItems: 64
+                  items:
+                    type: object
+                    required: [id, version]
+                    properties:
+                      id: { type: string }
+                      version: { type: integer }
+                candidates:
+                  type: array
+                  maxItems: 10000
+                  items:
+                    oneOf:
+                      - { type: string, maxLength: 4096 }
+                      - { type: number }
+      responses:
+        "200":
+          description: One boolean per candidate, same order.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [matches, positives]
+                properties:
+                  matches: { type: array, items: { type: boolean } }
+                  positives: { type: integer }
+        "400":
+          description: 'invalid_request (missing field, 1 to 64 policies required, a candidate that is neither a string of at most 4096 characters nor a number) or batch_too_large.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: 'unknown_policy (a version was never signed by this keyguard) or kid_not_held (fail closed: the check cannot be done without the key).'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429":
+          description: 'rate_limited or budget_exceeded (daily budget).'
+          headers:
+            Retry-After: { schema: { type: integer } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/policy/sign:
+    post:
+      tags: [policy]
+      operationId: signPolicy
+      summary: Sign a policy body
+      description: |
+        keyguard validates the body (schema, every rule of docs/spec/policy.md §1.4, canonical bytes, times, HMAC
+        kids it holds and has not revoked), computes **by itself** whether the change opens data, checks the approvals
+        and signs `"tt.policy.body/v1" || 0x00 || body`.
+
+        Classification (stricter than the v1.1 text): the new body is compared with the last body keyguard signed for
+        the same `policy_id` **and** with the current policy (newest signed, not expired) of every group in
+        `targets.groups`. Any opening comparison, a first policy for a `policy_id`, or a group without a current policy
+        makes the change opening.
+
+        Approvals: closing changes need one, opening changes `opening_approvals` (1 or 2, default 2); approvers need
+        the `policy-approver` role and must be distinct persons (OIDC `sub` when verified); with two required, at least
+        one must not be the proposer. A single approval by a user with the `admin` role and a non-empty `reason` is
+        always accepted, unless `TT_KEYGUARD_ADMIN_OVERRIDE=false`; the answer then has `approval_mode: admin` and the
+        alert `policy.admin_approval` is raised. `version` must exceed the last signed version of the policy and
+        `issued_seq` every `issued_seq` signed before.
+
+        **Observe-safe changes (1.5.0, docs/spec/policy.md §7).** keyguard also computes, on its own and from the bodies it
+        signed, whether the change opens values (`policy.ClassifyValues`): against the last body of the same `policy_id`
+        and against the current policy of every target group. When it does not (only drop, hmac, the automatic identity
+        sources, timed discovery windows; never keep or bucket) and `approvals` is empty, keyguard signs without
+        approvals: `approval_mode: observe`, `opens_values: false`. With `TT_KEYGUARD_OBSERVE_AUTO=false` an empty
+        `approvals` list is refused as before (`insufficient_approvals`). A change that opens values without approvals is
+        refused (`insufficient_approvals`, audit detail `value_reason`).
+
+        **With an OIDC issuer configured (1.4, red team round 3)** every approval needs an `id_token` that keyguard
+        verifies on its own: signature (JWKS), `iss`, `aud` equal to the dedicated approval audience
+        (`TT_KEYGUARD_OIDC_AUDIENCE`, never tt-core's login client), `exp`, `iat` and `auth_time` at most 10 minutes
+        old, and the **binding** `nonce = base64url(SHA-256("tt.approve/v1" 0x00 "policy-approve" 0x00 policy_id 0x00
+        version 0x00 body_sha256))`, where `body_sha256` is the hex SHA-256 of the canonical body without `issued_seq`,
+        `created_at` and `not_after` (`approval_unverifiable`). The approver's roles are read from the token's roles
+        claim (`TT_KEYGUARD_OIDC_ROLES_CLAIM`, mapped by `TT_KEYGUARD_OIDC_ROLE_MAPPING`): a declared `admin`,
+        `policy-approver` or `publisher` missing from the token is `403 role_unverified`. Tokens are single use: keyguard
+        stores, for **every** token presented in a successful call (admin mode included), a fingerprint over
+        iss/sub/jti (or iat and nonce) and one over the decoded signature, and refuses any token whose segments are not
+        canonical base64url.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [body_b64, proposer]
+              properties:
+                body_b64: { type: string, pattern: "^[A-Za-z0-9_-]+$", description: 'The exact compiled body bytes, base64url without padding.' }
+                proposer: { type: string, pattern: "^[A-Za-z0-9_.:/@+=,-]{1,128}$", description: 'User id of the author of the change.' }
+                approvals:
+                  type: array
+                  maxItems: 8
+                  description: 'Empty or absent: only an observe-safe change is signed (1.5.0).'
+                  items: { $ref: "#/components/schemas/Approval" }
+      responses:
+        "200":
+          description: Signature over "tt.policy.body/v1" || 0x00 || body.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [alg, kid, sig, classification, approval_mode]
+                properties:
+                  alg: { const: Ed25519 }
+                  kid: { type: string }
+                  sig: { type: string, pattern: "^[A-Za-z0-9_-]{86}$" }
+                  classification: { enum: [closing, opening], description: 'keyguard''s own verdict; tt-core uses it to correct its advisory classification.' }
+                  approval_mode: { $ref: "#/components/schemas/ApprovalMode" }
+                  opens_values: { type: boolean, description: 'keyguard''s observe-safe verdict (1.5.0): false when the change lets no value out beyond the bodies signed.' }
+        "400":
+          description: 'invalid_request: body_b64 is not base64url without padding, or malformed JSON.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: |
+            Refused. Codes: `insufficient_approvals`, `duplicate_approver`, `missing_role`, `invalid_approval`,
+            `approval_unverifiable` (no or invalid OIDC ID token, not bound to this change, or a token already used),
+            `role_unverified` (a declared admin, policy-approver or publisher role is not in the token), `admin_override_disabled`,
+            `admin_reason_required`, `issued_seq_not_increasing`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: |
+            Body or request invalid. Codes: `invalid_body` (schema or a rule of policy.md §1.4), `not_canonical`,
+            `invalid_times` (created_at in the future, not_after past or beyond the maximum validity),
+            `kid_revoked`, `kid_not_held`, `version_not_increasing`, `invalid_request` (malformed proposer).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/policy/renew:
+    post:
+      tags: [policy]
+      operationId: renewPolicy
+      summary: Re-sign with a new expiry
+      description: |
+        Accepts a body that differs from the last signed body of the same policy_id only in version, issued_seq,
+        created_at and not_after. No approvals. The last signed body must not have expired and the policy must still be
+        the current one of every group it targets: a renewal cannot bring back a superseded or lapsed policy.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [body_b64]
+              properties:
+                body_b64: { type: string, pattern: "^[A-Za-z0-9_-]+$" }
+      responses:
+        "200":
+          description: Signature.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [alg, kid, sig]
+                properties:
+                  alg: { const: Ed25519 }
+                  kid: { type: string }
+                  sig: { type: string }
+        "400":
+          description: 'invalid_request.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: 'no_signed_policy, fields_differ (fields other than the four differ), expired, superseded, issued_seq_not_increasing.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: 'Body invalid (invalid_body, not_canonical, invalid_times, kid_revoked, kid_not_held) or version_not_increasing.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/pack/sign:
+    post:
+      tags: [pack]
+      operationId: signPack
+      summary: Verify and sign a pack
+      description: |
+        Verifies file hashes against the manifest, the gate report (verdict `pass`, every required check present and
+        passing), `not_after` against `created_at`, re-runs reverse-HMAC on every string, number and object key of every
+        file using the policies listed in `manifest.source.policies`, and signs `"tt.pack/v1" || 0x00 || manifest bytes`.
+        A reverse-HMAC positive is never overridable.
+
+        Called twice for a pack: at build time without `X-TT-Approval` (`approval_mode: standard`), and at publication
+        with the requester's approval in `X-TT-Approval`. Ed25519 is deterministic, so both calls return the same
+        signature. A requester with the `publisher` role needs nothing else; one with only `admin` needs a non-empty
+        `reason` and is `approval_mode: admin` (alert `pack.admin_approval`); anyone else is refused (`missing_role`).
+        Pack signing is rate-limited (default one call per second). With OIDC the requester's `id_token` is verified as
+        for policies, with `nonce = base64url(SHA-256("tt.approve/v1" 0x00 "pack-publish" 0x00 pack_id 0x00
+        manifest_sha256))` and `publisher` (or `admin`) required in the roles claim.
+      parameters:
+        - name: X-TT-Approval
+          in: header
+          required: false
+          schema: { type: string, pattern: "^[A-Za-z0-9_-]+$", maxLength: 1400000 }
+          description: 'Optional approval of the person who asked to publish: base64url, without padding, of the JSON of an Approval object (user, roles, at, reason, id_token).'
+      requestBody:
+        required: true
+        content:
+          application/gzip:
+            schema: { type: string, format: binary, description: '.ttpack archive without manifest.sig.json (at most 256 MiB).' }
+      responses:
+        "200":
+          description: manifest.sig.json and the reverse-HMAC result.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [signature, reverse_hmac, approval_mode]
+                properties:
+                  signature: { $ref: "../schemas/pack-manifest.v1.schema.json#/$defs/signature" }
+                  reverse_hmac:
+                    type: object
+                    required: [status, strings_checked]
+                    properties:
+                      status: { enum: [pass, fail] }
+                      strings_checked: { type: integer }
+                      findings: { type: array, items: { type: object, properties: { file: { type: string }, pointer: { type: string }, reason: { type: string } } } }
+                  approval_mode: { enum: [standard, admin] }
+        "400":
+          description: 'invalid_request: Content-Type is not application/gzip, or X-TT-Approval is not a base64url JSON approval.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "403":
+          description: |
+            Refused. Codes: `invalid_pack` (not a gzip tar, entry not allowed, duplicate, too large, manifest invalid),
+            `hash_mismatch`, `gate_report` (not valid, not `pass`, or a required check missing), `reverse_hmac`
+            (the body then also carries `reverse_hmac` with the findings: file and pointer, never the value),
+            `unknown_policy`, `kid_not_held`, and for the requester `missing_role`, `invalid_approval`,
+            `approval_unverifiable`, `role_unverified`, `admin_override_disabled`, `admin_reason_required`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "413":
+          description: 'too_large: the archive exceeds the limit.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429":
+          description: 'rate_limited or budget_exceeded.'
+          headers:
+            Retry-After: { schema: { type: integer } }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/public-keys:
+    get:
+      tags: [info]
+      operationId: getPublicKeys
+      summary: Public signing keys
+      description: The active key of each kind and, during a rotation, the retired keys still announced for verification. Keys revoked with `TT_KEYGUARD_REVOKED_KIDS` are not listed.
+      responses:
+        "200":
+          description: Policy and pack signing public keys.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [policy, pack]
+                properties:
+                  policy: { type: array, items: { $ref: "#/components/schemas/PublicKey" } }
+                  pack: { type: array, items: { $ref: "#/components/schemas/PublicKey" } }
+  /keyguard/v1/status:
+    get:
+      tags: [info]
+      operationId: getStatus
+      summary: Status
+      description: Key ids (never keys), filter sizes, budget, approval settings and OIDC verification state. tt-core reads the approval settings from here and shows them; it cannot change them.
+      responses:
+        "200":
+          description: Status.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [hmac_kids, epochs, approvals_unverified, match_budget_left, opening_approvals, admin_override]
+                properties:
+                  hmac_kids: { type: array, items: { type: string } }
+                  epochs: { type: array, items: { type: string } }
+                  approvals_unverified: { type: boolean, description: 'True when no OIDC issuer is configured: keyguard trusts the identities and roles declared by tt-core (reduced guarantee, single-host or development installations).' }
+                  match_budget_left: { type: integer }
+                  policy_kid: { type: string, description: 'Active policy signing key.' }
+                  pack_kid: { type: string, description: 'Active pack signing key.' }
+                  revoked_kids: { type: array, items: { type: string } }
+                  filters:
+                    type: array
+                    description: One entry per (epoch, kid) real-token filter; counts only.
+                    items:
+                      type: object
+                      properties:
+                        epoch: { type: string }
+                        kid: { type: string }
+                        tokens: { type: integer }
+                        segments: { type: integer }
+                  last_issued_seq: { type: integer, description: 'Highest issued_seq signed so far.' }
+                  opening_approvals: { type: integer, enum: [1, 2], description: 'Approvals needed by a change that opens data (TT_KEYGUARD_OPENING_APPROVALS).' }
+                  admin_override: { type: boolean, description: 'A single admin approval with a reason is accepted (TT_KEYGUARD_ADMIN_OVERRIDE).' }
+                  observe_auto: { type: boolean, description: 'Observe-safe changes are signed without approvals (TT_KEYGUARD_OBSERVE_AUTO, default true; 1.5.0).' }
+                  transport: { type: string, description: 'How keyguard listens (unix socket or mTLS).' }
+                  oidc:
+                    type: object
+                    description: 'Present when approvals are verified with OIDC: what tt-core''s step-up must obtain tokens for. No secret.'
+                    required: [issuer, audience, roles_claim]
+                    properties:
+                      issuer: { type: string }
+                      audience: { type: string, description: 'Dedicated approval audience (the client id of tt-core''s approval client).' }
+                      roles_claim: { type: string }
+  /keyguard/v1/audit:
+    get:
+      tags: [info]
+      operationId: getAudit
+      summary: Audit log
+      description: |
+        Entries of keyguard's own hash-chained audit log, kept in keyguard's own SQLite database (a separate file from
+        tt-core's, append-only, each entry carries the hash of the previous one). At most 1000 entries per call,
+        oldest first after `since_seq`. Counts and identifiers only, never candidate strings, tokens or values.
+      parameters:
+        - { name: since_seq, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        "200":
+          description: Hash-chained entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [seq, at, op, outcome, prev_hash, hash]
+                  properties:
+                    seq: { type: integer }
+                    at: { type: string, format: date-time }
+                    op: { type: string, examples: ["keyguard.policy_sign", "keyguard.match", "keyguard.pack_sign", "keyguard.tokens"] }
+                    outcome: { enum: [ok, refused, alert], description: '`alert` marks an operation that succeeded but raised an alarm (a reverse-HMAC positive).' }
+                    detail: { type: object, additionalProperties: { type: string }, description: 'Counts and identifiers; `code` carries the refusal code and `target` the policy or pack id.' }
+                    prev_hash: { type: string }
+                    hash: { type: string }
+        "400":
+          description: 'invalid_request: since_seq is not a non-negative integer.'
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /keyguard/v1/health:
+    get:
+      tags: [info]
+      operationId: getHealth
+      summary: Liveness
+      description: Answers `{"status":"ok"}` when the process serves requests. Reachable only through the same transport as the rest.
+      responses:
+        "200":
+          description: Alive.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status: { const: ok }
+components:
+  securitySchemes:
+    mtls:
+      type: mutualTLS
+  schemas:
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        reverse_hmac: { type: object, description: 'Only on a pack refused for reverse-HMAC positives: same shape as the success body.' }
+    ApprovalMode:
+      enum: [standard, single, admin, observe]
+    Approval:
+      type: object
+      required: [user, roles, at]
+      properties:
+        user: { type: string, pattern: "^[A-Za-z0-9_.:/@+=,-]{1,128}$" }
+        roles: { type: array, maxItems: 16, items: { type: string, pattern: "^[A-Za-z0-9_.:/@+=,-]{1,128}$" } }
+        at: { type: string, format: date-time, description: 'When the approval was given; not in the future.' }
+        id_token: { type: string, maxLength: 16384, description: 'Required when keyguard has an OIDC issuer configured: step-up ID token of the approver for the approval audience, bound to the change by its nonce, with the roles claim.' }
+        reason: { type: string, maxLength: 1000, description: 'Mandatory for an admin single approval; free text without real values.' }
+    PublicKey:
+      type: object
+      required: [kid, alg, public_key]
+      properties:
+        kid: { type: string }
+        alg: { const: Ed25519 }
+        public_key: { type: string, pattern: "^[A-Za-z0-9_-]{43}$" }
+        endorsed_by: { type: string, description: 'Optional: kid of an older key that endorsed this one for a rotation announced to sources (heartbeat `add_signing_keys`).' }
+        endorsement: { type: string, description: 'Optional: Ed25519 signature by `endorsed_by` over "tt-fleet-key/v1" || 0x00 || kid || 0x00 || public key bytes, base64url.' }

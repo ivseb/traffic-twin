@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2321-xml-xmlns-limit",
+  "category": "xml",
+  "description": "More than 64 namespace changes: the first 64 paths and {trunc}.",
+  "spec": ["sanitizer.md#22.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "application/xml"]
+    ],
+    "req_body": {
+      "b64": "PHI+PGUwIHhtbG5zPSJ1cm46bjAiLz48ZTEgeG1sbnM9InVybjpuMSIvPjxlMiB4bWxucz0idXJuOm4yIi8+PGUzIHhtbG5zPSJ1cm46bjMiLz48ZTQgeG1sbnM9InVybjpuNCIvPjxlNSB4bWxucz0idXJuOm41Ii8+PGU2IHhtbG5zPSJ1cm46bjYiLz48ZTcgeG1sbnM9InVybjpuNyIvPjxlOCB4bWxucz0idXJuOm44Ii8+PGU5IHhtbG5zPSJ1cm46bjkiLz48ZTEwIHhtbG5zPSJ1cm46bjEwIi8+PGUxMSB4bWxucz0idXJuOm4xMSIvPjxlMTIgeG1sbnM9InVybjpuMTIiLz48ZTEzIHhtbG5zPSJ1cm46bjEzIi8+PGUxNCB4bWxucz0idXJuOm4xNCIvPjxlMTUgeG1sbnM9InVybjpuMTUiLz48ZTE2IHhtbG5zPSJ1cm46bjE2Ii8+PGUxNyB4bWxucz0idXJuOm4xNyIvPjxlMTggeG1sbnM9InVybjpuMTgiLz48ZTE5IHhtbG5zPSJ1cm46bjE5Ii8+PGUyMCB4bWxucz0idXJuOm4yMCIvPjxlMjEgeG1sbnM9InVybjpuMjEiLz48ZTIyIHhtbG5zPSJ1cm46bjIyIi8+PGUyMyB4bWxucz0idXJuOm4yMyIvPjxlMjQgeG1sbnM9InVybjpuMjQiLz48ZTI1IHhtbG5zPSJ1cm46bjI1Ii8+PGUyNiB4bWxucz0idXJuOm4yNiIvPjxlMjcgeG1sbnM9InVybjpuMjciLz48ZTI4IHhtbG5zPSJ1cm46bjI4Ii8+PGUyOSB4bWxucz0idXJuOm4yOSIvPjxlMzAgeG1sbnM9InVybjpuMzAiLz48ZTMxIHhtbG5zPSJ1cm46bjMxIi8+PGUzMiB4bWxucz0idXJuOm4zMiIvPjxlMzMgeG1sbnM9InVybjpuMzMiLz48ZTM0IHhtbG5zPSJ1cm46bjM0Ii8+PGUzNSB4bWxucz0idXJuOm4zNSIvPjxlMzYgeG1sbnM9InVybjpuMzYiLz48ZTM3IHhtbG5zPSJ1cm46bjM3Ii8+PGUzOCB4bWxucz0idXJuOm4zOCIvPjxlMzkgeG1sbnM9InVybjpuMzkiLz48ZTQwIHhtbG5zPSJ1cm46bjQwIi8+PGU0MSB4bWxucz0idXJuOm40MSIvPjxlNDIgeG1sbnM9InVybjpuNDIiLz48ZTQzIHhtbG5zPSJ1cm46bjQzIi8+PGU0NCB4bWxucz0idXJuOm40NCIvPjxlNDUgeG1sbnM9InVybjpuNDUiLz48ZTQ2IHhtbG5zPSJ1cm46bjQ2Ii8+PGU0NyB4bWxucz0idXJuOm40NyIvPjxlNDggeG1sbnM9InVybjpuNDgiLz48ZTQ5IHhtbG5zPSJ1cm46bjQ5Ii8+PGU1MCB4bWxucz0idXJuOm41MCIvPjxlNTEgeG1sbnM9InVybjpuNTEiLz48ZTUyIHhtbG5zPSJ1cm46bjUyIi8+PGU1MyB4bWxucz0idXJuOm41MyIvPjxlNTQgeG1sbnM9InVybjpuNTQiLz48ZTU1IHhtbG5zPSJ1cm46bjU1Ii8+PGU1NiB4bWxucz0idXJuOm41NiIvPjxlNTcgeG1sbnM9InVybjpuNTciLz48ZTU4IHhtbG5zPSJ1cm46bjU4Ii8+PGU1OSB4bWxucz0idXJuOm41OSIvPjxlNjAgeG1sbnM9InVybjpuNjAiLz48ZTYxIHhtbG5zPSJ1cm46bjYxIi8+PGU2MiB4bWxucz0idXJuOm42MiIvPjxlNjMgeG1sbnM9InVybjpuNjMiLz48ZTY0IHhtbG5zPSJ1cm46bjY0Ii8+PGU2NSB4bWxucz0idXJuOm42NSIvPjxlNjYgeG1sbnM9InVybjpuNjYiLz48ZTY3IHhtbG5zPSJ1cm46bjY3Ii8+PGU2OCB4bWxucz0idXJuOm42OCIvPjxlNjkgeG1sbnM9InVybjpuNjkiLz48L3I+",
+      "text": "<r><e0 xmlns=\"urn:n0\"/><e1 xmlns=\"urn:n1\"/><e2 xmlns=\"urn:n2\"/><e3 xmlns=\"urn:n3\"/><e4 xmlns=\"urn:n4\"/><e5 xmlns=\"urn:n5\"/><e6 xmlns=\"urn:n6\"/><e7 xmlns=\"urn:n7\"/><e8 xmlns=\"urn:n8\"/><e9 xmlns=\"urn:n9\"/><e10 xmlns=\"urn:n10\"/><e11 xmlns=\"urn:n11\"/><e12 xmlns=\"urn:n12\"/><e13 xmlns=\"urn:n13\"/><e14 xmlns=\"urn:n14\"/><e15 xmlns=\"urn:n15\"/><e16 xmlns=\"urn:n16\"/><e17 xmlns=\"urn:n17\"/><e18 xmlns=\"urn:n18\"/><e19 xmlns=\"urn:n19\"/><e20 xmlns=\"urn:n20\"/><e21 xmlns=\"urn:n21\"/><e22 xmlns=\"urn:n22\"/><e23 xmlns=\"urn:n23\"/><e24 xmlns=\"urn:n24\"/><e25 xmlns=\"urn:n25\"/><e26 xmlns=\"urn:n26\"/><e27 xmlns=\"urn:n27\"/><e28 xmlns=\"urn:n28\"/><e29 xmlns=\"urn:n29\"/><e30 xmlns=\"urn:n30\"/><e31 xmlns=\"urn:n31\"/><e32 xmlns=\"urn:n32\"/><e33 xmlns=\"urn:n33\"/><e34 xmlns=\"urn:n34\"/><e35 xmlns=\"urn:n35\"/><e36 xmlns=\"urn:n36\"/><e37 xmlns=\"urn:n37\"/><e38 xmlns=\"urn:n38\"/><e39 xmlns=\"urn:n39\"/><e40 xmlns=\"urn:n40\"/><e41 xmlns=\"urn:n41\"/><e42 xmlns=\"urn:n42\"/><e43 xmlns=\"urn:n43\"/><e44 xmlns=\"urn:n44\"/><e45 xmlns=\"urn:n45\"/><e46 xmlns=\"urn:n46\"/><e47 xmlns=\"urn:n47\"/><e48 xmlns=\"urn:n48\"/><e49 xmlns=\"urn:n49\"/><e50 xmlns=\"urn:n50\"/><e51 xmlns=\"urn:n51\"/><e52 xmlns=\"urn:n52\"/><e53 xmlns=\"urn:n53\"/><e54 xmlns=\"urn:n54\"/><e55 xmlns=\"urn:n55\"/><e56 xmlns=\"urn:n56\"/><e57 xmlns=\"urn:n57\"/><e58 xmlns=\"urn:n58\"/><e59 xmlns=\"urn:n59\"/><e60 xmlns=\"urn:n60\"/><e61 xmlns=\"urn:n61\"/><e62 xmlns=\"urn:n62\"/><e63 xmlns=\"urn:n63\"/><e64 xmlns=\"urn:n64\"/><e65 xmlns=\"urn:n65\"/><e66 xmlns=\"urn:n66\"/><e67 xmlns=\"urn:n67\"/><e68 xmlns=\"urn:n68\"/><e69 xmlns=\"urn:n69\"/></r>"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"r\":{\"e0\":\"drop:str:l8\",\"e1\":\"drop:str:l8\",\"e10\":\"drop:str:l8\",\"e11\":\"drop:str:l8\",\"e12\":\"drop:str:l8\",\"e13\":\"drop:str:l8\",\"e14\":\"drop:str:l8\",\"e15\":\"drop:str:l8\",\"e16\":\"drop:str:l8\",\"e17\":\"drop:str:l8\",\"e18\":\"drop:str:l8\",\"e19\":\"drop:str:l8\",\"e2\":\"drop:str:l8\",\"e20\":\"drop:str:l8\",\"e21\":\"drop:str:l8\",\"e22\":\"drop:str:l8\",\"e23\":\"drop:str:l8\",\"e24\":\"drop:str:l8\",\"e25\":\"drop:str:l8\",\"e26\":\"drop:str:l8\",\"e27\":\"drop:str:l8\",\"e28\":\"drop:str:l8\",\"e29\":\"drop:str:l8\",\"e3\":\"drop:str:l8\",\"e30\":\"drop:str:l8\",\"e31\":\"drop:str:l8\",\"e32\":\"drop:str:l8\",\"e33\":\"drop:str:l8\",\"e34\":\"drop:str:l8\",\"e35\":\"drop:str:l8\",\"e36\":\"drop:str:l8\",\"e37\":\"drop:str:l8\",\"e38\":\"drop:str:l8\",\"e39\":\"drop:str:l8\",\"e4\":\"drop:str:l8\",\"e40\":\"drop:str:l8\",\"e41\":\"drop:str:l8\",\"e42\":\"drop:str:l8\",\"e43\":\"drop:str:l8\",\"e44\":\"drop:str:l8\",\"e45\":\"drop:str:l8\",\"e46\":\"drop:str:l8\",\"e47\":\"drop:str:l8\",\"e48\":\"drop:str:l8\",\"e49\":\"drop:str:l8\",\"e5\":\"drop:str:l8\",\"e50\":\"drop:str:l8\",\"e51\":\"drop:str:l8\",\"e52\":\"drop:str:l8\",\"e53\":\"drop:str:l8\",\"e54\":\"drop:str:l8\",\"e55\":\"drop:str:l8\",\"e56\":\"drop:str:l8\",\"e57\":\"drop:str:l8\",\"e58\":\"drop:str:l8\",\"e59\":\"drop:str:l8\",\"e6\":\"drop:str:l8\",\"e60\":\"drop:str:l8\",\"e61\":\"drop:str:l8\",\"e62\":\"drop:str:l8\",\"e63\":\"drop:str:l8\",\"e64\":\"drop:str:l8\",\"e65\":\"drop:str:l8\",\"e66\":\"drop:str:l8\",\"e67\":\"drop:str:l8\",\"e68\":\"drop:str:l8\",\"e69\":\"drop:str:l8\",\"e7\":\"drop:str:l8\",\"e8\":\"drop:str:l8\",\"e9\":\"drop:str:l8\"}},\"ct\":\"application/xml\",\"fmt\":\"xml\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"lmax\",\"xmlns\":{\"$.r.e0\":\"ns:urn:n0\",\"$.r.e1\":\"ns:urn:n1\",\"$.r.e10\":\"ns:urn:n10\",\"$.r.e11\":\"ns:urn:n11\",\"$.r.e12\":\"ns:urn:n12\",\"$.r.e13\":\"ns:urn:n13\",\"$.r.e14\":\"ns:urn:n14\",\"$.r.e15\":\"ns:urn:n15\",\"$.r.e16\":\"ns:urn:n16\",\"$.r.e17\":\"ns:urn:n17\",\"$.r.e18\":\"ns:urn:n18\",\"$.r.e19\":\"ns:urn:n19\",\"$.r.e2\":\"ns:urn:n2\",\"$.r.e20\":\"ns:urn:n20\",\"$.r.e21\":\"ns:urn:n21\",\"$.r.e22\":\"ns:urn:n22\",\"$.r.e23\":\"ns:urn:n23\",\"$.r.e24\":\"ns:urn:n24\",\"$.r.e25\":\"ns:urn:n25\",\"$.r.e26\":\"ns:urn:n26\",\"$.r.e27\":\"ns:urn:n27\",\"$.r.e28\":\"ns:urn:n28\",\"$.r.e29\":\"ns:urn:n29\",\"$.r.e3\":\"ns:urn:n3\",\"$.r.e30\":\"ns:urn:n30\",\"$.r.e31\":\"ns:urn:n31\",\"$.r.e32\":\"ns:urn:n32\",\"$.r.e33\":\"ns:urn:n33\",\"$.r.e34\":\"ns:urn:n34\",\"$.r.e35\":\"ns:urn:n35\",\"$.r.e36\":\"ns:urn:n36\",\"$.r.e37\":\"ns:urn:n37\",\"$.r.e38\":\"ns:urn:n38\",\"$.r.e39\":\"ns:urn:n39\",\"$.r.e4\":\"ns:urn:n4\",\"$.r.e40\":\"ns:urn:n40\",\"$.r.e41\":\"ns:urn:n41\",\"$.r.e42\":\"ns:urn:n42\",\"$.r.e43\":\"ns:urn:n43\",\"$.r.e44\":\"ns:urn:n44\",\"$.r.e45\":\"ns:urn:n45\",\"$.r.e46\":\"ns:urn:n46\",\"$.r.e47\":\"ns:urn:n47\",\"$.r.e48\":\"ns:urn:n48\",\"$.r.e49\":\"ns:urn:n49\",\"$.r.e5\":\"ns:urn:n5\",\"$.r.e50\":\"ns:urn:n50\",\"$.r.e51\":\"ns:urn:n51\",\"$.r.e52\":\"ns:urn:n52\",\"$.r.e53\":\"ns:urn:n53\",\"$.r.e54\":\"ns:urn:n54\",\"$.r.e55\":\"ns:urn:n55\",\"$.r.e56\":\"ns:urn:n56\",\"$.r.e57\":\"ns:urn:n57\",\"$.r.e58\":\"ns:urn:n58\",\"$.r.e59\":\"ns:urn:n59\",\"$.r.e6\":\"ns:urn:n6\",\"$.r.e60\":\"ns:urn:n60\",\"$.r.e61\":\"ns:urn:n61\",\"$.r.e62\":\"ns:urn:n62\",\"$.r.e63\":\"ns:urn:n63\",\"$.r.e7\":\"ns:urn:n7\",\"$.r.e8\":\"ns:urn:n8\",\"$.r.e9\":\"ns:urn:n9\",\"{trunc}\":\"trunc:keys:l128\"}},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

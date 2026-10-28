@@ -1,0 +1,19 @@
+{
+  "name": "traffic-twin-site",
+  "private": true,
+  "type": "module",
+  "description": "Product site and documentation of traffic-twin (VitePress).",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sync-docs": "node scripts/sync-docs.mjs",
+    "dev": "npm run sync-docs && vitepress dev",
+    "build": "npm run sync-docs && vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  }
+}

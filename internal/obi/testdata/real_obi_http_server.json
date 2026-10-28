@@ -1,0 +1,794 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "app"
+            }
+          },
+          {
+            "key": "telemetry.distro.name",
+            "value": {
+              "stringValue": "opentelemetry-ebpf-instrumentation"
+            }
+          },
+          {
+            "key": "telemetry.distro.version",
+            "value": {
+              "stringValue": "v0.15.2"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "78B98D257E3419CEF789FC15D68E4438",
+              "spanId": "E4D1A8951F9C1173",
+              "parentSpanId": "04E4208BB35D772E",
+              "name": "in queue",
+              "kind": 1,
+              "startTimeUnixNano": "1792808955430637427",
+              "endTimeUnixNano": "1792808955431851302",
+              "status": {}
+            },
+            {
+              "traceId": "78B98D257E3419CEF789FC15D68E4438",
+              "spanId": "6E6EE23952D73A69",
+              "parentSpanId": "04E4208BB35D772E",
+              "name": "processing",
+              "kind": 1,
+              "startTimeUnixNano": "1792808955431851302",
+              "endTimeUnixNano": "1792808955433061802",
+              "status": {}
+            },
+            {
+              "traceId": "78B98D257E3419CEF789FC15D68E4438",
+              "spanId": "04E4208BB35D772E",
+              "name": "GET /json/list",
+              "kind": 2,
+              "startTimeUnixNano": "1792808955430637427",
+              "endTimeUnixNano": "1792808955433061802",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "9229"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "app"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "200"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/json/list"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "http"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/json/list"
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "632"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json; charset=UTF-8"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "[ {\n  \"description\": \"node.js instance\",\n  \"devtoolsFrontendUrl\": \"devtools://devtools/bundled/js_app.html?experiments=true&v8only=true&ws=127.0.0.1:9229/4ddfde76-0a3f-47b0-9a2e-3afe76eb6c3e\",\n  \"devtoolsFrontendUrlCompat\": \"devtools://devtools/bundled/inspector.html?experiments=true&v8only=true&ws=127.0.0.1:9229/4ddfde76-0a3f-47b0-9a2e-3afe76eb6c3e\",\n  \"faviconUrl\": \"https://nodejs.org/static/images/favicons/favicon.ico\",\n  \"id\": \"4ddfde76-0a3f-47b0-9a2e-3afe76eb6c3e\",\n  \"title\": \"/app.js\",\n  \"type\": \"node\",\n  \"url\": \"file:///app.js\",\n  \"webSocketDebuggerUrl\": \"ws://127.0.0.1:9229/4ddfde76-0a3f-47b0-9a2e-3afe76eb6c3e\"\n} ]\n\n"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "55460"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "C118170B51BCF8C544006FE8C358AF4B",
+              "spanId": "961579654C4C412C",
+              "name": "GET /*",
+              "kind": 2,
+              "startTimeUnixNano": "1792808955433387011",
+              "endTimeUnixNano": "1792808955434498011",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "9229"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "app"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "101"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "GET"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/4ddfde76-0a3f-47b0-9a2e-3afe76eb6c3e"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "http"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/*"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "55460"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ],
+      "schemaUrl": "https://open-telemetry.github.io/opentelemetry-ebpf-instrumentation/schemas/obi/0.15.2"
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "app"
+            }
+          },
+          {
+            "key": "telemetry.distro.name",
+            "value": {
+              "stringValue": "opentelemetry-ebpf-instrumentation"
+            }
+          },
+          {
+            "key": "telemetry.distro.version",
+            "value": {
+              "stringValue": "v0.15.2"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "E4E531B89DA93C857C1CA205BB305C41",
+              "spanId": "79B2FD40A6D85221",
+              "parentSpanId": "457F0EE220C3173F",
+              "name": "in queue",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972670083338",
+              "endTimeUnixNano": "1792808972678141796",
+              "status": {}
+            },
+            {
+              "traceId": "E4E531B89DA93C857C1CA205BB305C41",
+              "spanId": "C25ACC15F85DA362",
+              "parentSpanId": "457F0EE220C3173F",
+              "name": "processing",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972678141796",
+              "endTimeUnixNano": "1792808972690901004",
+              "status": {}
+            },
+            {
+              "traceId": "E4E531B89DA93C857C1CA205BB305C41",
+              "spanId": "457F0EE220C3173F",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792808972670083338",
+              "endTimeUnixNano": "1792808972690901004",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "3000"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "app"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "http"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.x-customer-id",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "CUS-000001"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "108"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "51"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"items\":[{\"qty\":2,\"sku\":\"SKU-1001\"}],\"email\":\"anna.rossi@example.com\",\"card\":{\"number\":\"***\"}}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\":\"ORD-000042\",\"status\":\"CREATED\",\"total\":79.9}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "51206"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "2FEF4D3A0C1AE13E493DAD57094910AD",
+              "spanId": "7E34EC0F22BD8397",
+              "parentSpanId": "9572E436C5D82879",
+              "name": "in queue",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972763850504",
+              "endTimeUnixNano": "1792808972764133796",
+              "status": {}
+            },
+            {
+              "traceId": "2FEF4D3A0C1AE13E493DAD57094910AD",
+              "spanId": "E6DD8A33A510EFBA",
+              "parentSpanId": "9572E436C5D82879",
+              "name": "processing",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972764133796",
+              "endTimeUnixNano": "1792808972764435254",
+              "status": {}
+            },
+            {
+              "traceId": "2FEF4D3A0C1AE13E493DAD57094910AD",
+              "spanId": "9572E436C5D82879",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792808972763850504",
+              "endTimeUnixNano": "1792808972764435254",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "3000"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "app"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "http"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.x-customer-id",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "CUS-000001"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "108"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "51"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"items\":[{\"sku\":\"SKU-1001\",\"qty\":2}],\"email\":\"anna.rossi@example.com\",\"card\":{\"number\":\"***\"}}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\":\"ORD-000042\",\"status\":\"CREATED\",\"total\":79.9}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "51210"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "14C11623C941AB348232F99D7C4B28ED",
+              "spanId": "930FC669D6273DF2",
+              "parentSpanId": "0E519982B5B35B6B",
+              "name": "in queue",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972834658963",
+              "endTimeUnixNano": "1792808972835120213",
+              "status": {}
+            },
+            {
+              "traceId": "14C11623C941AB348232F99D7C4B28ED",
+              "spanId": "96E927C8039A1E21",
+              "parentSpanId": "0E519982B5B35B6B",
+              "name": "processing",
+              "kind": 1,
+              "startTimeUnixNano": "1792808972835120213",
+              "endTimeUnixNano": "1792808972835559171",
+              "status": {}
+            },
+            {
+              "traceId": "14C11623C941AB348232F99D7C4B28ED",
+              "spanId": "0E519982B5B35B6B",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792808972834658963",
+              "endTimeUnixNano": "1792808972835559171",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "3000"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "app"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "http"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.x-customer-id",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "CUS-000001"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "108"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "51"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"items\":[{\"sku\":\"SKU-1001\",\"qty\":2}],\"email\":\"anna.rossi@example.com\",\"card\":{\"number\":\"***\"}}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\":\"ORD-000042\",\"status\":\"CREATED\",\"total\":79.9}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "51220"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ],
+      "schemaUrl": "https://open-telemetry.github.io/opentelemetry-ebpf-instrumentation/schemas/obi/0.15.2"
+    }
+  ]
+}

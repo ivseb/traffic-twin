@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0601-format-uuid",
+  "category": "formats",
+  "description": "uuid: 8-4-4-4-12 hex, any case; wrong group length is not uuid.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJ2MDEiOiI1NTBFODQwMC1FMjlCLTQxRDQtQTcxNi00NDY2NTU0NDAwMDAiLCJ2MDIiOiI1NTBlODQwMGUyOWI0MWQ0YTcxNjQ0NjY1NTQ0MDAwMCIsInYwMyI6IjU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwIiwidjA0IjoiezU1MGU4NDAwLWUyOWItNDFkNC1hNzE2LTQ0NjY1NTQ0MDAwMH0ifQ==",
+      "text": "{\"v00\":\"550e8400-e29b-41d4-a716-446655440000\",\"v01\":\"550E8400-E29B-41D4-A716-446655440000\",\"v02\":\"550e8400e29b41d4a716446655440000\",\"v03\":\"550e8400-e29b-41d4-a716-44665544000\",\"v04\":\"{550e8400-e29b-41d4-a716-446655440000}\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:uuid\",\"v01\":\"drop:str:uuid\",\"v02\":\"drop:str:hex\",\"v03\":\"drop:str:l128\",\"v04\":\"drop:str:l128\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

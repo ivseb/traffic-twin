@@ -1,0 +1,151 @@
+# tt-mock: serves a twin package (signed by the publication gate) as a stateful mock.
+# Meant for CI clusters and test environments (zone C). The session state lives in memory: replicas are
+# independent mocks, keep 1 unless your tests pin a session to a pod.
+#
+# Two ways to feed it:
+#   console mode (console.url set): the mock gets the latest published package of console.group from the
+#     traffic-twin console with a mock token, switches to a newer one by itself and shows on the console's Mock
+#     page (URLs to use, last calls, scenarios, virtual clock). The Mock page prefills these values.
+#   file mode (pack.*): a fixed package from a PVC, a ConfigMap or an OCI image, for CI without the console.
+
+image:
+  repository: ghcr.io/ivseb/traffic-twin
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+replicaCount: 1
+
+# -- Console mode: the traffic-twin console (tt-core) sends the packages. Wins over pack.* when url is set.
+console:
+  # -- URL of the console as this pod reaches it, e.g. https://tt-core.traffic-twin.svc.cluster.local:7070
+  url: ""
+  # -- Group (team) whose published package is served: as shown on the Mock page.
+  group: ""
+  # -- Secret holding the mock token (ttm_..., shown once on the Mock page):
+  #    kubectl create secret generic tt-mock-token --from-literal=token='ttm_...'
+  tokenSecret: ""
+  tokenKey: token
+  # -- ConfigMap with the PEM of the CA of the console certificate (when it is not from a public CA).
+  caConfigMap: ""
+  caKey: ca.crt
+  # -- URL your tests use to reach this mock, shown on the Mock page. Default: https://<route.host> when the Route
+  # has a host, else http://<release>-tt-mock.<namespace>.svc.cluster.local:<port>.
+  publicURL: ""
+  # -- How often the mock reports (the console holds each report until something happens).
+  reportInterval: 5s
+
+# -- OpenShift Route to the mock (TLS edge). Set host to show the right URL on the Mock page.
+route:
+  enabled: false
+  host: ""
+  annotations: {}
+
+# -- File mode: where the signed twin package comes from. Exactly one source is used, in this order:
+# 1. pack.persistentVolumeClaim : a PVC with the package (directory or .ttpack) at pack.path
+# 2. pack.configMap             : a ConfigMap whose keys are the package files (small packages only, < 1 MiB)
+# 3. pack.image                 : an OCI image with the package, copied by an init container
+pack:
+  # -- Path of the package inside the volume (directory or .ttpack archive), relative to the mount.
+  path: "."
+  persistentVolumeClaim: ""
+  configMap: ""
+  image:
+    repository: ""
+    tag: ""
+    digest: ""
+    pullPolicy: IfNotPresent
+    # -- Command of the init container, run as the non-root user with the image's own tools.
+    # Must copy the package into /pack-out. The default needs `cp` in the image (busybox based).
+    command: ["cp", "-R", "/pack/.", "/pack-out/"]
+
+# -- Public keys of the publication gate, `kid:base64url` comma separated (TT_GATE_PUBKEYS). Not a secret.
+# The mock refuses unsigned packages or packages signed with another key (also in console mode: the console is not
+# trusted to sign). The Mock page of the console shows the value.
+gatePubKeys: ""
+
+# -- Bearer token of the control API /__tt/ (TT_CONTROL_TOKEN). In file mode the mock refuses to start outside the
+# loopback without one; in console mode it is optional (the console drives the control API; set it for tests that
+# create sessions themselves). Create the Secret by hand: kubectl create secret generic tt-mock-control --from-literal=token=...
+controlToken:
+  existingSecret: ""
+  key: token
+
+# -- Extra `tt mock` flags: ["--latency", "record", "--faults", "off"]. See internal/mock/README.md.
+extraArgs: []
+
+service:
+  type: ClusterIP
+  port: 8480
+  annotations: {}
+
+# -- File mode: tt-mock makes no outbound calls at all, egress is denied completely. Console mode: only DNS and the
+# console (HTTPS) are allowed.
+networkPolicy:
+  enabled: true
+  ingress:
+    # -- Who may use the mock. Default: the pods of this namespace; add your CI runners / test namespaces
+    # (and the OpenShift router namespace with route.enabled: network.openshift.io/policy-group: ingress).
+    from:
+      - podSelector: {}
+  egress:
+    # -- Console mode: where the console is. Default: any address on the console port; narrow it to the tt-core pods
+    # (namespaceSelector + podSelector) or an ipBlock.
+    console:
+      to: []
+    dns:
+      enabled: true
+      namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+
+probes:
+  liveness:
+    initialDelaySeconds: 2
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 1
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+priorityClassName: ""
+terminationGracePeriodSeconds: 15
+extraEnv: []

@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tt-egress.fullname" . }}
+  labels:
+    {{- include "tt-egress.labels" . | nindent 4 }}
+data:
+  egress.yaml: |
+    {{- include "tt-egress.config" (dict "ctx" . "listen" (printf ":%d" (int .Values.listenPort))) | nindent 4 }}
+{{- if .Values.sidecar.enabled }}
+{{- $sidePort := (splitList ":" .Values.sidecar.listen | last) | int }}
+---
+# Sidecar publication. Install the chart in the namespace of the application, then add the container and the
+# volumes of snippet.yaml to its pod template (kubectl patch / kustomize / your own chart).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "tt-egress.fullname" . }}-sidecar
+  labels:
+    {{- include "tt-egress.labels" . | nindent 4 }}
+data:
+  egress.yaml: |
+    {{- include "tt-egress.config" (dict "ctx" . "listen" .Values.sidecar.listen) | nindent 4 }}
+  snippet.yaml: |
+    # containers:
+    - {{- include "tt-egress.container" (dict "ctx" . "port" $sidePort) | nindent 6 }}
+    # volumes:
+    {{- include "tt-egress.volumes" (dict "ctx" . "configMap" (printf "%s-sidecar" (include "tt-egress.fullname" .))) | nindent 4 }}
+{{- end }}

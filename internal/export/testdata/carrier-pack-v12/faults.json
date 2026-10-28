@@ -1,0 +1,30 @@
+{
+  "format": "tt.faults/v1",
+  "ops": [
+    {
+      "service": "shipping-ext",
+      "op": "GET /v1/shipments",
+      "statuses": [ { "status": 503, "p": 0.012, "example": "carrier-unavailable" } ],
+      "net_errors": [
+        { "kind": "timeout", "p": 0.002 },
+        { "kind": "reset", "p": 0.001 },
+        { "kind": "refused", "p": 0.0005 },
+        { "kind": "dns", "p": 0.0005 },
+        { "kind": "tls", "p": 0.0002 },
+        { "kind": "other", "p": 0.0002 }
+      ],
+      "latency_ms": { "p50": 80, "p95": 215, "p99": 323, "lognormal": { "median": 80, "sigma": 0.6 } }
+    },
+    {
+      "service": "shipping-ext",
+      "op": "POST /v1/shipments",
+      "statuses": [ { "status": 503, "p": 0.01, "example": "carrier-unavailable" } ],
+      "latency_ms": { "p50": 140, "p95": 318, "p99": 448, "lognormal": { "median": 140, "sigma": 0.5 } }
+    },
+    {
+      "service": "shop-api",
+      "op": "POST /orders",
+      "latency_ms": { "p50": 120, "p95": 400, "p99": 900 }
+    }
+  ]
+}

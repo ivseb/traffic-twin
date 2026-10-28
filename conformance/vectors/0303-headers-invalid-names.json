@@ -1,0 +1,29 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0303-headers-invalid-names",
+  "category": "headers",
+  "description": "Names outside the token grammar become {*}; their values are joined into one.",
+  "spec": ["sanitizer.md#8.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["x bad", "v1"],
+      ["x-\u00e9", "v2"],
+      ["x:colon", "v3"],
+      ["", "v4"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"{*}\":[\"drop:str:l32\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

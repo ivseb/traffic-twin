@@ -1,0 +1,45 @@
+{
+  "apiVersion": "admission.k8s.io/v1",
+  "kind": "AdmissionReview",
+  "request": {
+    "uid": "11111111-0000-4000-8000-000000000002",
+    "kind": {"group": "", "version": "v1", "kind": "Pod"},
+    "namespace": "shop",
+    "operation": "CREATE",
+    "object": {
+      "apiVersion": "v1",
+      "kind": "Pod",
+      "metadata": {
+        "generateName": "checkout-5c4d6f7b9-",
+        "namespace": "shop",
+        "labels": {"app": "checkout"},
+        "annotations": {
+          "traffic-twin.io/inject": "Node",
+          "instrumentation.opentelemetry.io/inject-nodejs": "true"
+        }
+      },
+      "spec": {
+        "initContainers": [
+          {"name": "opentelemetry-auto-instrumentation-nodejs", "image": "otel/autoinstrumentation-nodejs:0.53.0"}
+        ],
+        "containers": [
+          {
+            "name": "checkout",
+            "image": "registry.example/checkout:2.0.0",
+            "env": [
+              {"name": "NODE_OPTIONS", "value": "--max-old-space-size=512 --require /otel-auto-instrumentation-nodejs/autoinstrumentation.js"},
+              {"name": "OTEL_SERVICE_NAME", "value": "checkout-from-otel"},
+              {"name": "OTEL_EXPORTER_OTLP_ENDPOINT", "value": "http://otel-collector.observability.svc:4318"},
+              {"name": "OTEL_RESOURCE_ATTRIBUTES", "value": "k8s.pod.name=checkout"}
+            ],
+            "volumeMounts": [{"name": "opentelemetry-auto-instrumentation-nodejs", "mountPath": "/otel-auto-instrumentation-nodejs"}]
+          },
+          {"name": "sidecar", "image": "registry.example/sidecar:1"}
+        ],
+        "volumes": [
+          {"name": "opentelemetry-auto-instrumentation-nodejs", "emptyDir": {"sizeLimit": "200Mi"}}
+        ]
+      }
+    }
+  }
+}

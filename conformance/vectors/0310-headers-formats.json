@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0310-headers-formats",
+  "category": "headers",
+  "description": "Header values get format shapes: a bare JWT is jwt, \"Bearer <jwt>\" is not.",
+  "spec": ["sanitizer.md#8.1", "sanitizer.md#6.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln"],
+      ["X-Token", "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2ln"],
+      ["X-Forwarded-For", "203.0.113.7"],
+      ["X-Customer-Email", "giulia.neri@example.com"],
+      ["Date", "Mon, 19 Oct 2026 10:00:00 GMT"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"authorization\":[\"drop:str:l128\"],\"date\":[\"drop:str:l32\"],\"x-customer-email\":[\"drop:str:email\"],\"x-forwarded-for\":[\"drop:str:ipv4\"],\"x-token\":[\"drop:str:jwt\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

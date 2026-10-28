@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/schemas/policy-compiled.v1.schema.json",
+  "title": "traffic-twin compiled policy (tt.policy.compiled/v1 envelope and tt.policy.body/v1 body)",
+  "description": "The envelope is what sources fetch. body_b64 decodes to a document valid against #/$defs/body. The signature covers \"tt.policy.body/v1\" || 0x00 || body bytes; the hash covers the body bytes. Cross-field checks (bounds strictly increasing as doubles, envelope/body coherence, expiry limits) are in docs/spec/policy.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "policy_id", "version", "issued_seq", "hash", "body_b64", "signature"],
+  "properties": {
+    "format": { "const": "tt.policy.compiled/v1" },
+    "policy_id": { "$ref": "#/$defs/policyId" },
+    "version": { "type": "integer", "minimum": 1 },
+    "issued_seq": { "type": "integer", "minimum": 1 },
+    "hash": { "type": "string", "pattern": "^sha256:[0-9a-f]{64}$" },
+    "body_b64": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$", "maxLength": 4194304 },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alg", "kid", "sig"],
+      "properties": {
+        "alg": { "const": "Ed25519" },
+        "kid": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" },
+        "sig": { "type": "string", "pattern": "^[A-Za-z0-9_-]{86}$" }
+      }
+    }
+  },
+  "$defs": {
+    "policyId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+    "groupName": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,62}$" },
+    "domain": { "type": "string", "pattern": "^[a-z][a-z0-9_-]{0,31}$" },
+    "kid": { "type": "string", "pattern": "^[a-z0-9]{1,8}$" },
+    "hostPort": { "type": "string", "pattern": "^[a-z0-9.-]{1,253}(:[0-9]{1,5})?$" },
+    "keyName": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$" },
+    "headerName": { "type": "string", "pattern": "^[a-z0-9!#$%&'*+.^_`|~-]{1,64}$" },
+    "paramName": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$" },
+    "ttPath": { "type": "string", "pattern": "^\\$(\\.@?[A-Za-z_][A-Za-z0-9_-]{0,63}|\\.#text|\\.\\*|\\[\\*\\]){0,64}$" },
+    "opKey": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,16} /([A-Za-z0-9._~-]{1,64}|\\{[A-Za-z_][A-Za-z0-9_]{0,63}\\})?(/([A-Za-z0-9._~-]{1,64}|\\{[A-Za-z_][A-Za-z0-9_]{0,63}\\})){0,31}$"
+    },
+    "action": {
+      "oneOf": [
+        {
+          "type": "object", "additionalProperties": false, "required": ["action"],
+          "properties": { "action": { "enum": ["drop", "keep", "code", "graphql"] } }
+        },
+        {
+          "description": "Spec v1.19 (sanitizer.md 5.6): code with the alnum shape ^[A-Za-z0-9_.-]{1,16}$.",
+          "type": "object", "additionalProperties": false, "required": ["action", "shape"],
+          "properties": { "action": { "const": "code" }, "shape": { "const": "alnum" } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["action", "domain"],
+          "properties": { "action": { "const": "hmac" }, "domain": { "$ref": "#/$defs/domain" } }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["action", "kind", "bounds"],
+          "properties": {
+            "action": { "const": "bucket" },
+            "kind": { "const": "num" },
+            "bounds": { "type": "array", "minItems": 1, "maxItems": 32, "items": { "type": "number" } }
+          }
+        },
+        {
+          "type": "object", "additionalProperties": false, "required": ["action", "kind", "unit"],
+          "properties": {
+            "action": { "const": "bucket" },
+            "kind": { "const": "time" },
+            "unit": { "enum": ["year", "month", "day", "hour"] }
+          }
+        }
+      ]
+    },
+    "nameActionMap": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": { "$ref": "#/$defs/keyName" },
+      "additionalProperties": { "$ref": "#/$defs/action" }
+    },
+    "headerActionMap": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": { "$ref": "#/$defs/headerName" },
+      "additionalProperties": { "$ref": "#/$defs/action" }
+    },
+    "paramActionMap": {
+      "type": "object",
+      "maxProperties": 32,
+      "propertyNames": { "$ref": "#/$defs/paramName" },
+      "additionalProperties": { "$ref": "#/$defs/action" }
+    },
+    "bodyRules": {
+      "type": "array",
+      "maxItems": 1024,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "action"],
+        "properties": {
+          "path": { "$ref": "#/$defs/ttPath" },
+          "action": { "$ref": "#/$defs/action" }
+        }
+      }
+    },
+    "part": {
+      "description": "Service or global rules: no path parameters.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "query": { "$ref": "#/$defs/nameActionMap" },
+        "headers": { "$ref": "#/$defs/headerActionMap" },
+        "cookies": { "$ref": "#/$defs/nameActionMap" },
+        "body": { "$ref": "#/$defs/bodyRules" }
+      }
+    },
+    "opPart": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": { "$ref": "#/$defs/paramActionMap" },
+        "query": { "$ref": "#/$defs/nameActionMap" },
+        "headers": { "$ref": "#/$defs/headerActionMap" },
+        "cookies": { "$ref": "#/$defs/nameActionMap" },
+        "body": { "$ref": "#/$defs/bodyRules" }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": { "$ref": "#/$defs/part" },
+        "response": { "$ref": "#/$defs/part" },
+        "errors": { "$ref": "#/$defs/part" }
+      }
+    },
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["format", "policy_id", "version", "issued_seq", "created_at", "not_after", "targets", "hmac", "sampling", "segments", "limits", "global", "services"],
+      "properties": {
+        "format": { "const": "tt.policy.body/v1" },
+        "policy_id": { "$ref": "#/$defs/policyId" },
+        "version": { "type": "integer", "minimum": 1 },
+        "issued_seq": { "type": "integer", "minimum": 1 },
+        "created_at": { "type": "string", "format": "date-time" },
+        "not_after": { "type": "string", "format": "date-time" },
+        "targets": {
+          "type": "object", "additionalProperties": false, "required": ["groups"],
+          "properties": {
+            "groups": { "type": "array", "minItems": 1, "maxItems": 256, "uniqueItems": true, "items": { "$ref": "#/$defs/groupName" } }
+          }
+        },
+        "hmac": {
+          "type": "object", "additionalProperties": false, "required": ["kid", "epoch", "accept_kids"],
+          "properties": {
+            "kid": { "$ref": "#/$defs/kid" },
+            "accept_kids": { "type": "array", "maxItems": 4, "uniqueItems": true, "items": { "$ref": "#/$defs/kid" } },
+            "epoch": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,32}$" }
+          }
+        },
+        "identity": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "subject": {
+              "type": "object", "additionalProperties": false, "required": ["from", "name"],
+              "properties": {
+                "from": { "enum": ["header", "cookie"] },
+                "name": { "type": "string", "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$" },
+                "jwt_claim": { "type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_.-]{0,63}$" },
+                "json_path": { "type": "string", "maxLength": 520, "pattern": "^[A-Za-z0-9_-]{1,64}(\\.[A-Za-z0-9_-]{1,64}){0,7}$",
+                  "description": "Spec v1.18: dotted path of members inside a header whose value is a JSON object (or base64/base64url of one). Header only; excludes jwt_claim. Sources that predate it reject the body and keep the previous policy." }
+              },
+              "not": { "required": ["json_path", "jwt_claim"] },
+              "if": { "required": ["json_path"] },
+              "then": { "properties": { "from": { "const": "header" } } }
+            }
+          }
+        },
+        "sampling": {
+          "type": "object", "additionalProperties": false, "required": ["rate_bp", "trust_baggage", "propagate_to"],
+          "properties": {
+            "rate_bp": { "type": "integer", "minimum": 0, "maximum": 10000 },
+            "trust_baggage": { "type": "boolean" },
+            "propagate_to": { "type": "array", "maxItems": 256, "uniqueItems": true, "items": { "$ref": "#/$defs/hostPort" } }
+          }
+        },
+        "segments": {
+          "type": "object", "additionalProperties": false, "required": ["auto_words", "allow", "hosts_allow"],
+          "properties": {
+            "auto_words": { "type": "boolean" },
+            "auto_words_expires_at": { "type": "string", "format": "date-time" },
+            "allow": { "type": "array", "maxItems": 1024, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z0-9._~-]{1,64}$" } },
+            "hosts_allow": { "type": "array", "maxItems": 1024, "uniqueItems": true, "items": { "$ref": "#/$defs/hostPort" } }
+          },
+          "if": { "properties": { "auto_words": { "const": true } } },
+          "then": { "required": ["auto_words_expires_at"] }
+        },
+        "limits": {
+          "type": "object", "additionalProperties": false,
+          "required": ["max_body_bytes", "max_depth", "max_array", "max_keys", "keep_max_bytes"],
+          "properties": {
+            "max_body_bytes": { "type": "integer", "minimum": 0, "maximum": 16777216 },
+            "max_depth": { "type": "integer", "minimum": 1, "maximum": 128 },
+            "max_array": { "type": "integer", "minimum": 0, "maximum": 1024 },
+            "max_keys": { "type": "integer", "minimum": 1, "maximum": 4096 },
+            "keep_max_bytes": { "type": "integer", "minimum": 0, "maximum": 1024 }
+          }
+        },
+        "bodies": {
+          "description": "Spec v1.19 (sanitizer.md 22): XML and SOAP, multipart/form-data, base64 documents and large bodies. Absent = all off (behaviour before v1.19). A source older than v1.19 refuses a body with this field.",
+          "type": "object", "additionalProperties": false,
+          "required": ["xml", "multipart", "docs", "max_large_body_bytes", "large_array", "large_nested_array"],
+          "properties": {
+            "xml": { "type": "boolean" },
+            "multipart": { "type": "boolean" },
+            "docs": { "type": "boolean" },
+            "max_large_body_bytes": { "type": "integer", "minimum": 0, "maximum": 67108864 },
+            "large_array": { "type": "integer", "minimum": 0, "maximum": 1024 },
+            "large_nested_array": { "type": "integer", "minimum": 0, "maximum": 1024 }
+          }
+        },
+        "discovery": {
+          "type": "object", "additionalProperties": false, "required": ["enabled", "expires_at"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "expires_at": { "type": "string", "format": "date-time" }
+          }
+        },
+        "hosts": {
+          "description": "Spec v1.5 (sanitizer.md 3.5): how hosts without a matching base leave. Absent = auto. tt-core writes it only for off.",
+          "type": "object", "additionalProperties": false, "required": ["discovery"],
+          "properties": {
+            "discovery": { "enum": ["auto", "off"] }
+          }
+        },
+        "global": { "$ref": "#/$defs/scope" },
+        "services": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "match", "ops"],
+            "properties": {
+              "name": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$" },
+              "match": {
+                "oneOf": [
+                  {
+                    "type": "object", "additionalProperties": false, "required": ["inbound", "internal"],
+                    "properties": { "inbound": { "const": true }, "internal": { "type": "boolean" } }
+                  },
+                  {
+                    "type": "object", "additionalProperties": false, "required": ["base"],
+                    "properties": { "base": { "type": "string", "pattern": "^https?://[a-z0-9.-]{1,253}(:[0-9]{1,5})?(/[A-Za-z0-9._~-]{1,64})*$" } }
+                  }
+                ]
+              },
+              "request": { "$ref": "#/$defs/part" },
+              "response": { "$ref": "#/$defs/part" },
+              "errors": { "$ref": "#/$defs/part" },
+              "ops": {
+                "type": "array",
+                "maxItems": 4096,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["op"],
+                  "properties": {
+                    "op": { "$ref": "#/$defs/opKey" },
+                    "request": { "$ref": "#/$defs/opPart" },
+                    "response": { "$ref": "#/$defs/opPart" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

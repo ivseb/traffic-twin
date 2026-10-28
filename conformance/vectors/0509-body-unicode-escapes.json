@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0509-body-unicode-escapes",
+  "category": "body",
+  "description": "Escapes are decoded before shaping: \\u00e8 is 2 bytes, an escaped surrogate pair is 4 bytes, raw UTF-8 likewise.",
+  "spec": ["sanitizer.md#9.2", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJhIjoiXHUwMGU4IiwiYiI6Ilx1ZDgzZFx1ZGUwMCIsImMiOiLDqMOow6giLCJkIjoiXHUwMDQxXHUwMDQyIn0=",
+      "text": "{\"a\":\"\\u00e8\",\"b\":\"\\ud83d\\ude00\",\"c\":\"\u00e8\u00e8\u00e8\",\"d\":\"\\u0041\\u0042\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"a\":\"drop:str:l8\",\"b\":\"drop:str:l8\",\"c\":\"drop:str:l8\",\"d\":\"drop:str:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

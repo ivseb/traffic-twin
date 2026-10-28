@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0008-default-drop-scalars",
+  "category": "body",
+  "description": "Shapes of every JSON scalar kind with an empty policy.",
+  "spec": ["sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJuIjpudWxsLCJ0Ijp0cnVlLCJmIjpmYWxzZSwiemVybyI6MCwibmVnIjotMTIsImRlYyI6MS41LCJleHAiOjFlMywicyI6IiIsInUiOiJcdTAwZTgifQ==",
+      "text": "{\"n\":null,\"t\":true,\"f\":false,\"zero\":0,\"neg\":-12,\"dec\":1.5,\"exp\":1e3,\"s\":\"\",\"u\":\"\\u00e8\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"dec\":\"drop:dec\",\"exp\":\"drop:dec\",\"f\":\"drop:bool\",\"n\":\"drop:null\",\"neg\":\"drop:int\",\"s\":\"drop:str:l8\",\"t\":\"drop:bool\",\"u\":\"drop:str:l8\",\"zero\":\"drop:int\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

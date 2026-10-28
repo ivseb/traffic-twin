@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1402-refuse-short-key",
+  "category": "refusal",
+  "description": "A 31-byte key: key_missing.",
+  "spec": ["sanitizer.md#7.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHg",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "key_missing"
+  }
+}

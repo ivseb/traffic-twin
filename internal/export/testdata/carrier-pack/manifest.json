@@ -1,0 +1,15 @@
+{
+  "format": "tt.pack/v1",
+  "pack_id": "pk-20261019-0001",
+  "created_at": "2026-10-19T03:20:00Z",
+  "tt_version": "0.1.0",
+  "seed": 42,
+  "k_min": 20,
+  "services": [
+    { "name": "shipping-ext", "contract": "contracts/shipping-ext.openapi.json", "upstream_alias": "carrier" },
+    { "name": "shop-api", "contract": "contracts/shop-api.openapi.json" }
+  ],
+  "rules": { "path": "rules.json", "approved": ["r-0007", "r-0012"] },
+  "world": { "path": "world.jsonl", "customers": 1 },
+  "faults": "faults.json"
+}

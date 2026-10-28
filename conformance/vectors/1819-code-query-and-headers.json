@@ -1,0 +1,101 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1819-code-query-and-headers",
+  "category": "code",
+  "description": "code on query and header values: the same shape rule, repeated values one by one.",
+  "spec": ["sanitizer.md#5.6", "sanitizer.md#8.1", "sanitizer.md#8.3", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "query": {
+            "status": {
+              "action": "code"
+            },
+            "type": {
+              "action": "code"
+            },
+            "channel": {
+              "action": "code"
+            }
+          },
+          "headers": {
+            "x-order-status": {
+              "action": "code"
+            },
+            "x-error-code": {
+              "action": "code"
+            }
+          }
+        },
+        "response": {
+          "headers": {
+            "x-result": {
+              "action": "code"
+            }
+          }
+        },
+        "ops": []
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders",
+    "raw_query": "status=shipped&status=in%20transit&type=Return-Requested&channel=web2",
+    "req_headers": [
+      ["X-Order-Status", "DELIVERED"],
+      ["X-Error-Code", "E_42"]
+    ],
+    "status": 200,
+    "resp_headers": [
+      ["X-Result", "card_declined"]
+    ]
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"headers\":{\"x-error-code\":[\"drop:str:l8\"],\"x-order-status\":[\"keep:DELIVERED\"]},\"path\":\"/{drop:str:l8}\",\"query\":{\"channel\":[\"drop:str:l8\"],\"status\":[\"keep:shipped\",\"drop:str:l32\"],\"type\":[\"keep:Return-Requested\"]},\"size\":\"l8\"},\"resp\":{\"headers\":{\"x-result\":[\"keep:card_declined\"]},\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

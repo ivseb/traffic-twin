@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0119-path-control-bytes",
+  "category": "path",
+  "description": "A decoded NUL or DEL makes a segment non-printable: length class only.",
+  "spec": ["sanitizer.md#4.1", "sanitizer.md#6.3"],
+  "policy_ref": "policies/auto-words.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/%00orders/184%7F",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}/{drop:str:l8}\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

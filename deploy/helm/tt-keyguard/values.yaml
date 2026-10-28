@@ -1,0 +1,154 @@
+# tt keyguard: the only holder of the HMAC keys and of the policy/pack signing keys in zone B
+# (THREAT_MODEL zone B*). Install it in a namespace of its own, separate from tt-core:
+#
+#   helm install tt-keyguard deploy/helm/tt-keyguard -n tt-keyguard --create-namespace -f my-values.yaml
+#
+# KEYS NEVER GO THROUGH HELM VALUES: Helm stores the values of a release in a Secret of the cluster.
+# Create the Secrets with kubectl (see deploy/README.md) and reference them by name below.
+
+image:
+  repository: ghcr.io/ivseb/traffic-twin
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# -- mTLS listen address of keyguard (TT_KEYGUARD_LISTEN).
+listen: ":7443"
+
+tls:
+  # -- Secret (kubernetes.io/tls) with keyguard's server certificate: tls.crt, tls.key.
+  # Empty means "<release>-tt-keyguard-tls".
+  existingSecret: ""
+  # -- Also verify the client chain against ca.crt of this Secret (TT_KEYGUARD_CLIENT_CA_FILE). Optional:
+  # the pins below are always required.
+  clientCASecret: ""
+  clientCAKey: ca.crt
+
+# -- sha256:<hex SPKI> pins of tt-core's client certificate (TT_KEYGUARD_CLIENT_PINS). At least one is
+# required, otherwise keyguard refuses to start. `tt keyguard pin tt-core-client.crt` prints it.
+clientPins: []
+
+keys:
+  # -- Secret with the key material, created by hand (never by Helm):
+  #   kubectl -n tt-keyguard create secret generic tt-keyguard-keys \
+  #     --from-file=hmac-keys=hmac.keys --from-file=policy-signing-key=policy.key --from-file=pack-signing-key=pack.key
+  # Empty means "<release>-tt-keyguard-keys".
+  existingSecret: ""
+  # -- Keys of that Secret.
+  hmacKeysKey: hmac-keys
+  policySigningKey: policy-signing-key
+  packSigningKey: pack-signing-key
+
+  # keyguard refuses key files that are readable by group or others (mode must be 0400/0600). A Secret volume
+  # is owned by root, and with fsGroup the kubelet makes it group-readable (0440), so the safe way is a tiny
+  # init container that copies the files into a memory-backed volume, owned by the keyguard user, mode 0400.
+  # It runs as root with only CAP_CHOWN: it needs a namespace with Pod Security "baseline" (not "restricted").
+  installer:
+    enabled: true
+    image:
+      repository: busybox
+      tag: 1.37.0-musl
+      digest: sha256:5cec3fc171c87218698e85a52af7087de727372aae264a787b8112901a5b0092
+      pullPolicy: IfNotPresent
+    resources:
+      requests: {cpu: 10m, memory: 8Mi}
+      limits: {cpu: 100m, memory: 32Mi}
+
+# -- Other TT_KEYGUARD_* settings, name: value (see internal/keyguard/config.go): OPENING_APPROVALS, ADMIN_OVERRIDE,
+# OBSERVE_AUTO (observe phase, policy.md 7: "true" signs policy changes that open no values without approvals,
+# approval_mode observe in the audit; "false" makes every change need the approvals again, as before v1.6),
+# MATCH_MAX_BATCH, MATCH_INTERVAL, MATCH_DAILY_BUDGET, PACK_INTERVAL, BLOOM_CAPACITY, FILTER_RETENTION,
+# SNAPSHOT_INTERVAL, POLICY_MAX_VALIDITY, OIDC_ISSUER, OIDC_AUDIENCE, OIDC_JWKS_FILE, OIDC_JWKS_URL,
+# ALERT_WEBHOOK, REVOKED_KIDS, LOG_LEVEL, LOG_FORMAT. An OIDC_JWKS_URL or ALERT_WEBHOOK needs the matching
+# networkPolicy.egress rule: keyguard has no outbound access otherwise.
+settings:
+  TT_KEYGUARD_OPENING_APPROVALS: "2"
+  TT_KEYGUARD_ADMIN_OVERRIDE: "true"
+  TT_KEYGUARD_OBSERVE_AUTO: "true"
+  TT_KEYGUARD_LOG_LEVEL: info
+  TT_KEYGUARD_LOG_FORMAT: json
+
+persistence:
+  enabled: true
+  size: 1Gi
+  storageClassName: ""
+  accessModes: [ReadWriteOnce]
+  existingClaim: ""
+
+service:
+  type: ClusterIP
+  port: 7443
+
+# -- Ingress only from tt-core, egress nothing (not even DNS) unless listed.
+networkPolicy:
+  enabled: true
+  ingress:
+    from:
+      - namespaceSelector:
+          matchLabels:
+            kubernetes.io/metadata.name: traffic-twin
+        podSelector:
+          matchLabels:
+            app.kubernetes.io/name: tt-core
+  egress:
+    dns:
+      enabled: false
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    # -- Allowed outbound destinations, only for an alert webhook or an OIDC JWKS URL: [{cidr: 203.0.113.10/32, port: 443}]
+    allowed: []
+
+# Probes are TCP: the HTTP endpoints require tt-core's client certificate.
+probes:
+  liveness:
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+priorityClassName: ""
+terminationGracePeriodSeconds: 30
+extraEnv: []

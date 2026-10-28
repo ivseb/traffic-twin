@@ -1,0 +1,28 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0302-headers-repeated",
+  "category": "headers",
+  "description": "Repeated header fields are joined with \", \" into one value per name.",
+  "spec": ["sanitizer.md#8.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["X-Tag", "a"],
+      ["Accept", "text/html"],
+      ["x-tag", "bbbbbb"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"accept\":[\"drop:str:l32\"],\"x-tag\":[\"drop:str:l32\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

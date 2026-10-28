@@ -1,0 +1,84 @@
+{
+  "format": "tt.rules/v1",
+  "generated_at": "2026-10-19T03:00:00Z",
+  "window": { "from": "2026-10-05T00:00:00Z", "to": "2026-10-19T00:00:00Z" },
+  "entities": [
+    {
+      "name": "order",
+      "service": "shop-api",
+      "id_domain": "order",
+      "id_field": "id",
+      "id_prefix": "ORD-SYN-",
+      "created_by": {
+        "op": "POST /orders",
+        "id": { "from": "resp.body", "path": "$.id" },
+        "state": { "from": "req.body", "path": "$" },
+        "defaults": { "status": "CREATED" }
+      },
+      "read_by": [
+        { "op": "GET /orders/{id}", "by": { "from": "req.path", "name": "id" }, "at": { "from": "resp.body", "path": "$" } }
+      ]
+    },
+    {
+      "name": "shipment",
+      "service": "shipping-ext",
+      "id_domain": "shipment",
+      "id_field": "shipmentId",
+      "id_prefix": "SHP-SYN-",
+      "read_by": [
+        { "op": "GET /v1/shipments", "by": { "from": "req.query", "name": "orderId", "field": "orderId" }, "at": { "from": "resp.body", "path": "$.items[*]" } },
+        { "op": "GET /v1/shipments/{shipmentId}", "by": { "from": "req.path", "name": "shipmentId" }, "at": { "from": "resp.body", "path": "$" } }
+      ]
+    }
+  ],
+  "rules": [
+    {
+      "id": "r-0007",
+      "kind": "causal",
+      "status": "approved",
+      "title": "A created order creates a shipment at the carrier",
+      "cause": {
+        "service": "shop-api",
+        "op": "POST /orders",
+        "when": { "status": [201] },
+        "bind": { "order": { "from": "resp.body", "path": "$.id" } }
+      },
+      "effects": [
+        { "id": "shipment-created", "entity": "shipment", "create": { "orderId": "${order}", "status": "CREATED" }, "after": "5m" },
+        { "id": "shipment-in-transit", "entity": "shipment", "target": "shipment-created", "set": { "status": "IN_TRANSIT" }, "after_effect": "shipment-created", "after": "4h" },
+        { "id": "shipment-delivered", "entity": "shipment", "target": "shipment-created", "set": { "status": "DELIVERED" }, "after_effect": "shipment-in-transit", "after": "2d" },
+        { "id": "shipment-cancelled", "entity": "shipment", "target": "shipment-created", "set": { "status": "CANCELLED" }, "after_effect": "shipment-created", "after": "1h" }
+      ],
+      "outcomes": [
+        { "name": "happy", "p": 0.93, "effects": ["shipment-created", "shipment-in-transit", "shipment-delivered"] },
+        { "name": "cancelled", "p": 0.04, "effects": ["shipment-created", "shipment-cancelled"] },
+        { "name": "never-shipped", "p": 0.03, "effects": [] }
+      ],
+      "evidence": {
+        "counts": { "causes": 4120, "distinct_subjects": 1310, "outcomes": { "happy": 3832, "cancelled": 165, "never-shipped": 123 } }
+      }
+    },
+    {
+      "id": "r-0012",
+      "kind": "batch",
+      "status": "approved",
+      "title": "Nightly delivery consolidation",
+      "schedule": "0 2 * * *",
+      "entity": "shipment",
+      "where": { "status": "IN_TRANSIT" },
+      "set": { "status": "DELIVERED" },
+      "fraction": 0.6,
+      "evidence": { "counts": { "runs": 14, "entities_changed": 9800 } }
+    },
+    {
+      "id": "r-0099",
+      "kind": "causal",
+      "status": "draft",
+      "title": "Draft rule: must not be exported",
+      "cause": { "service": "shop-api", "op": "POST /orders", "when": { "status": [201] } },
+      "effects": [ { "id": "ghost", "entity": "shipment", "create": { "status": "GHOST" }, "after": "1m" } ],
+      "outcomes": [ { "name": "ghost", "p": 1, "effects": ["ghost"] } ],
+      "evidence": { "counts": { "causes": 1, "distinct_subjects": 1, "outcomes": { "ghost": 1 } } }
+    }
+  ]
+}

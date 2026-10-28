@@ -1,0 +1,44 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.name", "value": { "stringValue": "shop-api" } },
+          { "key": "telemetry.sdk.name", "value": { "stringValue": "opentelemetry-ebpf-instrumentation" } }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": { "name": "go.opentelemetry.io/obi" },
+          "spans": [
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "00f067aa0ba902b7",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792404000412000000",
+              "endTimeUnixNano": "1792404000596000000",
+              "attributes": [
+                { "key": "http.request.method", "value": { "stringValue": "POST" } },
+                { "key": "url.path", "value": { "stringValue": "/orders" } },
+                { "key": "http.response.status_code", "value": { "intValue": "201" } },
+                { "key": "http.route", "value": { "stringValue": "/orders" } },
+                { "key": "client.address", "value": { "stringValue": "10.0.0.7" } },
+                { "key": "server.port", "value": { "intValue": "3000" } },
+                { "key": "http.request.body.size", "value": { "intValue": "112" } },
+                { "key": "http.response.body.size", "value": { "intValue": "73" } },
+                { "key": "http.request.header.content-type", "value": { "arrayValue": { "values": [ { "stringValue": "application/json" } ] } } },
+                { "key": "http.request.header.content-length", "value": { "arrayValue": { "values": [ { "stringValue": "112" } ] } } },
+                { "key": "http.request.header.x-customer-id", "value": { "arrayValue": { "values": [ { "stringValue": "CUS-000001" } ] } } },
+                { "key": "http.response.header.content-type", "value": { "arrayValue": { "values": [ { "stringValue": "application/json; charset=utf-8" } ] } } },
+                { "key": "http.request.body.content", "value": { "stringValue": "{\"items\":[{\"sku\":\"SKU-1001\",\"qty\":2}],\"email\":\"anna.rossi@example.com\",\"card\":{\"number\":\"***\"}}" } },
+                { "key": "http.response.body.content", "value": { "stringValue": "{\"id\":\"ORD-000042\",\"status\":\"CREATED\",\"total\":79.9}" } }
+              ],
+              "status": { "code": 0 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

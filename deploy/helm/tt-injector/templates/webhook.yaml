@@ -1,0 +1,98 @@
+{{- $full := include "tt-injector.fullname" . -}}
+{{- $ns := .Release.Namespace -}}
+{{- $caBundle := "" -}}
+{{- if eq .Values.tls.mode "helm" }}
+{{- /* Generated once per render, so the Secret and the caBundle below always match. Kept across upgrades. */ -}}
+{{- $secretName := include "tt-injector.tlsSecretName" . -}}
+{{- $existing := lookup "v1" "Secret" $ns $secretName -}}
+{{- $crt := "" -}}
+{{- $key := "" -}}
+{{- $ca := "" -}}
+{{- if and $existing $existing.data (index $existing.data "ca.crt") (index $existing.data "tls.crt") (index $existing.data "tls.key") -}}
+{{- $crt = index $existing.data "tls.crt" | b64dec -}}
+{{- $key = index $existing.data "tls.key" | b64dec -}}
+{{- $ca = index $existing.data "ca.crt" | b64dec -}}
+{{- else -}}
+{{- $days := int .Values.tls.validityDays -}}
+{{- $names := list $full (printf "%s.%s" $full $ns) (printf "%s.%s.svc" $full $ns) (printf "%s.%s.svc.cluster.local" $full $ns) -}}
+{{- $genCA := genCA (printf "%s-ca" $full) $days -}}
+{{- $gen := genSignedCert (printf "%s.%s.svc" $full $ns) nil $names $days $genCA -}}
+{{- $crt = $gen.Cert -}}
+{{- $key = $gen.Key -}}
+{{- $ca = $genCA.Cert -}}
+{{- end }}
+{{- $caBundle = $ca | b64enc }}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ $secretName }}
+  labels:
+    {{- include "tt-injector.labels" . | nindent 4 }}
+type: kubernetes.io/tls
+data:
+  tls.crt: {{ $crt | b64enc }}
+  tls.key: {{ $key | b64enc }}
+  ca.crt: {{ $ca | b64enc }}
+---
+{{- else if eq .Values.tls.mode "existing" }}
+{{- $caBundle = .Values.tls.caBundle -}}
+{{- end }}
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ $full }}
+  labels:
+    {{- include "tt-injector.labels" . | nindent 4 }}
+  {{- if eq .Values.tls.mode "certManager" }}
+  annotations:
+    cert-manager.io/inject-ca-from: {{ $ns }}/{{ $full }}
+  {{- end }}
+webhooks:
+  - name: {{ .Values.webhook.name }}
+    admissionReviewVersions: [v1]
+    sideEffects: None
+    failurePolicy: {{ .Values.webhook.failurePolicy }}
+    timeoutSeconds: {{ .Values.webhook.timeoutSeconds }}
+    reinvocationPolicy: {{ .Values.webhook.reinvocationPolicy }}
+    matchPolicy: Equivalent
+    clientConfig:
+      service:
+        name: {{ $full }}
+        namespace: {{ $ns }}
+        path: /mutate
+        port: {{ .Values.service.port }}
+      {{- if $caBundle }}
+      caBundle: {{ $caBundle }}
+      {{- end }}
+    rules:
+      - operations: [CREATE]
+        apiGroups: [""]
+        apiVersions: [v1]
+        resources: [pods]
+        scope: Namespaced
+    {{- $excluded := .Values.webhook.excludeNamespaces | default list }}
+    {{- if .Values.webhook.excludeReleaseNamespace }}{{ $excluded = append $excluded $ns }}{{ end }}
+    namespaceSelector:
+      {{- with .Values.webhook.namespaceSelector.matchLabels }}
+      matchLabels:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      matchExpressions:
+        {{- if $excluded }}
+        - key: kubernetes.io/metadata.name
+          operator: NotIn
+          values:
+            {{- toYaml $excluded | nindent 12 }}
+        {{- end }}
+        {{- with .Values.webhook.namespaceSelector.matchExpressions }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    {{- with .Values.webhook.objectSelector }}
+    objectSelector:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- if and .Values.webhook.useMatchConditions (semverCompare ">=1.28.0-0" .Capabilities.KubeVersion.Version) }}
+    matchConditions:
+      - name: has-traffic-twin-inject-annotation
+        expression: "has(object.metadata.annotations) && 'traffic-twin.io/inject' in object.metadata.annotations"
+    {{- end }}

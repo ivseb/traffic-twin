@@ -1,0 +1,87 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1814-code-unicode-lookalikes",
+  "category": "code",
+  "description": "Non-ASCII letters never match: Cyrillic E, fullwidth, zero-width space, Greek, sharp s, e acute, NBSP.",
+  "spec": ["sanitizer.md#5.6", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders/{id}",
+            "response": {
+              "body": [
+                {
+                  "path": "$.*.status",
+                  "action": {
+                    "action": "code"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJhIjp7InN0YXR1cyI6IkRcdTA0MTVMSVZFUkVEIn0sImIiOnsic3RhdHVzIjoiXHVmZjI0XHVmZjI1XHVmZjJjXHVmZjI5XHVmZjM2XHVmZjI1XHVmZjMyXHVmZjI1XHVmZjI0In0sImMiOnsic3RhdHVzIjoiREVMSVx1MjAwYlZFUkVEIn0sImQiOnsic3RhdHVzIjoiXHUwMzkxXHUwMzkyIn0sImUiOnsic3RhdHVzIjoiZ3JvXHUwMGRmZSJ9LCJmIjp7InN0YXR1cyI6ImFubnVsXHUwMGU5In0sImciOnsic3RhdHVzIjoiT1BFTlx1MDBhMCJ9fQ==",
+      "text": "{\"a\":{\"status\":\"D\\u0415LIVERED\"},\"b\":{\"status\":\"\\uff24\\uff25\\uff2c\\uff29\\uff36\\uff25\\uff32\\uff25\\uff24\"},\"c\":{\"status\":\"DELI\\u200bVERED\"},\"d\":{\"status\":\"\\u0391\\u0392\"},\"e\":{\"status\":\"gro\\u00dfe\"},\"f\":{\"status\":\"annul\\u00e9\"},\"g\":{\"status\":\"OPEN\\u00a0\"}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/{id}\",\"req\":{\"path\":\"/orders/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"a\":{\"status\":\"drop:str:l32\"},\"b\":{\"status\":\"drop:str:l32\"},\"c\":{\"status\":\"drop:str:l32\"},\"d\":{\"status\":\"drop:str:l8\"},\"e\":{\"status\":\"drop:str:l8\"},\"f\":{\"status\":\"drop:str:l8\"},\"g\":{\"status\":\"drop:str:l8\"}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l1024\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

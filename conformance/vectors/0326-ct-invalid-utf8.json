@@ -1,0 +1,35 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0326-ct-invalid-utf8",
+  "category": "headers",
+  "description": "A non-UTF-8 content-type value gives ct \"invalid\".",
+  "spec": ["sanitizer.md#8.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/",
+    "req_headers": [
+      [
+        "Content-Type",
+        {
+          "b64": "YXBwbGljYXRpb24vanP/b24="
+        }
+      ]
+    ],
+    "req_body": {
+      "b64": "eyJhIjoxfQ==",
+      "text": "{\"a\":1}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /\",\"req\":{\"body\":\"drop:bytes:l8\",\"ct\":\"invalid\",\"headers\":{\"content-type\":[\"drop:bytes\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

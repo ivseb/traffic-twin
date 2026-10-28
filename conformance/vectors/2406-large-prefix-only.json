@@ -1,0 +1,73 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2406-large-prefix-only",
+  "category": "large-body",
+  "description": "Only a prefix kept by the source (req_body shorter than the total): trunc:size.",
+  "spec": ["sanitizer.md#22.5", "sanitizer.md#9.0"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 2048,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 200000,
+      "large_array": 6,
+      "large_nested_array": 2
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJpdGVtcyI6W3siaWQiOiJQLTAwMDAwMCIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDAxIiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDIiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwMyIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDA0IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDUiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwNiIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDA3IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMDgiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAwOSIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDEwIiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMTEiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAxMiIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDEzIiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMTQiLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAxNSIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDE2IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIifSx7ImFtb3VudCI6MTMsImNvZGUiOiJDMyJ9XSwic3RhdHVzIjoiSU5fU1RPQ0sifSx7ImlkIjoiUC0wMDAwMTciLCJsaW5lcyI6W3siYW1vdW50IjoxMCwiY29kZSI6IkMwIn0seyJhbW91bnQiOjExLCJjb2RlIjoiQzEifSx7ImFtb3VudCI6MTIsImNvZGUiOiJDMiJ9LHsiYW1vdW50IjoxMywiY29kZSI6IkMzIn1dLCJzdGF0dXMiOiJJTl9TVE9DSyJ9LHsiaWQiOiJQLTAwMDAxOCIsImxpbmVzIjpbeyJhbW91bnQiOjEwLCJjb2RlIjoiQzAifSx7ImFtb3VudCI6MTEsImNvZGUiOiJDMSJ9LHsiYW1vdW50IjoxMiwiY29kZSI6IkMyIn0seyJhbW91bnQiOjEzLCJjb2RlIjoiQzMifV0sInN0YXR1cyI6IklOX1NUT0NLIn0seyJpZCI6IlAtMDAwMDE5IiwibGluZXMiOlt7ImFtb3VudCI6MTAsImNvZGUiOiJDMCJ9LHsiYW1vdW50IjoxMSwiY29kZSI6IkMxIn0seyJhbW91bnQiOjEyLCJjb2RlIjoiQzIi",
+      "text": "{\"items\":[{\"id\":\"P-000000\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000001\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000002\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000003\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000004\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000005\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000006\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000007\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000008\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000009\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000010\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000011\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000012\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000013\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000014\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000015\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000016\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000017\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000018\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\"},{\"amount\":13,\"code\":\"C3\"}],\"status\":\"IN_STOCK\"},{\"id\":\"P-000019\",\"lines\":[{\"amount\":10,\"code\":\"C0\"},{\"amount\":11,\"code\":\"C1\"},{\"amount\":12,\"code\":\"C2\""
+    },
+    "req_body_total": 12182,
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":\"trunc:size\",\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"lmax\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

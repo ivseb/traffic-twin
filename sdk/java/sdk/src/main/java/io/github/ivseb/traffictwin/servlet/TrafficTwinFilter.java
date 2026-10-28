@@ -1,0 +1,592 @@
+package io.github.ivseb.traffictwin.servlet;
+
+import io.github.ivseb.traffictwin.TrafficTwin;
+import io.github.ivseb.traffictwin.capture.BodyTap;
+import io.github.ivseb.traffictwin.capture.ExchangeContext;
+import io.github.ivseb.traffictwin.capture.OtelContext;
+import io.github.ivseb.traffictwin.capture.OtelRouteHints;
+import io.github.ivseb.traffictwin.capture.RawExchange;
+import io.github.ivseb.traffictwin.sanitizer.Exchange;
+import io.github.ivseb.traffictwin.sanitizer.Sanitizer;
+import jakarta.servlet.AsyncEvent;
+import jakarta.servlet.AsyncListener;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletInputStream;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.WriteListener;
+import jakarta.servlet.ReadListener;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponseWrapper;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * Inbound capture for servlet containers (Servlet 5 / Jakarta). Register it first in the chain,
+ * for the REQUEST and ASYNC dispatchers.
+ *
+ * <p>Sampled exchanges get a request and a response wrapper that tee the body bytes (first
+ * {@code max(max_body_bytes, bodies.max_large_body_bytes) + 1} kept, the rest counted) without altering them; unsampled exchanges
+ * pass through untouched. Sanitization and export happen after the response, on the SDK's own
+ * bounded executor: the filter never waits for them and never throws into the application.
+ *
+ * <p>{@code framework_route} comes from Spring MVC ({@code HandlerMapping.bestMatchingPattern},
+ * completed with the context and servlet path) or from the JAX-RS filter of this SDK.
+ */
+public final class TrafficTwinFilter implements Filter {
+    private static final String ATTR = "io.github.ivseb.traffictwin.capture";
+    private static final String SPRING_PATTERN = "org.springframework.web.servlet.HandlerMapping.bestMatchingPattern";
+
+    @Override
+    public void init(FilterConfig config) {
+        // No-code start: only when the environment asks for it and nothing started the agent yet.
+        if (TrafficTwin.current() == null && System.getenv("TT_ENROLL_URL") != null) {
+            try {
+                TrafficTwin.startFromEnvironment();
+            } catch (RuntimeException e) {
+                // never affect the application
+            }
+        }
+    }
+
+    @Override
+    public void destroy() {}
+
+    private static final class State {
+        Sanitizer san;
+        Sanitizer.Decision decision;
+        ExchangeContext ctx;
+        String parentSpanId;
+        long t0;
+        long tsMs;
+        BodyTap reqTap;
+        BodyTap resTap;
+        TeeRequest treq;
+        long overheadNs;
+        final AtomicBoolean done = new AtomicBoolean();
+        Throwable failure;
+        boolean asyncError;
+    }
+
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+        TrafficTwin tt = TrafficTwin.current();
+        Sanitizer san = tt == null ? null : tt.active();
+        if (san == null || !(req instanceof HttpServletRequest hreq) || !(res instanceof HttpServletResponse hres) || hreq.getAttribute(ATTR) != null) {
+            chain.doFilter(req, res);
+            return;
+        }
+        long t = System.nanoTime();
+        State st = null;
+        ExchangeContext prev = ExchangeContext.current();
+        ServletRequest nreq = req;
+        ServletResponse nres = res;
+        try {
+            st = start(tt, san, hreq);
+            if (st != null && st.decision.sampled()) {
+                TeeRequest tr = new TeeRequest(hreq, st.reqTap);
+                TeeResponse tr2 = new TeeResponse(hres, st.resTap);
+                tr.response(tr2);
+                st.treq = tr;
+                nreq = tr;
+                nres = tr2;
+                hreq.setAttribute(ATTR, st);
+            }
+        } catch (RuntimeException e) {
+            tt.noteError("capture_inbound_start");
+            st = null;
+        }
+        if (st != null) {
+            ExchangeContext.set(st.ctx);
+            st.overheadNs = System.nanoTime() - t;
+        }
+        try {
+            chain.doFilter(nreq, nres);
+        } catch (IOException | ServletException | RuntimeException | Error e) {
+            if (st != null) st.failure = e;
+            throw e;
+        } finally {
+            ExchangeContext.set(prev);
+            if (st != null && st.decision.sampled()) {
+                try {
+                    if (hreq.isAsyncStarted()) {
+                        final State fs = st;
+                        hreq.getAsyncContext().addListener(new AsyncListener() {
+                            @Override
+                            public void onComplete(AsyncEvent event) {
+                                finish(tt, fs, hreq, hres);
+                            }
+
+                            @Override
+                            public void onTimeout(AsyncEvent event) {
+                                fs.asyncError = true;
+                            }
+
+                            @Override
+                            public void onError(AsyncEvent event) {
+                                fs.asyncError = true;
+                                if (event.getThrowable() != null) fs.failure = event.getThrowable();
+                            }
+
+                            @Override
+                            public void onStartAsync(AsyncEvent event) {
+                                event.getAsyncContext().addListener(this);
+                            }
+                        });
+                    } else {
+                        finish(tt, st, hreq, hres);
+                    }
+                } catch (RuntimeException e) {
+                    tt.noteError("capture_inbound_finish");
+                }
+            }
+        }
+    }
+
+    private static State start(TrafficTwin tt, Sanitizer san, HttpServletRequest req) {
+        tt.noteSeen();
+        String[] tp = ExchangeContext.parseTraceparent(req.getHeader("traceparent"));
+        OtelContext.Ids otel = OtelContext.active();
+        Exchange probe = new Exchange();
+        probe.inbound = true;
+        probe.serviceName = tt.serviceName();
+        String traceId = otel != null ? otel.traceId() : tp != null ? tp[0] : null;
+        probe.traceId = traceId;
+        Set<String> names = tt.decisionHeaders();
+        for (String n : names) {
+            Enumeration<String> vals = req.getHeaders(n);
+            while (vals != null && vals.hasMoreElements()) probe.reqHeaders.add(new Exchange.Header(n, vals.nextElement().getBytes(StandardCharsets.ISO_8859_1)));
+        }
+        Sanitizer.Decision d = san.decide(probe);
+        boolean known = traceId != null;
+        String spanId = otel != null && !otel.spanId().isEmpty() ? otel.spanId() : ExchangeContext.newSpanId();
+        ExchangeContext ctx = new ExchangeContext(d.sampled(), known ? traceId : ExchangeContext.newTraceId(), known, spanId);
+        State st = new State();
+        st.san = san;
+        st.decision = d;
+        st.ctx = ctx;
+        st.parentSpanId = tp != null ? tp[1] : null;
+        if (!d.sampled()) {
+            tt.noteOverhead(0);
+            return st;
+        }
+        tt.noteSampled();
+        int limit = san.policy.captureLimit(); // 9.0, 22.5: max(max_body_bytes, bodies.max_large_body_bytes) + 1
+        st.t0 = System.nanoTime();
+        st.tsMs = System.currentTimeMillis();
+        st.reqTap = new BodyTap(limit);
+        st.resTap = new BodyTap(limit);
+        return st;
+    }
+
+    private static List<Exchange.Header> requestHeaders(HttpServletRequest req) {
+        List<Exchange.Header> out = new ArrayList<>();
+        Enumeration<String> names = req.getHeaderNames();
+        while (names != null && names.hasMoreElements()) {
+            String n = names.nextElement();
+            Enumeration<String> vals = req.getHeaders(n);
+            while (vals != null && vals.hasMoreElements()) out.add(new Exchange.Header(n, vals.nextElement().getBytes(StandardCharsets.ISO_8859_1)));
+        }
+        return out;
+    }
+
+    private static List<Exchange.Header> responseHeaders(HttpServletResponse res) {
+        List<Exchange.Header> out = new ArrayList<>();
+        boolean hasCt = false;
+        Collection<String> names = res.getHeaderNames();
+        if (names != null) {
+            for (String n : names) {
+                if (n.equalsIgnoreCase("content-type")) hasCt = true;
+                Collection<String> vals = res.getHeaders(n);
+                if (vals != null) for (String v : vals) out.add(new Exchange.Header(n, v.getBytes(StandardCharsets.ISO_8859_1)));
+            }
+        }
+        if (!hasCt && res.getContentType() != null) out.add(new Exchange.Header("Content-Type", res.getContentType().getBytes(StandardCharsets.ISO_8859_1)));
+        return out;
+    }
+
+    /** True when the application took the whole request body although it never saw the end-of-stream. */
+    private static boolean fullyRead(State st, long contentLength) {
+        try {
+            if (contentLength >= 0) return st.reqTap.total() >= contentLength;
+            if (st.treq == null) return false;
+            if (st.treq.finished()) return true;
+            // Chunked, and the container cannot say without blocking (Jetty: the terminating chunk is parsed
+            // on demand). What the application read is one complete JSON document: it took the body.
+            return st.reqTap.total() == st.reqTap.kept() && completeJson(st.reqTap.bytes());
+        } catch (RuntimeException e) {
+            return false;
+        }
+    }
+
+    /** True when the bytes are exactly one JSON object or array (nothing but whitespace around it, balanced, strings aware). */
+    static boolean completeJson(byte[] b) {
+        int i = 0;
+        while (i < b.length && (b[i] == ' ' || b[i] == '\t' || b[i] == '\r' || b[i] == '\n')) i++;
+        if (i >= b.length || (b[i] != '{' && b[i] != '[')) return false;
+        int depth = 0;
+        boolean inString = false;
+        for (; i < b.length; i++) {
+            byte c = b[i];
+            if (inString) {
+                if (c == '\\') i++;
+                else if (c == '"') inString = false;
+            } else if (c == '"') {
+                inString = true;
+            } else if (c == '{' || c == '[') {
+                depth++;
+            } else if (c == '}' || c == ']') {
+                if (--depth == 0) {
+                    for (i++; i < b.length; i++) {
+                        if (b[i] != ' ' && b[i] != '\t' && b[i] != '\r' && b[i] != '\n') return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static void finish(TrafficTwin tt, State st, HttpServletRequest req, HttpServletResponse res) {
+        if (!st.done.compareAndSet(false, true)) return;
+        long t = System.nanoTime();
+        try {
+            long latencyMs = Math.max(0, (t - st.t0) / 1_000_000);
+            int status = res.getStatus();
+            if (st.failure != null && status < 400) status = 500;
+            String method = req.getMethod() == null ? "" : req.getMethod();
+            // 9.0: a body the app did not read to the end is "not consumed"; an empty body is complete.
+            long cl = req.getContentLengthLong();
+            boolean emptyBody = cl == 0 || (cl == -1 && req.getHeader("transfer-encoding") == null);
+            // A parser (Jackson under Spring's @RequestBody) stops at the closing brace and never reads the
+            // end-of-stream: the body is consumed all the same when every byte the request declares went
+            // through the application (Content-Length), or when the container reports the stream finished.
+            boolean reqConsumed = st.reqTap.ended() || emptyBody || fullyRead(st, cl);
+            boolean noBody = method.equalsIgnoreCase("HEAD") || status == 204 || status == 304 || (status >= 100 && status < 200);
+            byte[] reqBody = reqConsumed ? st.reqTap.bytes() : new byte[0];
+            byte[] resBody = noBody ? new byte[0] : st.resTap.bytes();
+            long reqTotal = reqConsumed ? st.reqTap.total() : 0;
+            long resTotal = noBody ? 0 : st.resTap.total();
+            boolean resEnded = !(st.asyncError && !res.isCommitted());
+            String uri = req.getRequestURI() == null ? "/" : req.getRequestURI();
+            String qs = req.getQueryString();
+            List<Exchange.Header> rh = requestHeaders(req);
+            List<Exchange.Header> sh = responseHeaders(res);
+            String framework = null;
+            String route = null;
+            Object sp = req.getAttribute(SPRING_PATTERN);
+            if (sp instanceof String s) {
+                framework = "spring";
+                String ctxPath = req.getContextPath() == null ? "" : req.getContextPath();
+                String prefix = req.getPathInfo() != null && req.getServletPath() != null ? ctxPath + req.getServletPath() : ctxPath;
+                route = prefix + s;
+            } else if (st.ctx.frameworkRoute != null) {
+                framework = st.ctx.framework;
+                route = st.ctx.frameworkRoute;
+            } else {
+                // The OpenTelemetry agent (with sdk-otel-extension) names the route of its server span.
+                String hint = OtelRouteHints.lookup(st.ctx.spanId);
+                if (hint != null) {
+                    framework = "spring";
+                    route = hint;
+                }
+            }
+            final String fw = framework;
+            final String fr = route;
+            final int fstatus = status;
+            final String serviceName = tt.serviceName();
+            final boolean reqCons = reqConsumed;
+            RawExchange raw = new RawExchange();
+            raw.sanitizer = st.san;
+            raw.decision = st.decision;
+            raw.inbound = true;
+            raw.tsMs = st.tsMs;
+            raw.latencyMs = latencyMs;
+            raw.traceId = st.ctx.traceId;
+            raw.spanId = st.ctx.spanId;
+            raw.parentSpanId = st.parentSpanId;
+            raw.status = status;
+            raw.heldBytes = reqBody.length + resBody.length;
+            raw.build = () -> {
+                Exchange ex = new Exchange();
+                ex.inbound = true;
+                ex.serviceName = serviceName;
+                ex.method = method;
+                ex.rawPath = uri.getBytes(StandardCharsets.UTF_8);
+                ex.rawQuery = qs == null ? null : qs.getBytes(StandardCharsets.UTF_8);
+                if (fr != null && fw != null) {
+                    ex.framework = fw;
+                    ex.frameworkRoute = fr;
+                }
+                if (st.ctx.traceKnown) ex.traceId = st.ctx.traceId;
+                ex.reqHeaders = rh;
+                ex.reqBody = reqBody;
+                ex.reqBodyTotal = reqTotal;
+                ex.reqBodyConsumed = reqCons;
+                ex.status = fstatus;
+                ex.respHeaders = sh;
+                ex.respBody = resBody;
+                ex.respBodyTotal = resEnded ? resTotal : Exchange.UNKNOWN;
+                return ex;
+            };
+            tt.submit(raw);
+            tt.noteOverhead(st.overheadNs + (System.nanoTime() - t));
+        } catch (RuntimeException e) {
+            tt.noteError("capture_inbound_finish");
+        }
+    }
+
+    // ---------------------------------------------------------------------------------
+    // Tees. They delegate everything and copy the bytes that actually passed.
+
+    private static final class TeeRequest extends HttpServletRequestWrapper {
+        private final BodyTap tap;
+        private TeeInputStream stream;
+        private BufferedReader reader;
+
+        private ServletResponse response;
+
+        TeeRequest(HttpServletRequest r, BodyTap tap) {
+            super(r);
+            this.tap = tap;
+        }
+
+        void response(ServletResponse r) {
+            this.response = r;
+        }
+
+        /** The application took the whole body (chunked: up to the terminating chunk), not just the part it needed. */
+        boolean finished() {
+            TeeInputStream s = stream;
+            if (s == null) return false;
+            try {
+                return s.atEnd();
+            } catch (IOException | RuntimeException e) {
+                return false;
+            }
+        }
+
+        /** The no-argument form would hand the application the original response, bypassing the tee. */
+        @Override
+        public jakarta.servlet.AsyncContext startAsync() throws IllegalStateException {
+            return response == null ? super.startAsync() : super.startAsync(this, response);
+        }
+
+        @Override
+        public ServletInputStream getInputStream() throws IOException {
+            if (reader != null) throw new IllegalStateException("getReader() has already been called for this request");
+            if (stream == null) stream = new TeeInputStream(super.getInputStream(), tap);
+            return stream;
+        }
+
+        @Override
+        public BufferedReader getReader() throws IOException {
+            if (reader != null) return reader;
+            if (stream != null) throw new IllegalStateException("getInputStream() has already been called for this request");
+            String enc = getCharacterEncoding();
+            Charset cs = StandardCharsets.ISO_8859_1;
+            if (enc != null) {
+                try {
+                    cs = Charset.forName(enc);
+                } catch (RuntimeException e) {
+                    cs = StandardCharsets.ISO_8859_1;
+                }
+            }
+            stream = new TeeInputStream(super.getInputStream(), tap);
+            reader = new BufferedReader(new InputStreamReader(stream, cs));
+            return reader;
+        }
+    }
+
+    private static final class TeeInputStream extends ServletInputStream {
+        private final ServletInputStream in;
+        private final BodyTap tap;
+
+        TeeInputStream(ServletInputStream in, BodyTap tap) {
+            this.in = in;
+            this.tap = tap;
+        }
+
+        @Override
+        public int read() throws IOException {
+            int b = in.read();
+            if (b >= 0) tap.add(b);
+            else tap.markEnded();
+            return b;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int n = in.read(b, off, len);
+            if (n > 0) tap.add(b, off, n);
+            else if (n < 0) tap.markEnded();
+            return n;
+        }
+
+        @Override
+        public int available() throws IOException {
+            return in.available();
+        }
+
+        @Override
+        public void close() throws IOException {
+            in.close();
+        }
+
+        /**
+         * True when nothing is left of the body. A streaming JSON parser stops at the closing brace; for a
+         * chunked body the terminating chunk is then still unread, so the container does not report the
+         * stream finished. When it has bytes ready (a read cannot block) one is read: end-of-stream means
+         * the application had everything; a data byte means it left part of the body unread.
+         */
+        boolean atEnd() throws IOException {
+            if (in.isFinished() || (in.available() > 0 && in.read() < 0)) {
+                tap.markEnded();
+                return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean isFinished() {
+            boolean f = in.isFinished();
+            if (f) tap.markEnded();
+            return f;
+        }
+
+        @Override
+        public boolean isReady() {
+            return in.isReady();
+        }
+
+        @Override
+        public void setReadListener(ReadListener listener) {
+            in.setReadListener(listener);
+        }
+    }
+
+    private static final class TeeResponse extends HttpServletResponseWrapper {
+        private final BodyTap tap;
+        private ServletOutputStream stream;
+        private PrintWriter writer;
+
+        TeeResponse(HttpServletResponse r, BodyTap tap) {
+            super(r);
+            this.tap = tap;
+        }
+
+        @Override
+        public ServletOutputStream getOutputStream() throws IOException {
+            if (writer != null) throw new IllegalStateException("getWriter() has already been called for this response");
+            if (stream == null) stream = new TeeOutputStream(super.getOutputStream(), tap);
+            return stream;
+        }
+
+        @Override
+        public PrintWriter getWriter() throws IOException {
+            if (writer != null) return writer;
+            if (stream != null) throw new IllegalStateException("getOutputStream() has already been called for this response");
+            PrintWriter inner = super.getWriter();
+            Charset cs = StandardCharsets.ISO_8859_1;
+            try {
+                cs = Charset.forName(getCharacterEncoding());
+            } catch (RuntimeException e) {
+                // keep the default
+            }
+            writer = new TeePrintWriter(inner, cs, tap);
+            return writer;
+        }
+    }
+
+    private static final class TeeOutputStream extends ServletOutputStream {
+        private final ServletOutputStream out;
+        private final BodyTap tap;
+
+        TeeOutputStream(ServletOutputStream out, BodyTap tap) {
+            this.out = out;
+            this.tap = tap;
+        }
+
+        @Override
+        public void write(int b) throws IOException {
+            out.write(b);
+            tap.add(b);
+        }
+
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            out.write(b, off, len);
+            tap.add(b, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+            out.flush();
+        }
+
+        @Override
+        public void close() throws IOException {
+            out.close();
+        }
+
+        @Override
+        public boolean isReady() {
+            return out.isReady();
+        }
+
+        @Override
+        public void setWriteListener(WriteListener listener) {
+            out.setWriteListener(listener);
+        }
+    }
+
+    /** PrintWriter over the container's writer that also counts the encoded bytes. */
+    private static final class TeePrintWriter extends PrintWriter {
+        private final Charset cs;
+        private final BodyTap tap;
+
+        TeePrintWriter(Writer inner, Charset cs, BodyTap tap) {
+            super(inner);
+            this.cs = cs;
+            this.tap = tap;
+        }
+
+        @Override
+        public void write(int c) {
+            super.write(c);
+            byte[] b = String.valueOf((char) c).getBytes(cs);
+            tap.add(b, 0, b.length);
+        }
+
+        @Override
+        public void write(char[] buf, int off, int len) {
+            super.write(buf, off, len);
+            byte[] b = new String(buf, off, len).getBytes(cs);
+            tap.add(b, 0, b.length);
+        }
+
+        @Override
+        public void write(String s, int off, int len) {
+            super.write(s, off, len);
+            byte[] b = s.substring(off, off + len).getBytes(cs);
+            tap.add(b, 0, b.length);
+        }
+    }
+}

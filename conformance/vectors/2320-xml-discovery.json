@@ -1,0 +1,76 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2320-xml-discovery",
+  "category": "xml",
+  "description": "Discovery paths of XML leaves: attributes as .@name, text as .#text, arrays as [*].",
+  "spec": ["sanitizer.md#22.2", "sanitizer.md#15"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "discovery": {
+      "enabled": true,
+      "expires_at": "2026-10-26T10:00:00Z"
+    },
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "application/xml"]
+    ],
+    "req_body": {
+      "b64": "PGEgaz0idiI+PGk+MTwvaT48aT4yPC9pPjxtPnQ8Yi8+PC9tPjwvYT4=",
+      "text": "<a k=\"v\"><i>1</i><i>2</i><m>t<b/></m></a>"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"disc\":{\"req.body.a.@k\":\"tkd:D2Fjhg\",\"req.body.a.i[*]\":\"tkd:jNFlLw\",\"req.body.a.m.#text\":\"tkd:7ohx2w\",\"req.body.a.m.b\":\"tkd:stRvbg\",\"req.headers.content-type\":\"tkd:OMMUuA\",\"req.path.0\":\"tkd:bZpCng\",\"req.path.1\":\"tkd:J0l2iw\"},\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"a\":{\"@k\":\"drop:str:l8\",\"i\":[\"drop:str:digits\",\"drop:str:digits\"],\"m\":{\"#text\":\"drop:str:l8\",\"b\":\"drop:str:l8\"}}},\"ct\":\"application/xml\",\"fmt\":\"xml\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

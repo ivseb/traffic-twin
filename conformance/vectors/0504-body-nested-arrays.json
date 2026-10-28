@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0504-body-nested-arrays",
+  "category": "body",
+  "description": "Nested and mixed arrays keep order and shape every element.",
+  "spec": ["sanitizer.md#9.4"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "W1sxLFsyLjUsW11dXSwieCIsbnVsbCx0cnVlLHsiayI6W2ZhbHNlXX1d",
+      "text": "[[1,[2.5,[]]],\"x\",null,true,{\"k\":[false]}]"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":[[\"drop:int\",[\"drop:dec\",[]]],\"drop:str:l8\",\"drop:null\",\"drop:bool\",{\"k\":[\"drop:bool\"]}],\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1210-discovery-noeq",
+  "category": "discovery",
+  "description": "A query part without \"=\" adds a req.query.{*} entry (dropped by default, no rule).",
+  "spec": ["sanitizer.md#15", "sanitizer.md#8.3"],
+  "ambiguities": ["A-NOEQ-DISC"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "discovery": {
+      "enabled": true,
+      "expires_at": "2026-10-26T10:00:00Z"
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/s",
+    "raw_query": "ORD2026000184&x=1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"disc\":{\"req.path.0\":\"tkd:GnzOUQ\",\"req.query.x\":\"tkd:pO2tiA\",\"req.query.{*}\":\"tkd:zEe9qA\"},\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"x\":[\"drop:str:digits\"],\"{*}\":[\"drop:str:l32\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

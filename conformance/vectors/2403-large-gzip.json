@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2403-large-gzip",
+  "category": "large-body",
+  "description": "A gzip body whose decoded length is over max_body_bytes and within the large limit.",
+  "spec": ["sanitizer.md#22.5", "sanitizer.md#9.0"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 2048,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 200000,
+      "large_array": 6,
+      "large_nested_array": 2
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"],
+      ["Content-Encoding", "gzip"]
+    ],
+    "resp_body": {
+      "b64": "H4sIAAAAAAAC/83UvWrDMBSG4Xs5sws+P5JSr5lCoS20WynFNB4MSTxEmYLvvSYdnNzBq1GfQO/0XGWsw/Es3ddVxr108v7U3o40chhPw//SH6fLqUqnbSO/035Y3m1bmZu7RddFHxdbF3tcfF1c5u9GzrWvl+VL2b3+fHy+bV9u7++7FNpl0C6HdgW0K0G7MrSrQLs20K5nZpdCvVeo9wr1XqHeK9R7hXqvUO8V6r1CvVeo9wb13qDeG9R7g3pvUO8N6r1BvTeo9wb13qDeO9R7h3rvUO8d6r1DvXeo9w713qHeO9R7h3ofUO8D6n1AvQ+o9wH1PqDeB9T7gHofUO8D6n2Cep+g3ieo9wnqfYJ6n6DeJ6j3Cep9gnqfoN5nqPcZ6n2Gep+h3meo9xnqfYZ6n6HeZ6j3Gep9gXpfoN4XqPcF6n2Bel+g3heo9wXqfYF6XzDeL7d1qv1Buk07/wFhMC64li8AAA=="
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/{drop:str:digits}\",\"req\":{\"path\":\"/{drop:str:l8}/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"items\":[{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},{\"id\":\"drop:str:l8\",\"lines\":[{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},{\"amount\":\"drop:int\",\"code\":\"drop:str:l8\"},\"trunc:n:l8\"],\"status\":\"drop:str:l8\"},\"trunc:n:l128\"],\"total\":\"drop:int\"},\"ct\":\"application/json\",\"headers\":{\"content-encoding\":[\"drop:str:l8\"],\"content-type\":[\"drop:str:l32\"]},\"size\":\"lmax\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

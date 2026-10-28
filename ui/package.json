@@ -1,0 +1,34 @@
+{
+  "name": "traffic-twin-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "license": "Apache-2.0",
+  "scripts": {
+    "dev": "vite",
+    "dev:demo": "vite --mode demo",
+    "build": "vite build",
+    "build:demo": "vite build --mode demo",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:a11y": "vite build --mode demo && playwright test -c playwright.a11y.config.ts",
+    "test:e2e": "npm run e2e:prepare && playwright test",
+    "e2e:prepare": "vite build && go build -o e2e/.bin/tt ../cmd/tt && go test -c -tags e2e -o e2e/.bin/core.test ./e2e/core"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@scalar/api-reference": "1.76.0",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "@tsconfig/svelte": "5.0.8",
+    "axe-core": "4.11.4",
+    "redoc": "2.5.1",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
+    "swagger-ui-dist": "5.34.0",
+    "typescript": "6.0.3",
+    "vite": "8.3.4",
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0105-path-auto-words-patterns",
+  "category": "path",
+  "description": "auto_words regex: lowercase words joined by single - or _, and v + 1..3 digits; everything else is dropped.",
+  "spec": ["sanitizer.md#4.2"],
+  "policy_ref": "policies/auto-words.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/order-items/order_items/a-b_c/v1/v999/v1000/Orders/order--items/-orders/orders-/ord3rs/V1/x",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/order-items/order_items/a-b_c/v1/v999/{drop:str:l8}/{drop:str:l8}/{drop:str:l32}/{drop:str:l8}/{drop:str:l8}/{drop:str:l8}/{drop:str:l8}/x\",\"req\":{\"path\":\"/orders/order-items/order_items/a-b_c/v1/v999/{drop:str:l8}/{drop:str:l8}/{drop:str:l32}/{drop:str:l8}/{drop:str:l8}/{drop:str:l8}/{drop:str:l8}/x\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

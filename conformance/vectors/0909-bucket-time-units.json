@@ -1,0 +1,101 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0909-bucket-time-units",
+  "category": "actions",
+  "description": "bucket(time) units year, month, day, hour.",
+  "spec": ["sanitizer.md#5.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "body": [
+          {
+            "path": "$.d",
+            "action": {
+              "action": "bucket",
+              "kind": "time",
+              "unit": "day"
+            }
+          },
+          {
+            "path": "$.h",
+            "action": {
+              "action": "bucket",
+              "kind": "time",
+              "unit": "hour"
+            }
+          },
+          {
+            "path": "$.m",
+            "action": {
+              "action": "bucket",
+              "kind": "time",
+              "unit": "month"
+            }
+          },
+          {
+            "path": "$.y",
+            "action": {
+              "action": "bucket",
+              "kind": "time",
+              "unit": "year"
+            }
+          }
+        ]
+      }
+    },
+    "services": []
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ5IjoiMjAyNi0xMC0xOVQxMDoxNTowMFoiLCJtIjoiMjAyNi0xMC0xOVQxMDoxNTowMFoiLCJkIjoiMjAyNi0xMC0xOVQxMDoxNTowMFoiLCJoIjoiMjAyNi0xMC0xOVQxMDoxNTowMFoifQ==",
+      "text": "{\"y\":\"2026-10-19T10:15:00Z\",\"m\":\"2026-10-19T10:15:00Z\",\"d\":\"2026-10-19T10:15:00Z\",\"h\":\"2026-10-19T10:15:00Z\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"d\":\"time:2026-10-19\",\"h\":\"time:2026-10-19T10\",\"m\":\"time:2026-10\",\"y\":\"time:2026\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

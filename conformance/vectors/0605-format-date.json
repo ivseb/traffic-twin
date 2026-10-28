@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0605-format-date",
+  "category": "formats",
+  "description": "date: shape only, no calendar check.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiIyMDI2LTEwLTE5IiwidjAxIjoiMjAyNi0xMy00NSIsInYwMiI6IjI2LTEwLTE5IiwidjAzIjoiMjAyNi0xLTE5IiwidjA0IjoiMjAyNi8xMC8xOSJ9",
+      "text": "{\"v00\":\"2026-10-19\",\"v01\":\"2026-13-45\",\"v02\":\"26-10-19\",\"v03\":\"2026-1-19\",\"v04\":\"2026/10/19\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:date\",\"v01\":\"drop:str:date\",\"v02\":\"drop:str:l8\",\"v03\":\"drop:str:l32\",\"v04\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

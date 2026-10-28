@@ -1,0 +1,105 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0963-rules-headers-by-group",
+  "category": "rules",
+  "description": "Header rules follow the same group order (operation, service, global).",
+  "spec": ["sanitizer.md#5.0", "sanitizer.md#8.1"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "headers": {
+          "x-a": {
+            "action": "keep"
+          },
+          "x-b": {
+            "action": "keep"
+          },
+          "x-c": {
+            "action": "keep"
+          }
+        }
+      }
+    },
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "headers": {
+            "x-b": {
+              "action": "hmac",
+              "domain": "id"
+            }
+          }
+        },
+        "ops": [
+          {
+            "op": "GET /orders",
+            "request": {
+              "headers": {
+                "x-a": {
+                  "action": "hmac",
+                  "domain": "op"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["X-A", "a"],
+      ["X-B", "b"],
+      ["X-C", "c"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders\",\"req\":{\"headers\":{\"x-a\":[\"tk1:k1:Dn0r04QHiNz58-ND8MsE5A\"],\"x-b\":[\"tk1:k1:YICOQHa5HlxMXt_fDswXIg\"],\"x-c\":[\"keep:c\"]},\"path\":\"/orders\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

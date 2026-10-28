@@ -1,0 +1,115 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0804-hmac-cross-part",
+  "category": "hmac",
+  "description": "Same domain and value in path, query, header, cookie and body: one token everywhere.",
+  "spec": ["sanitizer.md#5.4", "sanitizer.md#7.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /orders/{id}",
+            "request": {
+              "path": {
+                "id": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              },
+              "query": {
+                "ref": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              },
+              "headers": {
+                "x-order": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              },
+              "cookies": {
+                "last": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              },
+              "body": [
+                {
+                  "path": "$.orderId",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders/ORD-2026-000184",
+    "raw_query": "ref=ORD-2026-000184",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["X-Order", "ORD-2026-000184"],
+      ["Cookie", "last=ORD-2026-000184"]
+    ],
+    "req_body": {
+      "b64": "eyJvcmRlcklkIjoiT1JELTIwMjYtMDAwMTg0In0=",
+      "text": "{\"orderId\":\"ORD-2026-000184\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /orders/{id}\",\"req\":{\"body\":{\"orderId\":\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\"},\"cookies\":{\"last\":[\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"],\"x-order\":[\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\"]},\"path\":\"/orders/{tk1:k1:5QWSSNfrkE8dHsTh40ixTw}\",\"query\":{\"ref\":[\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\"]},\"size\":\"l32\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Library</OutputType>
+    <RootNamespace>TrafficTwin.StartupHook</RootNamespace>
+    <AssemblyName>TrafficTwin.StartupHook</AssemblyName>
+    <Description>Zero-code injection for .NET: DOTNET_STARTUP_HOOKS entry point of the traffic-twin SDK.</Description>
+    <IsPackable>false</IsPackable>
+    <!-- Publish this project: the output folder (hook + SDK + ASP.NET Core integration) is what the init image carries. -->
+    <GenerateDependencyFile>true</GenerateDependencyFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Both go next to the hook so the folder is self-contained; the hook itself only needs the SDK. -->
+    <ProjectReference Include="../TrafficTwin.Sdk/TrafficTwin.Sdk.csproj" />
+    <ProjectReference Include="../TrafficTwin.Sdk.AspNetCore/TrafficTwin.Sdk.AspNetCore.csproj" />
+  </ItemGroup>
+</Project>

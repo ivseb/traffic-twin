@@ -1,0 +1,961 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/schemas/pack-manifest.v1.schema.json",
+  "title": "traffic-twin pack manifest (tt.pack/v1)",
+  "description": "manifest.json of a twin pack (revision 1.2). $defs also define manifest.sig.json (tt.pack.sig/v1), faults.json (tt.faults/v1), scenarios.json (tt.scenarios/v1), gate-report.json (tt.gate-report/v1), the lines of world.jsonl (tt.world/v1) and the x-tt-value contract extension.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "pack_id",
+    "created_at",
+    "tt_version",
+    "seed",
+    "k_min",
+    "source",
+    "services",
+    "rules",
+    "world",
+    "faults",
+    "gate_report",
+    "files"
+  ],
+  "properties": {
+    "format": {
+      "const": "tt.pack/v1"
+    },
+    "pack_id": {
+      "type": "string",
+      "pattern": "^pk-[0-9A-Za-z-]{1,60}$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "not_after": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional end of validity, covered by the signature. Verifiers refuse the pack when their clock is at or past this instant. Must be later than created_at."
+    },
+    "tt_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+][0-9A-Za-z.-]+)?$"
+    },
+    "seed": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "k_min": {
+      "type": "integer",
+      "minimum": 2
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "window",
+        "policies"
+      ],
+      "properties": {
+        "window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "to"
+          ],
+          "properties": {
+            "from": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "to": {
+              "type": "string",
+              "format": "date-time"
+            }
+          }
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "version"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "services": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "contract"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 518,
+            "pattern": "^([a-z0-9][a-z0-9._-]{0,62}|host:[a-z0-9.-]{1,253}(:[0-9]{1,5})?|host:(\\{\\*\\}|[a-z0-9-]{1,63})(\\.(\\{\\*\\}|[a-z0-9-]{1,63}))*(:[0-9]{1,5})?|host:ip:(private|public)(:[0-9]{1,5})?)$"
+          },
+          "contract": {
+            "$ref": "#/$defs/relPath"
+          },
+          "upstream_alias": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+          }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "approved"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relPath"
+        },
+        "approved": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^r-[0-9]{4,}$"
+          }
+        }
+      }
+    },
+    "world": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "customers"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/relPath",
+          "description": "world.jsonl, canonical JSON lines."
+        },
+        "customers": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "faults": {
+      "$ref": "#/$defs/relPath"
+    },
+    "gate_report": {
+      "$ref": "#/$defs/relPath"
+    },
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "sha256",
+          "bytes"
+        ],
+        "properties": {
+          "path": {
+            "$ref": "#/$defs/relPath"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "bytes": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "$ref": "#/$defs/relPath"
+    },
+    "group": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]{0,62}$",
+      "description": "Optional (revision 1.6): the group (team) the pack was built for. Absent for packs of every group and multi-group packs. A mock in console mode refuses a pack of another group."
+    }
+  },
+  "$defs": {
+    "relPath": {
+      "type": "string",
+      "maxLength": 255,
+      "pattern": "^[A-Za-z0-9_-][A-Za-z0-9._-]*(/[A-Za-z0-9_-][A-Za-z0-9._-]*)*$",
+      "description": "Relative path; no component may start with a dot, so absolute paths and .. are impossible."
+    },
+    "signature": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "alg",
+        "kid",
+        "manifest_sha256",
+        "sig"
+      ],
+      "properties": {
+        "format": {
+          "const": "tt.pack.sig/v1"
+        },
+        "alg": {
+          "const": "Ed25519"
+        },
+        "kid": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9._-]{1,64}$"
+        },
+        "manifest_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "sig": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]{86}$"
+        }
+      },
+      "description": "Ed25519 signature by tt keyguard over \"tt.pack/v1\" || 0x00 || manifest.json bytes."
+    },
+    "faults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "ops"
+      ],
+      "properties": {
+        "format": {
+          "const": "tt.faults/v1"
+        },
+        "ops": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "service",
+              "op"
+            ],
+            "properties": {
+              "service": {
+                "type": "string"
+              },
+              "op": {
+                "type": "string",
+                "pattern": "^[A-Z]{1,16} /[!-~]*$"
+              },
+              "statuses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "status",
+                    "p"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    },
+                    "p": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "example": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+                    }
+                  }
+                }
+              },
+              "net_errors": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "kind",
+                    "p"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "enum": [
+                        "timeout",
+                        "reset",
+                        "refused",
+                        "dns",
+                        "tls",
+                        "other"
+                      ]
+                    },
+                    "p": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  }
+                }
+              },
+              "latency_ms": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "p50": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "p95": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "p99": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "lognormal": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "median",
+                      "sigma"
+                    ],
+                    "properties": {
+                      "median": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "sigma": {
+                        "type": "number",
+                        "minimum": 0
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "gateReport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "format",
+        "pack_id",
+        "verdict",
+        "k_min",
+        "checks"
+      ],
+      "properties": {
+        "format": {
+          "const": "tt.gate-report/v1"
+        },
+        "pack_id": {
+          "type": "string",
+          "pattern": "^pk-[0-9A-Za-z-]{1,60}$"
+        },
+        "verdict": {
+          "enum": [
+            "pass",
+            "fail"
+          ]
+        },
+        "k_min": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "checks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "status",
+              "findings"
+            ],
+            "properties": {
+              "id": {
+                "enum": [
+                  "provenance",
+                  "reverse-hmac",
+                  "pii-detectors",
+                  "k-thresholds",
+                  "rules-approved"
+                ]
+              },
+              "status": {
+                "enum": [
+                  "pass",
+                  "warn",
+                  "fail"
+                ]
+              },
+              "strings_checked": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "findings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "file",
+                    "pointer",
+                    "reason"
+                  ],
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "pointer": {
+                      "type": "string"
+                    },
+                    "reason": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "by": {
+                "enum": [
+                  "tt-core",
+                  "keyguard"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "worldLine": {
+      "description": "One line of world.jsonl.",
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "format",
+            "seed",
+            "t0"
+          ],
+          "properties": {
+            "type": {
+              "const": "meta"
+            },
+            "format": {
+              "const": "tt.world/v1"
+            },
+            "seed": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "t0": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "id",
+            "archetype",
+            "profile"
+          ],
+          "properties": {
+            "type": {
+              "const": "customer"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^[A-Z]{2,5}-SYN-[0-9]{4,}$"
+            },
+            "archetype": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "pattern": "^arch-[0-9A-Za-z-]{1,32}$"
+            },
+            "profile": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "entity",
+            "id",
+            "customer_id",
+            "state"
+          ],
+          "properties": {
+            "type": {
+              "const": "entity"
+            },
+            "entity": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^([A-Z]{2,5}-SYN-[0-9]{4,}|[A-Za-z0-9._:/+=#@ -]{1,256})$"
+            },
+            "customer_id": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2,5}-SYN-[0-9]{4,}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "state": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type",
+            "entity",
+            "id",
+            "at",
+            "seq",
+            "state"
+          ],
+          "properties": {
+            "type": {
+              "const": "history"
+            },
+            "entity": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^([A-Z]{2,5}-SYN-[0-9]{4,}|[A-Za-z0-9._:/+=#@ -]{1,256})$"
+            },
+            "at": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+            },
+            "seq": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "rule_id": {
+              "type": "string",
+              "pattern": "^r-[0-9]{4,}$"
+            },
+            "outcome": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+              "description": "Outcome (branch) of the rule firing that applied this change; present when rule_id is."
+            },
+            "effect_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "state": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "An effect of a rule firing that started before t0 and is still due after t0 (docs/spec/pack.md section 5).",
+          "required": [
+            "type",
+            "due_offset_s",
+            "seq",
+            "rule_id",
+            "outcome",
+            "effect_id",
+            "entity",
+            "id",
+            "customer_id"
+          ],
+          "properties": {
+            "type": {
+              "const": "pending"
+            },
+            "due_offset_s": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 316224000,
+              "description": "Seconds after the session t0 at which the effect applies."
+            },
+            "seq": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Unique among pending lines; ties on due_offset_s apply in seq order."
+            },
+            "rule_id": {
+              "type": "string",
+              "pattern": "^r-[0-9]{4,}$"
+            },
+            "outcome": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "effect_id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "entity": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "id": {
+              "type": "string",
+              "pattern": "^([A-Z]{2,5}-SYN-[0-9]{4,}|[A-Za-z0-9._:/+=#@ -]{1,256})$",
+              "description": "Entity changed by the effect; for a create effect, the id assigned in advance by the generator."
+            },
+            "customer_id": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[A-Z]{2,5}-SYN-[0-9]{4,}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "vars": {
+              "type": "object",
+              "description": "Values of cause.bind variables used by the effect.",
+              "propertyNames": {
+                "pattern": "^[a-z][a-z0-9_]{0,31}$"
+              },
+              "additionalProperties": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "effect_ids": {
+              "type": "object",
+              "description": "Ids of the entities created or targeted by effects of the same firing, for ${effect:...} references.",
+              "propertyNames": {
+                "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+              },
+              "additionalProperties": {
+                "type": "string",
+                "pattern": "^([A-Z]{2,5}-SYN-[0-9]{4,}|[A-Za-z0-9._:/+=#@ -]{1,256})$"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "xTtValue": {
+      "description": "x-tt-value contract extension (docs/spec/pack.md section 4.1).",
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "id",
+            "enum",
+            "bucket",
+            "shape"
+          ]
+        },
+        "domain": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+        },
+        "len_class": {
+          "enum": [
+            "l8",
+            "l32",
+            "l128",
+            "l1024",
+            "lmax"
+          ]
+        },
+        "format": {
+          "enum": [
+            "uuid",
+            "jwt",
+            "email",
+            "datetime",
+            "date",
+            "url",
+            "ipv4",
+            "phone",
+            "digits",
+            "hex"
+          ]
+        },
+        "enum": {
+          "type": "array",
+          "maxItems": 1024,
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          }
+        },
+        "enum_partial": {
+          "type": "boolean"
+        },
+        "bounds": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "number"
+          }
+        },
+        "bucket_p": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 34,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "unit": {
+          "enum": [
+            "year",
+            "month",
+            "day",
+            "hour"
+          ]
+        }
+      }
+    },
+    "sessionFaults": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Same shape as the control API Faults object.",
+      "required": [
+        "mode"
+      ],
+      "properties": {
+        "mode": {
+          "enum": [
+            "observed",
+            "off",
+            "custom"
+          ]
+        },
+        "rules": {
+          "type": "array",
+          "maxItems": 256,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "service",
+              "op",
+              "p"
+            ],
+            "properties": {
+              "service": {
+                "type": "string",
+                "minLength": 1
+              },
+              "op": {
+                "type": "string",
+                "pattern": "^(\\*|[A-Z]{1,16} /[!-~]*)$"
+              },
+              "status": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 599
+              },
+              "net_error": {
+                "enum": [
+                  "timeout",
+                  "reset",
+                  "refused",
+                  "dns",
+                  "tls",
+                  "other"
+                ]
+              },
+              "latency_ms": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "p": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "times": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "example": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                "description": "Named example of the contract for the status (mock 1.12)."
+              },
+              "body": {
+                "type": [
+                  "object",
+                  "array",
+                  "string"
+                ],
+                "description": "Error body typed by a person (mock 1.12): wins over example; at most 16 KiB."
+              }
+            },
+            "not": {
+              "required": [
+                "status",
+                "net_error"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "scenarios": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "scenarios.json (tt.scenarios/v1): presets of a test starting point, applied with the control API.",
+      "required": [
+        "format",
+        "scenarios"
+      ],
+      "properties": {
+        "format": {
+          "const": "tt.scenarios/v1"
+        },
+        "scenarios": {
+          "type": "array",
+          "maxItems": 1000,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "name"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "description": {
+                "type": "string",
+                "maxLength": 1000
+              },
+              "customer": {
+                "type": "string",
+                "pattern": "^[A-Z]{2,5}-SYN-[0-9]{4,}$"
+              },
+              "archetype": {
+                "type": "string",
+                "pattern": "^arch-[0-9A-Za-z-]{1,32}$"
+              },
+              "seed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "faults": {
+                "$ref": "#/$defs/sessionFaults"
+              },
+              "outcomes": {
+                "type": "array",
+                "maxItems": 256,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "rule",
+                    "outcome"
+                  ],
+                  "properties": {
+                    "rule": {
+                      "type": "string",
+                      "pattern": "^r-[0-9]{4,}$"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                    },
+                    "times": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "default": 1
+                    }
+                  }
+                }
+              }
+            },
+            "not": {
+              "required": [
+                "customer",
+                "archetype"
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

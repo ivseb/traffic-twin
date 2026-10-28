@@ -1,0 +1,1953 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ivseb/traffic-twin/schemas/rules.v1.schema.json",
+  "title": "traffic-twin behaviour rules (tt.rules/v1)",
+  "description": "Entities (with relations, ownership-aware reads and list shapes) plus cause/effect and batch rules (revision 1.6: pre-existing entities per customer, keyed state without an id, removal effects, reads selected by request body members). Delays are figurative (decision D1): a single duration or a {min, max} range drawn with the seed. Cross-field checks (outcome probabilities sum to 1, referenced effects exist and belong to the same outcome, no cycles in after_effect, ${effect:...} references only to earlier effects of the same chain, relation targets exist) are enforced by tt-core and by pack readers, not by this schema.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "entities",
+    "rules"
+  ],
+  "properties": {
+    "format": {
+      "const": "tt.rules/v1"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "to": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "entities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/entity"
+      }
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/causalRule"
+          },
+          {
+            "$ref": "#/$defs/batchRule"
+          }
+        ]
+      }
+    },
+    "attributes": {
+      "type": "array",
+      "maxItems": 64,
+      "items": {
+        "$ref": "#/$defs/attribute"
+      }
+    },
+    "aggregates": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/aggregate"
+      }
+    },
+    "lists": {
+      "type": "array",
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/listOp"
+      }
+    }
+  },
+  "$defs": {
+    "ident": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+    },
+    "ruleId": {
+      "type": "string",
+      "pattern": "^r-[0-9]{4,}$"
+    },
+    "serviceName": {
+      "type": "string",
+      "maxLength": 518,
+      "pattern": "^([a-z0-9][a-z0-9._-]{0,62}|host:[a-z0-9.-]{1,253}(:[0-9]{1,5})?|host:(\\{\\*\\}|[a-z0-9-]{1,63})(\\.(\\{\\*\\}|[a-z0-9-]{1,63}))*(:[0-9]{1,5})?|host:ip:(private|public)(:[0-9]{1,5})?)$"
+    },
+    "op": {
+      "type": "string",
+      "pattern": "^[A-Z]{1,16} /[!-~]*$"
+    },
+    "duration": {
+      "type": "string",
+      "pattern": "^[0-9]{1,6}(s|m|h|d)$"
+    },
+    "ttPath": {
+      "type": "string",
+      "description": "tt-path of sanitizer.md 5.0; .@name and .#text (v1.19) reach the attributes and the mixed text of XML bodies.",
+      "pattern": "^\\$(\\.@?[A-Za-z_][A-Za-z0-9_-]{0,63}|\\.#text|\\.\\*|\\[\\*\\])*$"
+    },
+    "ref": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "path"
+          ],
+          "properties": {
+            "from": {
+              "enum": [
+                "req.body",
+                "resp.body"
+              ]
+            },
+            "path": {
+              "$ref": "#/$defs/ttPath"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "name"
+          ],
+          "properties": {
+            "from": {
+              "enum": [
+                "req.path",
+                "req.query",
+                "req.headers",
+                "req.cookies",
+                "resp.headers",
+                "resp.cookies"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$"
+            },
+            "field": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+            }
+          }
+        }
+      ]
+    },
+    "fieldValues": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": {
+        "$ref": "#/$defs/fieldPath"
+      },
+      "additionalProperties": {
+        "type": [
+          "string",
+          "number",
+          "boolean",
+          "null"
+        ]
+      }
+    },
+    "review": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "magnitude": {
+      "enum": [
+        "seconds",
+        "minutes",
+        "hours",
+        "days"
+      ]
+    },
+    "entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "service",
+        "id_domain",
+        "id_field",
+        "id_prefix"
+      ],
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/ident"
+        },
+        "service": {
+          "$ref": "#/$defs/serviceName"
+        },
+        "id_domain": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+        },
+        "created_by": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "op",
+            "id"
+          ],
+          "properties": {
+            "op": {
+              "$ref": "#/$defs/op"
+            },
+            "id": {
+              "$ref": "#/$defs/ref"
+            },
+            "state": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "from",
+                "path"
+              ],
+              "properties": {
+                "from": {
+                  "const": "req.body"
+                },
+                "path": {
+                  "$ref": "#/$defs/ttPath"
+                }
+              }
+            },
+            "defaults": {
+              "$ref": "#/$defs/fieldValues"
+            }
+          }
+        },
+        "seed": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "per_customer",
+            "subjects"
+          ],
+          "description": "Rules v1.6: objects that exist before any session, per customer (an entity no write creates, read by its owner). The world generator gives every synthetic customer a number of them drawn from per_customer.",
+          "properties": {
+            "per_customer": {
+              "type": "array",
+              "minItems": 1,
+              "maxItems": 16,
+              "description": "Buckets of objects per customer and their shares (sum 1, checked by tt-core); every bucket was seen for at least k_min subjects.",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "n",
+                  "share"
+                ],
+                "properties": {
+                  "n": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,3})(-[1-9][0-9]{0,3}|\\+)?$",
+                    "description": "\"0\", \"3\", \"2-5\" (both included) or \"11+\"."
+                  },
+                  "share": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  }
+                }
+              }
+            },
+            "values": {
+              "type": "object",
+              "maxProperties": 16,
+              "description": "Shares of the clear values of some fields of the objects (each value seen for at least k_min owners): field path -> value -> share (sum 1).",
+              "propertyNames": {
+                "$ref": "#/$defs/fieldPath"
+              },
+              "additionalProperties": {
+                "type": "object",
+                "minProperties": 1,
+                "maxProperties": 64,
+                "propertyNames": {
+                  "maxLength": 256
+                },
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              }
+            },
+            "subjects": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Exact number of subjects the distribution counts."
+            }
+          }
+        },
+        "key": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Rules v1.6: the records have no id of their own; a record is identified by its owner (the session customer) and/or the values of fields. Excludes created_by.",
+          "properties": {
+            "owner": {
+              "type": "boolean"
+            },
+            "fields": {
+              "type": "array",
+              "maxItems": 8,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+              }
+            }
+          }
+        },
+        "upserted_by": {
+          "type": "array",
+          "maxItems": 16,
+          "description": "Rules v1.6, with key: writes that create or replace the record whose key they carry.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op"
+            ],
+            "properties": {
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "service": {
+                "$ref": "#/$defs/serviceName"
+              },
+              "key": {
+                "$ref": "#/$defs/keyRefs"
+              },
+              "state": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "from",
+                  "path"
+                ],
+                "properties": {
+                  "from": {
+                    "const": "req.body"
+                  },
+                  "path": {
+                    "$ref": "#/$defs/ttPath"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "read_by": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "at"
+            ],
+            "properties": {
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "service": {
+                "$ref": "#/$defs/serviceName",
+                "description": "Service that exposes the operation; default: the entity's service."
+              },
+              "by": {
+                "$ref": "#/$defs/selector",
+                "description": "Absent: every entity owned by the session's customer (lists), or the record of a keyed entity selected by key."
+              },
+              "at": {
+                "$ref": "#/$defs/ref"
+              },
+              "hidden_when": {
+                "$ref": "#/$defs/fieldValues",
+                "description": "Entities whose fields equal all these literal values are not exposed by this operation."
+              },
+              "scope": {
+                "enum": [
+                  "any",
+                  "owner"
+                ],
+                "default": "any",
+                "description": "owner: only entities owned by the session's customer (or without owner) are exposed."
+              },
+              "foreign": {
+                "enum": [
+                  "not_found",
+                  "forbidden"
+                ],
+                "default": "not_found",
+                "description": "With scope owner: answer when the selection designates another customer's entity or owner."
+              },
+              "foreign_example": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                "description": "Named contract example used for the foreign answer (default: the first example of that status)."
+              },
+              "not_found_example": {
+                "type": "string",
+                "pattern": "^[a-z0-9][a-z0-9-]{0,62}$",
+                "description": "Named contract example used when a single-object read finds nothing (default: the first 404 example)."
+              },
+              "list": {
+                "$ref": "#/$defs/listShape"
+              },
+              "key": {
+                "$ref": "#/$defs/keyRefs",
+                "description": "Rules v1.6, keyed entities: the request parameters holding the values of the key fields."
+              },
+              "removed_status": {
+                "type": "integer",
+                "minimum": 400,
+                "maximum": 599,
+                "description": "Rules v1.6: status of a single-object read of an entity removed in the session (default: as an entity that does not exist)."
+              }
+            }
+          }
+        },
+        "id_field": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+        },
+        "id_prefix": {
+          "type": "string",
+          "pattern": "^[A-Z]{2,5}-SYN-$"
+        },
+        "relations": {
+          "type": "array",
+          "maxItems": 32,
+          "description": "Fields of this entity that hold the id of another entity (foreign keys).",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "field",
+              "entity"
+            ],
+            "properties": {
+              "field": {
+                "$ref": "#/$defs/fieldPath"
+              },
+              "entity": {
+                "$ref": "#/$defs/ident"
+              },
+              "many": {
+                "type": "boolean",
+                "default": false,
+                "description": "true: the field holds an array of ids."
+              }
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "draft",
+        "approved",
+        "rejected",
+        "stale",
+        "superseded"
+      ]
+    },
+    "causalRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "title",
+        "cause",
+        "effects",
+        "outcomes",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ruleId"
+        },
+        "kind": {
+          "const": "causal"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "origin": {
+          "enum": [
+            "mined",
+            "manual"
+          ],
+          "description": "Who wrote the rule (v1.4): mined (default when absent) or manual (rule editor)."
+        },
+        "supersedes": {
+          "$ref": "#/$defs/ruleId"
+        },
+        "cause": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "service",
+            "op",
+            "when"
+          ],
+          "properties": {
+            "service": {
+              "$ref": "#/$defs/serviceName"
+            },
+            "op": {
+              "$ref": "#/$defs/op"
+            },
+            "when": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "status"
+              ],
+              "properties": {
+                "status": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  }
+                },
+                "match": {
+                  "$ref": "#/$defs/matches",
+                  "description": "Rules v1.9: conditions on the request and on the customer; all must hold or the rule does not fire."
+                }
+              }
+            },
+            "bind": {
+              "type": "object",
+              "propertyNames": {
+                "pattern": "^[a-z][a-z0-9_]{0,31}$"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/ref"
+              }
+            }
+          }
+        },
+        "effects": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "after"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/ident"
+              },
+              "entity": {
+                "$ref": "#/$defs/ident"
+              },
+              "create": {
+                "$ref": "#/$defs/effectValues"
+              },
+              "target": {
+                "$ref": "#/$defs/ident"
+              },
+              "target_id": {
+                "$ref": "#/$defs/bindRef",
+                "description": "Update the existing entity whose id is this bound variable (alternative to target)."
+              },
+              "target_key": {
+                "type": "object",
+                "maxProperties": 8,
+                "propertyNames": {
+                  "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+                },
+                "additionalProperties": {
+                  "type": "string",
+                  "maxLength": 256
+                },
+                "description": "Rules v1.8: the record of a keyed entity (key/upserted_by): every key field with a bound ${var} or a literal; {} is the customer's singleton. With set the record is created when missing; with remove it is deleted."
+              },
+              "set": {
+                "$ref": "#/$defs/effectValues",
+                "description": "Values: literals, ${var}, ${effect:id}; since v1.7 also ${not:field}, the opposite of the target's boolean field (a toggle); since v1.10 derived values."
+              },
+              "respond": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "service",
+                  "op",
+                  "status"
+                ],
+                "description": "Response effect (v1.4): from the instant it applies, the session's calls to service/op answer status (the named contract example, else the first of that status; body, when present, wins) with probability p each (default 1), for at most times calls (0 or absent: no limit). Used for 'the next call returns Y' (times 1) and 'errors with frequency p'.",
+                "properties": {
+                  "service": {
+                    "$ref": "#/$defs/serviceName"
+                  },
+                  "op": {
+                    "$ref": "#/$defs/op"
+                  },
+                  "status": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 599
+                  },
+                  "p": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "maximum": 1
+                  },
+                  "times": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 1000000
+                  },
+                  "example": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9][a-z0-9-]{0,62}$"
+                  },
+                  "body": {
+                    "type": [
+                      "object",
+                      "array",
+                      "string"
+                    ],
+                    "description": "Example error body typed by a person (rules 1.10): wins over example; at most 16 KiB; the gate runs the personal data detectors on it."
+                  },
+                  "limit": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "n"
+                    ],
+                    "description": "Rules v1.8: a counter per key. Every application of the effect counts one call for its key; a call of service/op answers status when at least n counted calls with the same key fall within window before it (absent: the whole session). key is a ${var} bound to the request of the cause (then service/op are the cause's); absent: per customer. Excludes times.",
+                    "properties": {
+                      "n": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 100000
+                      },
+                      "window": {
+                        "type": "string",
+                        "pattern": "^[0-9]{1,6}(s|m|h|d)$"
+                      },
+                      "key": {
+                        "$ref": "#/$defs/bindRef"
+                      }
+                    }
+                  },
+                  "until": {
+                    "const": true,
+                    "description": "Rules v1.9: a precondition. From the start of the session the calls answer status until the effect applies (the cause was seen); excludes times, limit and p."
+                  }
+                }
+              },
+              "remove": {
+                "const": true,
+                "description": "Rules v1.6: the target entity (target or target_id) is removed: it leaves the lists and its single-object reads answer as removed (read_by.removed_status, else not found)."
+              },
+              "where": {
+                "$ref": "#/$defs/fieldValues",
+                "description": "Rules v1.7: a guard of a target or target_id set: the effect applies only while the entity's fields equal these literal values (a later spontaneous step of a lifecycle does not undo the state a write set)."
+              },
+              "after_effect": {
+                "$ref": "#/$defs/ident"
+              },
+              "after": {
+                "$ref": "#/$defs/delay"
+              },
+              "target_all": {
+                "const": true,
+                "description": "Rules v1.9: every entity of entity owned by the customer of the cause that matches where gets set (or is removed). Cannot be the target or ${effect:} of another effect."
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "create",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "set"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "remove"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "where"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "target",
+                  "set",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "remove"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "target_id",
+                  "set",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "remove"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "respond"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "entity"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "set"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "remove"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "where"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "remove",
+                  "target",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "set"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "where"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "remove",
+                  "target_id",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "set"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "where"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "target_key",
+                  "set",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "remove"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "remove",
+                  "target_key",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "set"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "where"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_all"
+                      ]
+                    }
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "target_all",
+                  "entity"
+                ],
+                "not": {
+                  "anyOf": [
+                    {
+                      "required": [
+                        "create"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_id"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "respond"
+                      ]
+                    },
+                    {
+                      "required": [
+                        "target_key"
+                      ]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "outcomes": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "p",
+              "effects"
+            ],
+            "properties": {
+              "name": {
+                "$ref": "#/$defs/ident"
+              },
+              "p": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "effects": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ident"
+                }
+              },
+              "when": {
+                "$ref": "#/$defs/matches",
+                "description": "Rules v1.9: the outcome is eligible only when all conditions hold. Eligible outcomes are those whose when holds; when none does, the outcomes without when. The draw is weighted by p among the eligible ones; p are joint probabilities and sum to 1 over all outcomes."
+              }
+            }
+          }
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "counts"
+          ],
+          "properties": {
+            "counts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "causes",
+                "distinct_subjects",
+                "outcomes"
+              ],
+              "properties": {
+                "causes": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "distinct_subjects": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "outcomes": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "key_matches": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "keys": {
+              "type": "array",
+              "maxItems": 64,
+              "description": "Correlation keys found by the miner: two event locations that carry the same token (same HMAC domain).",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "domain",
+                  "from",
+                  "to",
+                  "matches"
+                ],
+                "properties": {
+                  "domain": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_-]{0,31}$"
+                  },
+                  "from": {
+                    "$ref": "#/$defs/keyEnd"
+                  },
+                  "to": {
+                    "$ref": "#/$defs/keyEnd"
+                  },
+                  "matches": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Exact count of causes whose token was found at both ends."
+                  }
+                }
+              }
+            },
+            "hints": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "magnitude": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "$ref": "#/$defs/magnitude"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "review": {
+          "$ref": "#/$defs/review"
+        }
+      }
+    },
+    "batchRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "status",
+        "title",
+        "schedule",
+        "entity",
+        "set",
+        "fraction",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/ruleId"
+        },
+        "kind": {
+          "const": "batch"
+        },
+        "status": {
+          "$ref": "#/$defs/status"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "origin": {
+          "enum": [
+            "mined",
+            "manual"
+          ],
+          "description": "Who wrote the rule (v1.4): mined (default when absent) or manual (rule editor)."
+        },
+        "supersedes": {
+          "$ref": "#/$defs/ruleId"
+        },
+        "schedule": {
+          "type": "string",
+          "pattern": "^[0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+ [0-9*,/-]+$"
+        },
+        "entity": {
+          "$ref": "#/$defs/ident"
+        },
+        "where": {
+          "$ref": "#/$defs/fieldValues"
+        },
+        "set": {
+          "$ref": "#/$defs/fieldValues"
+        },
+        "fraction": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 1
+        },
+        "evidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "counts"
+          ],
+          "properties": {
+            "counts": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "runs",
+                "entities_changed"
+              ],
+              "properties": {
+                "runs": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "entities_changed": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "hints": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "schedule_confidence": {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "review": {
+          "$ref": "#/$defs/review"
+        }
+      }
+    },
+    "fieldPath": {
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}(\\.[A-Za-z_][A-Za-z0-9_]{0,63}){0,7}$",
+      "description": "Dotted path into the entity: a.b is field b inside object a."
+    },
+    "delay": {
+      "description": "Figurative delay: one duration, or a range {min, max} (min <= max) from which the world generator and the mock draw a uniform whole number of seconds with the seed.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/duration"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "min",
+            "max"
+          ],
+          "properties": {
+            "min": {
+              "$ref": "#/$defs/duration"
+            },
+            "max": {
+              "$ref": "#/$defs/duration"
+            }
+          }
+        }
+      ]
+    },
+    "bindRef": {
+      "type": "string",
+      "pattern": "^\\$\\{[a-z][a-z0-9_]{0,31}\\}$",
+      "description": "A variable bound by cause.bind, written ${name}."
+    },
+    "nameRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "name"
+      ],
+      "properties": {
+        "from": {
+          "enum": [
+            "req.path",
+            "req.query",
+            "req.headers",
+            "req.cookies"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$"
+        }
+      },
+      "description": "A named request parameter (used by list pagination)."
+    },
+    "selector": {
+      "description": "How a read selects entities: a ref (by id, or by a top-level field with `field`), or a request parameter compared with the owner customer id (`owner: true`). Since v1.6 a request body member outside arrays selects too ($.filters.customerId, $.variables.id), by id, field or owner.",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ref"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "name",
+            "owner"
+          ],
+          "properties": {
+            "from": {
+              "enum": [
+                "req.path",
+                "req.query",
+                "req.headers",
+                "req.cookies"
+              ]
+            },
+            "name": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9!#$%&'*+.^_`|~-]{1,64}$"
+            },
+            "owner": {
+              "const": true
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "from",
+            "path"
+          ],
+          "minProperties": 3,
+          "properties": {
+            "from": {
+              "const": "req.body"
+            },
+            "path": {
+              "$ref": "#/$defs/ttPath"
+            },
+            "field": {
+              "type": "string",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+            },
+            "owner": {
+              "const": true
+            }
+          }
+        }
+      ]
+    },
+    "listShape": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Envelope and pagination of a list read (at path ends with [*]).",
+      "properties": {
+        "count": {
+          "$ref": "#/$defs/ttPath",
+          "description": "Where the number of items of this page goes in resp.body."
+        },
+        "total": {
+          "$ref": "#/$defs/ttPath",
+          "description": "Where the number of matching items (all pages) goes in resp.body."
+        },
+        "limit": {
+          "$ref": "#/$defs/nameRef"
+        },
+        "offset": {
+          "$ref": "#/$defs/nameRef"
+        },
+        "page": {
+          "$ref": "#/$defs/nameRef",
+          "description": "1-based page number."
+        },
+        "cursor": {
+          "$ref": "#/$defs/nameRef",
+          "description": "Opaque cursor parameter; values are minted by the mock (rules.md section 2.4)."
+        },
+        "next_cursor": {
+          "$ref": "#/$defs/ttPath",
+          "description": "Where the cursor of the next page goes in resp.body; requires cursor."
+        },
+        "default_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "max_limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000
+        },
+        "order_by": {
+          "$ref": "#/$defs/fieldPath"
+        },
+        "order": {
+          "enum": [
+            "asc",
+            "desc"
+          ]
+        },
+        "filters": {
+          "type": "array",
+          "maxItems": 8,
+          "description": "Rules v1.9: keep the items whose field equals the value of the request parameter, when the request carries it.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "param",
+              "field"
+            ],
+            "properties": {
+              "param": {
+                "$ref": "#/$defs/nameRef"
+              },
+              "field": {
+                "$ref": "#/$defs/fieldPath"
+              }
+            }
+          }
+        }
+      },
+      "dependentRequired": {
+        "next_cursor": [
+          "cursor"
+        ]
+      },
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "offset",
+              "page"
+            ]
+          },
+          {
+            "required": [
+              "offset",
+              "cursor"
+            ]
+          },
+          {
+            "required": [
+              "page",
+              "cursor"
+            ]
+          }
+        ]
+      }
+    },
+    "keyEnd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "op",
+        "at"
+      ],
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/serviceName"
+        },
+        "op": {
+          "$ref": "#/$defs/op"
+        },
+        "at": {
+          "$ref": "#/$defs/ref"
+        }
+      }
+    },
+    "derivedValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "$derive"
+      ],
+      "description": "Derived value (rules 1.10, docs/spec/rules.md 3.15): computed when the effect applies. Arguments are numbers, references (${var}, ${field:path} with [*] for every item, ${effect:id}, ${now}) or nested derived values (at most 4 levels); a text argument only for copy. Cross-field checks (variables bound, effects earlier ancestors, argument counts, offsets, templates) are done by tt-core and the pack loader.",
+      "properties": {
+        "$derive": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "fn"
+          ],
+          "properties": {
+            "fn": {
+              "enum": [
+                "copy",
+                "sum",
+                "count",
+                "add",
+                "sub",
+                "mul",
+                "div",
+                "min",
+                "max",
+                "round",
+                "date",
+                "template"
+              ]
+            },
+            "args": {
+              "type": "array",
+              "maxItems": 8,
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  {
+                    "$ref": "#/$defs/derivedValue"
+                  }
+                ]
+              }
+            },
+            "offset": {
+              "type": "string",
+              "pattern": "^[+-]?[0-9]{1,6}(s|m|h|d)$"
+            },
+            "format": {
+              "enum": [
+                "date",
+                "date-time"
+              ]
+            },
+            "template": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 64
+            },
+            "digits": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 6
+            }
+          }
+        }
+      }
+    },
+    "effectValues": {
+      "type": "object",
+      "maxProperties": 256,
+      "propertyNames": {
+        "$ref": "#/$defs/fieldPath"
+      },
+      "description": "Values of create and set (rules 1.10): scalars, references or derived values.",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": [
+              "string",
+              "number",
+              "boolean",
+              "null"
+            ]
+          },
+          {
+            "$ref": "#/$defs/derivedValue"
+          }
+        ]
+      }
+    },
+    "keyRefs": {
+      "type": "object",
+      "maxProperties": 8,
+      "description": "Key field -> where the request carries its value (a request parameter or a request body member outside arrays).",
+      "propertyNames": {
+        "pattern": "^[A-Za-z_][A-Za-z0-9_]{0,63}$"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/ref"
+      }
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Rules v1.9: one condition. A request value (at: req.body path outside arrays, req.query/req.headers/req.path name) or a customer attribute (customer) is one of in (canonical scalar comparison: a number, also a string that is one, by value) or a number in [min, max). A missing value never matches.",
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/ref"
+        },
+        "customer": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "in": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 64,
+          "items": {
+            "type": [
+              "string",
+              "number",
+              "boolean"
+            ]
+          }
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "at"
+          ]
+        },
+        {
+          "required": [
+            "customer"
+          ]
+        }
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "in"
+          ]
+        },
+        {
+          "required": [
+            "min"
+          ]
+        },
+        {
+          "required": [
+            "max"
+          ]
+        }
+      ]
+    },
+    "matches": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/match"
+      }
+    },
+    "respMember": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "from",
+        "path"
+      ],
+      "properties": {
+        "from": {
+          "const": "resp.body"
+        },
+        "path": {
+          "$ref": "#/$defs/ttPath"
+        }
+      }
+    },
+    "attribute": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "values",
+        "subjects",
+        "fields"
+      ],
+      "description": "Rules v1.9: a customer attribute carried by responses (one value per customer). The world gives each synthetic customer a value drawn from values; the mock keeps one value per session and writes it at every field.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]{0,31}$"
+        },
+        "values": {
+          "type": "object",
+          "minProperties": 2,
+          "maxProperties": 64,
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "subjects": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "fields": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "service",
+              "op",
+              "at"
+            ],
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/serviceName"
+              },
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "at": {
+                "$ref": "#/$defs/respMember"
+              }
+            }
+          }
+        }
+      }
+    },
+    "aggregate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "op",
+        "at"
+      ],
+      "description": "Rules v1.9: a number of a response computed at read time: count of the customer's entities matching where, sum of a numeric field, or the base value moved by by at every successful call of the delta operations.",
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/serviceName"
+        },
+        "op": {
+          "$ref": "#/$defs/op"
+        },
+        "at": {
+          "$ref": "#/$defs/respMember"
+        },
+        "count": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entity"
+          ],
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/ident"
+            },
+            "where": {
+              "$ref": "#/$defs/fieldValues"
+            }
+          }
+        },
+        "sum": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "entity",
+            "field"
+          ],
+          "properties": {
+            "entity": {
+              "$ref": "#/$defs/ident"
+            },
+            "where": {
+              "$ref": "#/$defs/fieldValues"
+            },
+            "field": {
+              "$ref": "#/$defs/fieldPath"
+            }
+          }
+        },
+        "delta": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "op",
+              "by"
+            ],
+            "properties": {
+              "service": {
+                "$ref": "#/$defs/serviceName"
+              },
+              "op": {
+                "$ref": "#/$defs/op"
+              },
+              "by": {
+                "type": "integer",
+                "minimum": -1000,
+                "maximum": 1000,
+                "not": {
+                  "const": 0
+                }
+              }
+            }
+          }
+        },
+        "subjects": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "oneOf": [
+        {
+          "required": [
+            "count"
+          ]
+        },
+        {
+          "required": [
+            "sum"
+          ]
+        },
+        {
+          "required": [
+            "delta"
+          ]
+        }
+      ]
+    },
+    "listOp": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "service",
+        "op",
+        "at",
+        "list"
+      ],
+      "description": "Rules v1.9: a list operation that no entity reads; the mock pages its static answer (a page beyond the first is empty).",
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/serviceName"
+        },
+        "op": {
+          "$ref": "#/$defs/op"
+        },
+        "at": {
+          "$ref": "#/$defs/respMember"
+        },
+        "list": {
+          "$ref": "#/$defs/listShape"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+tt-injector {{ .Chart.AppVersion }} installed as {{ include "tt-injector.fullname" . }} in {{ .Release.Namespace }}.
+
+Instrument a workload by annotating its POD TEMPLATE:
+
+  spec:
+    template:
+      metadata:
+        annotations:
+          traffic-twin.io/inject: node        # {{ range $i, $l := (list "node" "python" "java" "dotnet" "go" "php") }}{{ if $i }} | {{ end }}{{ $l }}{{ end }}
+
+In the namespace of the application create the Secrets (optional: without them the pod starts and the SDK is inert):
+  kubectl -n <app-ns> create secret generic {{ .Values.enrollSecret }} --from-literal=url=https://<tt-core intake>:4318 --from-literal=token=tte_...
+  kubectl -n <app-ns> create secret generic {{ .Values.hmacSecret }} --from-file=hmac-key=./hmac.key
+
+The webhook is registered with failurePolicy {{ .Values.webhook.failurePolicy }}: if it is down, pods are created without the SDK.
+{{- if ne .Values.webhook.failurePolicy "Ignore" }}
+
+WARNING: failurePolicy is not Ignore: an unavailable injector blocks the creation of annotated pods.
+{{- end }}
+{{- if and (eq .Values.tls.mode "existing") (not .Values.tls.caBundle) }}
+
+WARNING: tls.mode=existing needs tls.caBundle (base64 of the PEM CA), otherwise the API server cannot verify the webhook.
+{{- end }}

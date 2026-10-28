@@ -1,0 +1,26 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0407-cookies-dynamic-names",
+  "category": "cookies",
+  "description": "Cookie names outside the key rule collapse into {*}.",
+  "spec": ["sanitizer.md#8.2", "sanitizer.md#9.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Cookie", "mario.rossi@example.com=1; deadbeefdeadbeef=2; _ga=GA1.2.3"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"cookies\":{\"_ga\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:digits\",\"drop:str:digits\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

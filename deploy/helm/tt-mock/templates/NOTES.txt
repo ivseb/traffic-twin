@@ -1,0 +1,25 @@
+tt-mock {{ .Chart.AppVersion }} installed as {{ include "tt-mock.fullname" . }} in {{ .Release.Namespace }}.
+
+Data and control API: http://{{ include "tt-mock.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.service.port }}
+  /__svc/<service>/...   the mocked services (header X-TT-Session selects the session)
+  /__tt/health           public health check
+  /__tt/...              control API{{ if .Values.controlToken.existingSecret }} (Authorization: Bearer <token of {{ .Values.controlToken.existingSecret }}>){{ end }}
+{{- if eq (include "tt-mock.packSource" .) "console" }}
+
+Console mode: the mock serves the latest published package of group {{ .Values.console.group }} from
+{{ .Values.console.url }} and shows on the console's Mock page as {{ include "tt-mock.publicURL" . }}.
+Use, in your tests, {{ include "tt-mock.publicURL" . }}/__svc/<service>/... instead of the real endpoint.
+{{- end }}
+{{- if eq (include "tt-mock.packSource" .) "none" }}
+
+WARNING: no package source set (pack.persistentVolumeClaim, pack.configMap or pack.image): the pod has an empty
+/pack and tt-mock refuses to start.
+{{- end }}
+{{- if not .Values.gatePubKeys }}
+
+WARNING: gatePubKeys is empty: tt-mock refuses to start without the public keys of the publication gate.
+{{- end }}
+{{- if and (not .Values.controlToken.existingSecret) (ne (include "tt-mock.packSource" .) "console") }}
+
+WARNING: controlToken.existingSecret is empty: tt-mock refuses to listen outside the loopback without TT_CONTROL_TOKEN.
+{{- end }}

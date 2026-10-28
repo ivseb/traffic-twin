@@ -1,0 +1,27 @@
+tt-core {{ .Chart.AppVersion }} installed as {{ include "tt-core.fullname" . }} in {{ .Release.Namespace }}.
+
+Admin API and UI : https://{{ include "tt-core.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ include "tt-core.adminPort" . }}
+Source intake    : https://{{ include "tt-core.fullname" . }}-intake.{{ .Release.Namespace }}.svc.cluster.local:{{ include "tt-core.intakePort" . }}
+  (this is the TT_ENROLL_URL of SDKs, tt-egress and the tt-injector enrollment Secret; the sources pin the Fleet CA
+  through the enrollment token created in the UI)
+
+First start: the one-time setup token is NOT in the pod log (logs are collected); it is in a 0600 file of the data volume:
+  kubectl -n {{ .Release.Namespace }} exec statefulset/{{ include "tt-core.fullname" . }} -- cat /data/setup-token
+  (delete the file once the first administrator exists)
+
+tt-core needs keyguard ({{ .Values.keyguard.url }}) and its client certificate Secret
+({{ .Values.keyguard.clientTLSSecret }}); /readyz stays red until keyguard answers.
+{{- if not .Values.persistence.enabled }}
+
+WARNING: persistence.enabled=false: the database and the Fleet CA are lost at every restart.
+{{- end }}
+{{- if not .Values.networkPolicy.enabled }}
+
+WARNING: networkPolicy.enabled=false. The "no outbound calls" guarantee (G9) then rests on you.
+{{- end }}
+{{- range .Values.webhooks }}
+{{- if not .cidr }}
+
+WARNING: webhook {{ .host }} has no cidr: tt-core allows it (drift.webhook_allow) but the NetworkPolicy does not.
+{{- end }}
+{{- end }}

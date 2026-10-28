@@ -1,0 +1,185 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2006-graphql-syntax-errors",
+  "category": "graphql",
+  "description": "Lexical and syntactic errors (type definitions, bad numbers, open strings, bad escapes, unbalanced or empty brackets, extra tokens, characters outside the grammar): the shape of the string.",
+  "spec": ["sanitizer.md#5.7", "sanitizer.md#8.3", "policy.md#1.6"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "orders-graph",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /graphql",
+            "request": {
+              "query": {
+                "query": {
+                  "action": "graphql"
+                }
+              }
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.data.__schema.directives[*].locations[*]",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.directives[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.mutationType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.queryType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].enumValues[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].args[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "orders-graph",
+    "method": "GET",
+    "raw_path": "/graphql",
+    "raw_query": "query=type%20Query%20%7B%20order%3A%20Order%20%7D&query=%7B%20a%28x%3A%2001%29%20%7D&query=%7B%20a%28x%3A%201%2E%29%20%7D&query=%7B%20a%28x%3A%201abc%29%20%7D&query=%7B%20a%28x%3A%20%22open%29%20%7D&query=%7B%20a%28x%3A%20%22line%0Abreak%22%29%20%7D&query=%7B%20a%28x%3A%20%22%5Cq%22%29%20%7D&query=%7B%20a%20%7D%20%7D&query=%7B%20a&query=%7B%7D&query=query%20Q%28%29%20%7B%20a%20%7D&query=%7B%20a%28%29%20%7D&query=%7B%20a%20%7D%20extra&query=fragment%20on%20on%20T%20%7B%20a%20%7D&query=%7B%20a%28x%3A%20%3Fs%29%20%7D&query=%7B%20a%28x%3A%201%29%20%7D%20%2A&query=%7B%20%22s%22%20%7D&query=query&query=&query=%7B%20a%28x%3A%20%22%5Cu12G4%22%29%20%7D&query=%7B%20a%28x%3A%20%22%22%22never%20closed%29%20%7D&query=%7B%20a%28x%3A%201e%29%20%7D&query=%7B%20a%28x%3A%20%2D%29%20%7D&query=%7B%20a%2E%20%7D",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJlcnJvcnMiOlt7Im1lc3NhZ2UiOiJTeW50YXggRXJyb3IifV19",
+      "text": "{\"errors\":[{\"message\":\"Syntax Error\"}]}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /graphql\",\"req\":{\"path\":\"/graphql\",\"query\":{\"query\":[\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l32\",\"drop:str:l8\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l32\",\"drop:str:l8\"]},\"size\":\"l8\"},\"resp\":{\"body\":{\"errors\":[{\"message\":\"drop:str:l32\"}]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"orders-graph\"}"
+  }
+}

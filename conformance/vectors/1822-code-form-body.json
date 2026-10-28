@@ -1,0 +1,95 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1822-code-form-body",
+  "category": "code",
+  "description": "code on form fields: status leaves, a reason with spaces is a shape.",
+  "spec": ["sanitizer.md#5.6", "sanitizer.md#9.1", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "body": [
+            {
+              "path": "$.method",
+              "action": {
+                "action": "code"
+              }
+            },
+            {
+              "path": "$.reason",
+              "action": {
+                "action": "code"
+              }
+            },
+            {
+              "path": "$.status",
+              "action": {
+                "action": "code"
+              }
+            }
+          ]
+        },
+        "ops": []
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/payments",
+    "req_headers": [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ],
+    "req_body": {
+      "b64": "c3RhdHVzPXBhaWQmcmVhc29uPWNhcmQrZGVjbGluZWQmbWV0aG9kPWNhcmQ=",
+      "text": "status=paid&reason=card+declined&method=card"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"method\":[\"keep:card\"],\"reason\":[\"drop:str:l32\"],\"status\":[\"keep:paid\"]},\"ct\":\"application/x-www-form-urlencoded\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

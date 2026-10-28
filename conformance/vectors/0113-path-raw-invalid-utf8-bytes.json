@@ -1,0 +1,26 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0113-path-raw-invalid-utf8-bytes",
+  "category": "path",
+  "description": "Raw (not percent-encoded) invalid bytes in raw_path also give {drop:bytes}.",
+  "spec": ["sanitizer.md#4.1", "sanitizer.md#4.2"],
+  "policy_ref": "policies/auto-words.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": {
+      "b64": "L29yZGVycy///kE="
+    },
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/{drop:bytes}\",\"req\":{\"path\":\"/orders/{drop:bytes}\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

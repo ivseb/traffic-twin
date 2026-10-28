@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0518-body-form",
+  "category": "body",
+  "description": "application/x-www-form-urlencoded is handled like the query.",
+  "spec": ["sanitizer.md#9.1", "sanitizer.md#8.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/login",
+    "req_headers": [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ],
+    "req_body": {
+      "b64": "ZW1haWw9bWFyaW8ucm9zc2klNDBleGFtcGxlLmNvbSZwYXNzd29yZD1zM2NyZXQrcGFzcyZyZW1lbWJlcj1vbiZyZW1lbWJlcj0x",
+      "text": "email=mario.rossi%40example.com&password=s3cret+pass&remember=on&remember=1"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"email\":[\"drop:str:email\"],\"password\":[\"drop:str:l32\"],\"remember\":[\"drop:str:l8\",\"drop:str:digits\"]},\"ct\":\"application/x-www-form-urlencoded\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l128\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

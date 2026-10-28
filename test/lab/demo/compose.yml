@@ -1,0 +1,85 @@
+# Lab demo stack on the demo host (directory /opt/tt-lab):
+#
+#   loadgen ──▶ shop (Node + @traffic-twin/sdk) ──▶ tt-egress ──▶ carrier
+#                      │                                │
+#                      └──── sanitized events, mTLS ────┴──▶ tt-core (core host)
+#
+# The enrollment tokens and the core URL come from /opt/tt-lab/.env (0600),
+# written by test/e2e/lab-e2e.sh. Nothing secret is in this file.
+name: tt-lab
+
+x-clock: &clock
+  # Shared simulated clock: sim = SIM_EPOCH + (now - CLOCK_ANCHOR) * TIME_SCALE.
+  TIME_SCALE: ${TIME_SCALE:-240}            # 1 simulated day every 6 real minutes
+  SIM_EPOCH: ${SIM_EPOCH:-2026-10-19T06:00:00Z}
+  CLOCK_ANCHOR: ${CLOCK_ANCHOR:-}                # unix seconds of the first start, kept in .env by deploy-demo.sh
+  SEED: ${SEED:-42}
+
+services:
+  carrier:
+    build: {context: ./demo}
+    image: tt-demo-go:local
+    command: ["carrier"]
+    environment:
+      <<: *clock
+      PORT: "8080"
+    healthcheck:
+      test: ["CMD", "carrier", "-probe", "http://localhost:8080/__health"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+    restart: unless-stopped
+
+  tt-egress:
+    build: {context: ., dockerfile: egress.Dockerfile}
+    image: tt-lab-tt:local
+    command: ["egress", "--listen", ":9090",
+              "--upstream", "carrier=http://carrier:8080",
+              "--capture-origin", "carrier=https://api.carrier.example"]
+    environment:
+      TT_ENROLL_URL: ${TT_ENROLL_URL:-}
+      TT_ENROLL_TOKEN: ${TT_EGRESS_TOKEN:-}
+      TT_SERVICE_NAME: egress-shop
+      TT_HMAC_KEY_FILE: /run/secrets/hmac.keys
+      TT_STATE_DIR: /state
+    volumes:
+      - ./secrets/hmac.egress.keys:/run/secrets/hmac.keys:ro
+      - ./state/egress:/state
+    ports: ["9090:9090"]
+    depends_on:
+      carrier: {condition: service_healthy}
+    restart: unless-stopped
+
+  shop:
+    build: {context: ., dockerfile: shop.Dockerfile}
+    image: tt-lab-shop:local
+    command: ["node", "--import", "@traffic-twin/sdk/register", "server.js"]
+    environment:
+      <<: *clock
+      PORT: "3000"
+      CARRIER_BASE_URL: http://tt-egress:9090/carrier
+      TT_DISABLED: ${SHOP_TT_DISABLED:-0}
+      TT_ENROLL_URL: ${TT_ENROLL_URL:-}
+      TT_ENROLL_TOKEN: ${TT_SHOP_TOKEN:-}
+      TT_SERVICE_NAME: shop-api
+      TT_HMAC_KEY_FILE: /run/secrets/hmac.keys
+      TT_STATE_DIR: /state
+    volumes:
+      - ./secrets/hmac.shop.keys:/run/secrets/hmac.keys:ro
+      - ./state/shop:/state
+    ports: ["3000:3000"]
+    depends_on:
+      tt-egress: {condition: service_started}
+    restart: unless-stopped
+
+  loadgen:
+    image: tt-demo-go:local
+    command: ["loadgen"]
+    environment:
+      <<: *clock
+      SHOP_BASE_URL: http://shop:3000
+      CUSTOMERS: ${CUSTOMERS:-600}
+      MAX_RPS: ${MAX_RPS:-100}
+      DURATION: ${DURATION:-0s}
+    depends_on: [shop]
+    restart: unless-stopped

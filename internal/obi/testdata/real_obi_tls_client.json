@@ -1,0 +1,852 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "shop-api"
+            }
+          },
+          {
+            "key": "telemetry.distro.name",
+            "value": {
+              "stringValue": "opentelemetry-ebpf-instrumentation"
+            }
+          },
+          {
+            "key": "telemetry.distro.version",
+            "value": {
+              "stringValue": "v0.15.2"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "B05FDE5CE373B0E1CACA928FE9C148EE",
+              "spanId": "181AB9C7425BD411",
+              "name": "CONNECT",
+              "kind": 3,
+              "startTimeUnixNano": "1792809072244896092",
+              "endTimeUnixNano": "1792809072245023592",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "::1"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "_OTHER"
+                  }
+                }
+              ],
+              "status": {
+                "code": 2
+              }
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "D37DFC509A3ABFB5A944142572823C77",
+              "spanId": "11C2920C13A6A616",
+              "name": "POST /orders",
+              "kind": 3,
+              "startTimeUnixNano": "1792809072245297467",
+              "endTimeUnixNano": "1792809072252425258",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "localhost"
+                  }
+                },
+                {
+                  "key": "url.full",
+                  "value": {
+                    "stringValue": "https://localhost/orders"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "D37DFC509A3ABFB5A944142572823C77",
+              "spanId": "698244DA60E98EE6",
+              "parentSpanId": "11C2920C13A6A616",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792809072252478467",
+              "endTimeUnixNano": "1792809072253057217",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "63"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "41"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"card\":{\"number\":\"***\"},\"items\":[{\"sku\":\"SKU-1001\",\"qty\":2}]}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\": \"ORD-000042\", \"status\": \"CREATED\"}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "51622"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ],
+      "schemaUrl": "https://open-telemetry.github.io/opentelemetry-ebpf-instrumentation/schemas/obi/0.15.2"
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "shop-api"
+            }
+          },
+          {
+            "key": "telemetry.distro.name",
+            "value": {
+              "stringValue": "opentelemetry-ebpf-instrumentation"
+            }
+          },
+          {
+            "key": "telemetry.distro.version",
+            "value": {
+              "stringValue": "v0.15.2"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "F5D679DC04F027AFC4D195F8BE3E1213",
+              "spanId": "12072E61E4CA9582",
+              "name": "CONNECT",
+              "kind": 3,
+              "startTimeUnixNano": "1792809080262734791",
+              "endTimeUnixNano": "1792809080262852499",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "::1"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "_OTHER"
+                  }
+                }
+              ],
+              "status": {
+                "code": 2
+              }
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "25822F204590840003F19AD7876984F5",
+              "spanId": "7F6BD07F0B4C53A8",
+              "name": "POST /orders",
+              "kind": 3,
+              "startTimeUnixNano": "1792809080269701458",
+              "endTimeUnixNano": "1792809080270789374",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "59120"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "localhost"
+                  }
+                },
+                {
+                  "key": "url.full",
+                  "value": {
+                    "stringValue": "https://localhost/orders"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "59120"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "25822F204590840003F19AD7876984F5",
+              "spanId": "9C616E14E8C5DF9E",
+              "parentSpanId": "5453C7C10A033E81",
+              "name": "in queue",
+              "kind": 1,
+              "startTimeUnixNano": "1792809080263572415",
+              "endTimeUnixNano": "1792809080270880248",
+              "status": {}
+            },
+            {
+              "traceId": "25822F204590840003F19AD7876984F5",
+              "spanId": "F958B5FEFDCCC586",
+              "parentSpanId": "5453C7C10A033E81",
+              "name": "processing",
+              "kind": 1,
+              "startTimeUnixNano": "1792809080270880248",
+              "endTimeUnixNano": "1792809080271778248",
+              "status": {}
+            },
+            {
+              "traceId": "25822F204590840003F19AD7876984F5",
+              "spanId": "5453C7C10A033E81",
+              "parentSpanId": "7F6BD07F0B4C53A8",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792809080263572415",
+              "endTimeUnixNano": "1792809080271778248",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "63"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "41"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"items\":[{\"sku\":\"SKU-1001\",\"qty\":2}],\"card\":{\"number\":\"***\"}}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\": \"ORD-000042\", \"status\": \"CREATED\"}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "59120"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ],
+      "schemaUrl": "https://open-telemetry.github.io/opentelemetry-ebpf-instrumentation/schemas/obi/0.15.2"
+    },
+    {
+      "resource": {
+        "attributes": [
+          {
+            "key": "service.name",
+            "value": {
+              "stringValue": "shop-api"
+            }
+          },
+          {
+            "key": "telemetry.distro.name",
+            "value": {
+              "stringValue": "opentelemetry-ebpf-instrumentation"
+            }
+          },
+          {
+            "key": "telemetry.distro.version",
+            "value": {
+              "stringValue": "v0.15.2"
+            }
+          }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "C50EAD2203C3E0D3DE290272251A68B9",
+              "spanId": "E9E5AF8D0F78EC63",
+              "name": "CONNECT",
+              "kind": 3,
+              "startTimeUnixNano": "1792809088276349627",
+              "endTimeUnixNano": "1792809088276512211",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "::1"
+                  }
+                },
+                {
+                  "key": "error.type",
+                  "value": {
+                    "stringValue": "_OTHER"
+                  }
+                }
+              ],
+              "status": {
+                "code": 2
+              }
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "76C4F47AA0B9567D03F8ABC7A9396878",
+              "spanId": "DE9A9BD04A683C34",
+              "name": "POST /orders",
+              "kind": 3,
+              "startTimeUnixNano": "1792809088277296835",
+              "endTimeUnixNano": "1792809088282664627",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "localhost"
+                  }
+                },
+                {
+                  "key": "url.full",
+                  "value": {
+                    "stringValue": "https://localhost/orders"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        },
+        {
+          "scope": {},
+          "spans": [
+            {
+              "traceId": "76C4F47AA0B9567D03F8ABC7A9396878",
+              "spanId": "D758DDB45C5CC5A8",
+              "parentSpanId": "DE9A9BD04A683C34",
+              "name": "POST /orders",
+              "kind": 2,
+              "startTimeUnixNano": "1792809088282718502",
+              "endTimeUnixNano": "1792809088283559044",
+              "attributes": [
+                {
+                  "key": "server.port",
+                  "value": {
+                    "intValue": "8443"
+                  }
+                },
+                {
+                  "key": "client.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "server.address",
+                  "value": {
+                    "stringValue": "shop-api"
+                  }
+                },
+                {
+                  "key": "http.response.status_code",
+                  "value": {
+                    "intValue": "201"
+                  }
+                },
+                {
+                  "key": "http.request.method",
+                  "value": {
+                    "stringValue": "POST"
+                  }
+                },
+                {
+                  "key": "url.path",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "url.scheme",
+                  "value": {
+                    "stringValue": "https"
+                  }
+                },
+                {
+                  "key": "http.route",
+                  "value": {
+                    "stringValue": "/orders"
+                  }
+                },
+                {
+                  "key": "http.request.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "63"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-length",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "41"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.response.header.content-type",
+                  "value": {
+                    "arrayValue": {
+                      "values": [
+                        {
+                          "stringValue": "application/json"
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "key": "http.request.body.content",
+                  "value": {
+                    "stringValue": "{\"items\":[{\"qty\":2,\"sku\":\"SKU-1001\"}],\"card\":{\"number\":\"***\"}}"
+                  }
+                },
+                {
+                  "key": "http.response.body.content",
+                  "value": {
+                    "stringValue": "{\"id\": \"ORD-000042\", \"status\": \"CREATED\"}"
+                  }
+                },
+                {
+                  "key": "network.peer.address",
+                  "value": {
+                    "stringValue": "127.0.0.1"
+                  }
+                },
+                {
+                  "key": "network.peer.port",
+                  "value": {
+                    "intValue": "59128"
+                  }
+                },
+                {
+                  "key": "network.protocol.version",
+                  "value": {
+                    "stringValue": "1.1"
+                  }
+                }
+              ],
+              "status": {}
+            }
+          ]
+        }
+      ],
+      "schemaUrl": "https://open-telemetry.github.io/opentelemetry-ebpf-instrumentation/schemas/obi/0.15.2"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <!-- An ordinary ASP.NET Core application. It deliberately references nothing of traffic-twin:
+       the zero-code tests inject the SDK from outside (DOTNET_STARTUP_HOOKS + hosting startup). -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>TrafficTwin.TestApp</RootNamespace>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+</Project>

@@ -1,0 +1,11 @@
+apiVersion: v2
+name: tt-core
+description: "traffic-twin tt-core (intake, analysis, review UI, publication gate) for the production network. No outbound traffic except keyguard and the allow-listed alert webhooks."
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.25.0-0"
+home: https://github.com/ivseb/traffic-twin
+sources:
+  - https://github.com/ivseb/traffic-twin
+keywords: [traffic-twin, observability, mock]

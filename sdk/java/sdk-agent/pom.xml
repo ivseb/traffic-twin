@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.github.ivseb.traffictwin</groupId>
+    <artifactId>sdk-parent</artifactId>
+    <version>0.1.0</version>
+  </parent>
+  <artifactId>sdk-agent</artifactId>
+  <name>traffic-twin Java agent (-javaagent)</name>
+  <description>Zero-code injection: a single jar with no dependencies, started with -javaagent, that installs the servlet filter and the HttpClient, RestTemplate, RestClient and OkHttp capture without changing the application.</description>
+
+  <properties>
+    <tomcat10.version>10.1.34</tomcat10.version>
+    <tomcat9.version>9.0.98</tomcat9.version>
+    <otel.agent.version>2.10.0</otel.agent.version>
+    <it.libs>${project.build.directory}/it-libs</it.libs>
+    <agent.dir>${project.build.directory}/agent-jar</agent.dir>
+  </properties>
+
+  <dependencies>
+    <!-- Their classes go into the agent jar (see the antrun step). -->
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk-servlet-javax</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <!-- Test only: the fake tt-core and the PKI of the sdk tests, and the apps the agent is injected into. -->
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${project.version}</version>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-server</artifactId>
+      <version>${jetty11.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>${jetty11.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat.embed</groupId>
+      <artifactId>tomcat-embed-core</artifactId>
+      <version>${tomcat10.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk-otel-extension</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.squareup.okhttp3</groupId>
+      <artifactId>okhttp</artifactId>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>traffic-twin-agent-${project.version}</finalName>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.8.1</version>
+        <executions>
+          <!-- Test resources: the OpenTelemetry Java agent 2.x and a Tomcat 9 (javax.servlet) for the integration tests. -->
+          <execution>
+            <id>it-libs</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>io.opentelemetry.javaagent</groupId>
+                  <artifactId>opentelemetry-javaagent</artifactId>
+                  <version>${otel.agent.version}</version>
+                  <destFileName>opentelemetry-javaagent.jar</destFileName>
+                  <outputDirectory>${it.libs}</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.tomcat.embed</groupId>
+                  <artifactId>tomcat-embed-core</artifactId>
+                  <version>${tomcat9.version}</version>
+                  <outputDirectory>${it.libs}/tomcat9</outputDirectory>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.tomcat</groupId>
+                  <artifactId>tomcat-annotations-api</artifactId>
+                  <version>${tomcat9.version}</version>
+                  <outputDirectory>${it.libs}/tomcat9</outputDirectory>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Lays out the agent jar: SDK core classes as normal classes (visible from the bootstrap path),
+           the classes written against servlet / Spring / OkHttp as tt/ext/**.classdata. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>layout</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <delete dir="${agent.dir}"/>
+                <mkdir dir="${agent.dir}"/>
+                <unzip src="${project.basedir}/../sdk/target/sdk-${project.version}.jar" dest="${agent.dir}">
+                  <patternset>
+                    <exclude name="META-INF/**"/>
+                  </patternset>
+                </unzip>
+                <unzip src="${project.basedir}/../sdk-servlet-javax/target/sdk-servlet-javax-${project.version}.jar" dest="${agent.dir}">
+                  <patternset>
+                    <exclude name="META-INF/**"/>
+                  </patternset>
+                </unzip>
+                <copy todir="${agent.dir}">
+                  <fileset dir="${project.build.outputDirectory}"/>
+                </copy>
+                <move todir="${agent.dir}/tt/ext">
+                  <fileset dir="${agent.dir}">
+                    <include name="io/github/ivseb/traffictwin/servlet/**/*.class"/>
+                    <include name="io/github/ivseb/traffictwin/integration/**/*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/servlet/**/TrafficTwinInitializer*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/integration/TrafficTwinHttpClient*.class"/>
+                  </fileset>
+                  <globmapper from="*.class" to="*.classdata"/>
+                </move>
+                <!-- Everything that is not one of the few boot-path classes is the SDK proper: tt/core. -->
+                <move todir="${agent.dir}/tt/core">
+                  <fileset dir="${agent.dir}">
+                    <include name="io/**/*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/AgentMain*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/Installer*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/ClassPatcher*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/Hooks*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/CoreBridge.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/CoreLoader*.class"/>
+                    <exclude name="io/github/ivseb/traffictwin/agent/AgentState*.class"/>
+                  </fileset>
+                  <globmapper from="*.class" to="*.classdata"/>
+                </move>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <classesDirectory>${agent.dir}</classesDirectory>
+          <archive>
+            <manifestEntries>
+              <Premain-Class>io.github.ivseb.traffictwin.agent.AgentMain</Premain-Class>
+              <Agent-Class>io.github.ivseb.traffictwin.agent.AgentMain</Agent-Class>
+              <Can-Redefine-Classes>false</Can-Redefine-Classes>
+              <Can-Retransform-Classes>false</Can-Retransform-Classes>
+              <Can-Set-Native-Method-Prefix>false</Can-Set-Native-Method-Prefix>
+              <Implementation-Title>traffic-twin Java agent</Implementation-Title>
+              <Implementation-Version>${project.version}</Implementation-Version>
+            </manifestEntries>
+          </archive>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Unit tests only (ClassPatcherTest); the *IT classes need the packaged jar. -->
+          <excludes>
+            <exclude>**/*IT.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>3.5.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <useManifestOnlyJar>false</useManifestOnlyJar>
+          <systemPropertyVariables>
+            <tt.agent.jar>${project.build.directory}/traffic-twin-agent-${project.version}.jar</tt.agent.jar>
+            <tt.it.libs>${it.libs}</tt.it.libs>
+          </systemPropertyVariables>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

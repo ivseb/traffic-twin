@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0612-format-printable-only",
+  "category": "formats",
+  "description": "Formats apply only to printable ASCII strings: tabs, newlines and non-ASCII disable them.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiJtYXJpby5yb3NzaUBleGFtcGxlLmNvbVx1MDAwYSIsInYwMSI6IjIwMjYtMTAtMTlcdTAwMGEiLCJ2MDIiOiJcdTAwMDkxODQiLCJ2MDMiOiJtYXJcdTAwZWNvQGV4YW1wbGUuY29tIiwidjA0IjoiMTg0XHUwMGEwIiwidjA1IjoiMjAyNi0xMC0xOSAifQ==",
+      "text": "{\"v00\":\"mario.rossi@example.com\\u000a\",\"v01\":\"2026-10-19\\u000a\",\"v02\":\"\\u0009184\",\"v03\":\"mar\\u00eco@example.com\",\"v04\":\"184\\u00a0\",\"v05\":\"2026-10-19 \"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:l32\",\"v01\":\"drop:str:l32\",\"v02\":\"drop:str:l8\",\"v03\":\"drop:str:l32\",\"v04\":\"drop:str:l8\",\"v05\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

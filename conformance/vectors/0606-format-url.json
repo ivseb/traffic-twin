@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0606-format-url",
+  "category": "formats",
+  "description": "url: scheme of 1..16 chars, \"://\", then printable non-space ASCII.",
+  "spec": ["sanitizer.md#6.3", "sanitizer.md#6.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJ2MDAiOiJodHRwczovL3Nob3AuZXhhbXBsZS9vcmRlcnM/aWQ9MSIsInYwMSI6ImE6Ly94IiwidjAyIjoiYWJjZGVmZ2hpamtsbW5vcDovL3giLCJ2MDMiOiJhYmNkZWZnaGlqa2xtbm9wcTovL3giLCJ2MDQiOiJodHRwczovL3Nob3AuZXhhbXBsZS9hIGIiLCJ2MDUiOiIxaHR0cDovL3giLCJ2MDYiOiJodHRwczovLyIsInYwNyI6Im1haWx0bzptYXJpb0BleGFtcGxlLmNvbSJ9",
+      "text": "{\"v00\":\"https://shop.example/orders?id=1\",\"v01\":\"a://x\",\"v02\":\"abcdefghijklmnop://x\",\"v03\":\"abcdefghijklmnopq://x\",\"v04\":\"https://shop.example/a b\",\"v05\":\"1http://x\",\"v06\":\"https://\",\"v07\":\"mailto:mario@example.com\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"v00\":\"drop:str:url\",\"v01\":\"drop:str:url\",\"v02\":\"drop:str:url\",\"v03\":\"drop:str:l32\",\"v04\":\"drop:str:l32\",\"v05\":\"drop:str:l32\",\"v06\":\"drop:str:l8\",\"v07\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

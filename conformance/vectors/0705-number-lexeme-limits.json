@@ -1,0 +1,123 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0705-number-lexeme-limits",
+  "category": "numbers",
+  "description": "keep, hmac and bucket need a lexeme of at most 64 bytes and a written exponent of at most 9999; otherwise drop.",
+  "spec": ["sanitizer.md#5.3", "sanitizer.md#5.4", "sanitizer.md#5.5", "sanitizer.md#10.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "request": {
+        "body": [
+          {
+            "path": "$.b",
+            "action": {
+              "action": "bucket",
+              "kind": "num",
+              "bounds": [0, 1]
+            }
+          },
+          {
+            "path": "$.bx",
+            "action": {
+              "action": "bucket",
+              "kind": "num",
+              "bounds": [0, 1]
+            }
+          },
+          {
+            "path": "$.h64",
+            "action": {
+              "action": "hmac",
+              "domain": "id"
+            }
+          },
+          {
+            "path": "$.h65",
+            "action": {
+              "action": "hmac",
+              "domain": "id"
+            }
+          },
+          {
+            "path": "$.k64",
+            "action": {
+              "action": "keep"
+            }
+          },
+          {
+            "path": "$.k65",
+            "action": {
+              "action": "keep"
+            }
+          },
+          {
+            "path": "$.kE",
+            "action": {
+              "action": "keep"
+            }
+          },
+          {
+            "path": "$.ke",
+            "action": {
+              "action": "keep"
+            }
+          }
+        ]
+      }
+    },
+    "services": []
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJrNjQiOjEwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAsIms2NSI6MTAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAsImtlIjoxZTk5OTksImtFIjoxRSsxMDAwMCwiaDY0IjoxMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwLCJoNjUiOjEwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwLCJiIjoxZTA5OTk5LCJieCI6LTFlLTEwMDAwfQ==",
+      "text": "{\"k64\":1000000000000000000000000000000000000000000000000000000000000000,\"k65\":10000000000000000000000000000000000000000000000000000000000000000,\"ke\":1e9999,\"kE\":1E+10000,\"h64\":1000000000000000000000000000000000000000000000000000000000000000,\"h65\":10000000000000000000000000000000000000000000000000000000000000000,\"b\":1e09999,\"bx\":-1e-10000}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"b\":\"num:>=1\",\"bx\":\"drop:dec\",\"h64\":\"tk1:k1:sMwoKV6p0FPAUm8cCyv4xQ\",\"h65\":\"drop:int\",\"k64\":1e+63,\"k65\":\"drop:int\",\"kE\":\"drop:dec\",\"ke\":1e+9999},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

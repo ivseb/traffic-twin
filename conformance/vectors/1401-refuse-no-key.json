@@ -1,0 +1,23 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1401-refuse-no-key",
+  "category": "refusal",
+  "description": "No HMAC key: the source does not capture (key_missing).",
+  "spec": ["sanitizer.md#7.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "key_missing"
+  }
+}

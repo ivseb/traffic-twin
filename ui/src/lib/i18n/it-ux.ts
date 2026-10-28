@@ -1,0 +1,30 @@
+// Testi della passata di usabilità 3: bozza unica, token, approvatori. Tenuti a parte per non toccare i dizionari grandi.
+export const itUx = {
+  'wiz.source.groupPlaceholder': 'es. il-nome-della-tua-app',
+  'wiz.source.groupUse': 'Usa «{name}»',
+  'wiz.source.groupExists': 'Esiste già un gruppo «{group}»: se continui usi la sua policy. Se è di un altro team, scegli un altro nome.',
+  'wiz.tokenMeta.title': 'Hai già generato un token',
+  'wiz.tokenMeta.active': 'Token per il gruppo «{group}» creato alle {at}, scade alle {until}.',
+  'wiz.tokenMeta.expired': 'Token per il gruppo «{group}» creato alle {at}, scaduto alle {until}.',
+  'wiz.tokenMeta.why': 'Il segreto di un token si mostra una sola volta: il server ne conserva solo l’impronta e non può restituirlo: il segreto non si può rivedere. Se non l’hai copiato, o se sei in un’altra scheda o browser, rigenera: il token precedente scade comunque alla sua ora.',
+  'wiz.tokenMeta.regenerate': 'Rigenera il token',
+  'wiz.tokenMeta.dismiss': 'Ignora',
+  'wiz.install.times': 'Token creato alle {at}, scade alle {until}.',
+  'wiz.install.reload': 'Se ricarichi la pagina in questa scheda il token resta qui; in un’altra scheda o browser non si può rivedere (il server non lo conserva): rigeneralo.',
+  'wiz.draft.accumulate': 'Le modifiche si accumulano nella bozza v{v} finché non la invii.',
+  'wiz.draft.accumulateWhy': 'Quello che scegli qui (utente, campionamento, campi, host simulati) si somma a quella bozza: nasce una sola versione nuova con tutto e la v{v} risulta sostituita. Approva una volta sola, alla fine.',
+  'wiz.draft.see': 'Apri la bozza',
+  'wiz.draft.once': 'Scegli utente, campionamento e campi in questa pagina: partono insieme in un’unica bozza, così la policy cambia versione una volta sola.',
+  'wiz.draft.editing': 'Stai modificando la bozza v{v}: inviando di nuovo nasce una versione nuova che la sostituisce e contiene tutto. Nessuna approvazione va persa: la v{v} non ne ha ancora.',
+  'wiz.draft.edit': 'Modifica la bozza',
+  'wiz.draft.update': 'Aggiorna la bozza (sostituisce la v{v})',
+  'wiz.draft.approved': 'La bozza ha già approvazioni: modificarla le annullerebbe. Approvala o rifiutala da Sorgenti > Policy.',
+  'appr.who': 'Chi può approvare:',
+  'appr.whoNote': 'Chiedi a una di queste persone. Servono {n, plural, one {# approvazione} other {# approvazioni di persone diverse}}; chi propone non conta.',
+  'appr.noneListed': 'Nessun utente ha il ruolo Approvatore di policy: chiedi a un amministratore di assegnarlo a qualcuno (o di approvare lui, con una motivazione).',
+  'appr.askAdmin': 'chiedi a un amministratore: vede chi ha il ruolo Approvatore di policy e può approvare lui stesso con una motivazione.',
+  'appr.link': 'Link alla bozza:',
+  'appr.copyLink': 'Copia il link alla bozza',
+} as const;
+
+export type UxKey = keyof typeof itUx;

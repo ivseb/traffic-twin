@@ -1,0 +1,38 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0007-default-drop-outbound",
+  "category": "default-drop",
+  "description": "Outbound call with no service in policy: service is the host pattern (spec v1.5, hosts.discovery auto by default), everything else is a shape.",
+  "spec": ["sanitizer.md#3.1", "sanitizer.md#3.5", "sanitizer.md#13"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "outbound",
+    "url_base": "https://api.carrier.example",
+    "method": "POST",
+    "raw_path": "/v1/shipments",
+    "raw_query": "ref=ORD-2026-000184",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["X-Api-Key", "sk_test_51Hc0nf0rmance"]
+    ],
+    "req_body": {
+      "b64": "eyJvcmRlcklkIjoiT1JELTIwMjYtMDAwMTg0IiwidG8iOnsibmFtZSI6IkdpdWxpYSBOZXJpIiwiY2l0eSI6IlRvcmlubyJ9fQ==",
+      "text": "{\"orderId\":\"ORD-2026-000184\",\"to\":{\"name\":\"Giulia Neri\",\"city\":\"Torino\"}}"
+    },
+    "status": 201,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJzaGlwbWVudElkIjoiU0hQLTc3MTIwIiwibGFiZWwiOiJodHRwczovL2xhYmVscy5jYXJyaWVyLmV4YW1wbGUvU0hQLTc3MTIwLnBkZiJ9",
+      "text": "{\"shipmentId\":\"SHP-77120\",\"label\":\"https://labels.carrier.example/SHP-77120.pdf\"}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"orderId\":\"drop:str:l32\",\"to\":{\"city\":\"drop:str:l8\",\"name\":\"drop:str:l32\"}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"],\"x-api-key\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"query\":{\"ref\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"resp\":{\"body\":{\"label\":\"drop:str:url\",\"shipmentId\":\"drop:str:l32\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"host:api.carrier.example\"}"
+  }
+}

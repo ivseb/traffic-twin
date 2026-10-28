@@ -1,0 +1,31 @@
+{
+  "seed": 42,
+  "outcomes": {
+    "happy": 0.93,
+    "cancelled": 0.04,
+    "never_shipped": 0.03
+  },
+  "delays": {
+    "created": { "min": "2m", "max": "10m" },
+    "in_transit": { "min": "1h", "max": "6h" },
+    "delivered": { "min": "6h", "max": "36h" },
+    "cancelled": { "min": "30m", "max": "4h" }
+  },
+  "eta_presence": 0.37,
+  "cancel_reasons": ["ADDRESS_UNREACHABLE", "DAMAGED_IN_WAREHOUSE"],
+  "faults": {
+    "unavailable_p": 0.01,
+    "status": 503,
+    "code": "CARRIER_UNAVAILABLE"
+  },
+  "latency": {
+    "POST /v1/shipments": { "median_ms": 140, "sigma": 0.5, "max_ms": 2000 },
+    "GET /v1/shipments": { "median_ms": 80, "sigma": 0.6, "max_ms": 2000 }
+  },
+  "batch": {
+    "at_utc": "02:00",
+    "fraction": 0.6,
+    "from": "IN_TRANSIT",
+    "to": "DELIVERED"
+  }
+}

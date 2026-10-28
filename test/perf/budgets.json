@@ -1,0 +1,84 @@
+{
+  "_doc": "Performance budgets of test/perf/ttperf (docs/PERFORMANCE.md). 'default' applies to every run (the CI dataset, scale ci, on a GitHub runner: about 2-3x slower than the M3 laptop of the measurements); the profile named by TTPERF_BUDGET_PROFILE is merged on top (full: the 10M-event dataset). Times in ms (endpoints) or s (jobs), memory in MB of Go heap.",
+  "default": {
+    "class_p95_ms": { "list": 200, "detail": 100, "heavy": 5000 },
+    "endpoint_p95_ms": {},
+    "exempt": {},
+    "job_seconds": {
+      "contract.snapshot.all_services": 20,
+      "contract.snapshot.one_service": 5,
+      "rules.mine.first": 60,
+      "rules.mine": 60,
+      "archetypes.build": 20,
+      "worlds.generate": 30,
+      "worlds.generate.second": 30,
+      "pack.build": 40,
+      "pack.build.second": 40,
+      "export.wiremock": 20,
+      "events.export.ocel": 20,
+      "audit.verify": 10,
+      "store.purge": 180,
+      "intake.burst": 40,
+      "keyguard.add_tokens": 20,
+      "keyguard.match_10k": 10,
+      "keyguard.snapshot": 10,
+      "mock.sessions": 30,
+      "mock.journal": 5,
+      "mock.clock_advance_1y": 10
+    },
+    "job_heap_mb": {
+      "rules.mine.first": 1500,
+      "rules.mine": 1500,
+      "archetypes.build": 800,
+      "pack.build": 1200,
+      "pack.build.second": 1200,
+      "store.purge": 1000,
+      "mock.sessions": 1000
+    },
+    "job_detail_max": {
+      "webhook.delivery.fast_drained_s": 5,
+      "store.purge.max_writer_stall_ms": 1500,
+      "store.purge.overloaded": 0,
+      "keyguard.add_tokens.segments": 4
+    },
+    "job_detail_min": {
+      "intake.burst.events_per_s": 2000
+    }
+  },
+  "lab": {
+    "_doc": "The memory phase on the volume of the lab core: go run ./test/perf/ttperf -scale lab -only memory -memlimit 4GiB -miner-max-events 5000000, TTPERF_BUDGET_PROFILE=lab (docs/PERFORMANCE.md 3.5). The whole harness process (keyguard and the harness included) must stay well under the 4 GiB of the emulated host: before the fix one mining run of the 2 M events took 3.2 GB of RSS here and 4 GB on the lab (OOM kill).",
+    "job_seconds": { "mem.mine.one": 180, "mem.mine.two": 180, "mem.mine.snapshot.pack": 600 },
+    "job_heap_mb": { "mem.mine.one": 2600, "mem.mine.two": 2600, "mem.mine.snapshot.pack": 2600 },
+    "job_detail_max": {
+      "mem.mine.one.rss_peak_mb": 2800,
+      "mem.mine.two.rss_peak_mb": 2800,
+      "mem.mine.snapshot.pack.rss_peak_mb": 2800,
+      "mem.mine.two.runs": 1,
+      "mem.mine.one.job_bytes": 262144,
+      "mem.mine.one.heap_retained_mb": 64,
+      "mem.mine.snapshot.pack.heap_retained_mb": 128
+    }
+  },
+  "full": {
+    "class_p95_ms": { "list": 200, "detail": 100, "heavy": 10000 },
+    "job_seconds": {
+      "contract.snapshot.all_services": 120,
+      "contract.snapshot.one_service": 10,
+      "rules.mine.first": 900,
+      "rules.mine": 900,
+      "archetypes.build": 120,
+      "pack.build": 300,
+      "pack.build.second": 300,
+      "store.purge": 3600
+    },
+    "job_heap_mb": {
+      "rules.mine.first": 4500,
+      "rules.mine": 4500,
+      "archetypes.build": 2500,
+      "pack.build": 2500,
+      "pack.build.second": 2500,
+      "store.purge": 2500,
+      "mock.sessions": 2500
+    }
+  }
+}

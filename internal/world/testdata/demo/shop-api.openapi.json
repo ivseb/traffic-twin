@@ -1,0 +1,196 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "shop-api", "version": "2026-10-19" },
+  "paths": {
+    "/orders": {
+      "post": {
+        "operationId": "createOrder",
+        "x-tt-latency-ms": { "p50": 120, "p95": 400, "p99": 900 },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OrderRequest" },
+              "examples": {
+                "created": { "value": { "customerId": "CUS-SYN-0007", "sku": "SKU-1", "qty": 1 } },
+                "unknown-sku": { "value": { "customerId": "CUS-SYN-0007", "sku": "SKU-NOPE", "qty": 1 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" },
+                "examples": {
+                  "created": { "value": { "id": "ORD-SYN-0050", "customerId": "CUS-SYN-0007", "status": "CONFIRMED", "shipmentId": "SHP-SYN-0102", "createdAt": "2026-10-19T00:05:00Z" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "unknown-sku": { "value": { "error": { "code": "UNKNOWN_SKU", "message": "unknown sku" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}": {
+      "get": {
+        "operationId": "getOrder",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "The order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Order" },
+                "examples": {
+                  "confirmed": { "value": { "id": "ORD-SYN-0050", "customerId": "CUS-SYN-0007", "status": "CONFIRMED", "shipmentId": "SHP-SYN-0102", "createdAt": "2026-10-19T00:05:00Z" } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "order-not-found": { "value": { "error": { "code": "ORDER_NOT_FOUND", "message": "no such order" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{id}/shipment": {
+      "get": {
+        "operationId": "getOrderShipment",
+        "x-tt-latency-ms": { "p50": 60, "p95": 180, "p99": 300 },
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "The shipment of the order",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Shipment" },
+                "examples": {
+                  "in-transit": { "value": { "shipmentId": "SHP-SYN-0100", "orderId": "ORD-SYN-0100", "status": "IN_TRANSIT" } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown order or no visible shipment",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "order-not-found": { "value": { "error": { "code": "ORDER_NOT_FOUND", "message": "no such order" } } },
+                  "shipment-not-found": { "value": { "error": { "code": "SHIPMENT_NOT_FOUND", "message": "no shipment yet" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/customers/{id}/orders": {
+      "get": {
+        "operationId": "listCustomerOrders",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Orders of the customer",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OrderList" },
+                "examples": {
+                  "empty": { "value": { "customerId": "CUS-SYN-0001", "count": 0, "items": [] } }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Another customer",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" },
+                "examples": {
+                  "forbidden": { "value": { "error": { "code": "FORBIDDEN", "message": "not your orders" } } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Order": {
+        "type": "object",
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string", "x-tt-value": { "kind": "id", "domain": "order", "len_class": "l32" } },
+          "customerId": { "type": "string" },
+          "status": { "type": "string", "enum": ["CONFIRMED", "CANCELLED"] },
+          "shipmentId": { "type": "string", "x-tt-value": { "kind": "id", "domain": "shipment", "len_class": "l32" } },
+          "createdAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "OrderList": {
+        "type": "object",
+        "required": ["customerId", "count", "items"],
+        "properties": {
+          "customerId": { "type": "string" },
+          "count": { "type": "integer" },
+          "items": { "type": "array", "items": { "$ref": "#/components/schemas/Order" } }
+        }
+      },
+      "Shipment": {
+        "type": "object",
+        "required": ["shipmentId", "orderId", "status"],
+        "properties": {
+          "shipmentId": { "type": "string" },
+          "orderId": { "type": "string" },
+          "status": { "type": "string", "enum": ["PENDING", "CREATED", "IN_TRANSIT", "DELIVERED", "CANCELLED"] },
+          "cancelReason": { "type": "string" }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "required": ["customerId", "sku", "qty"],
+        "properties": { "customerId": { "type": "string" }, "sku": { "type": "string" }, "qty": { "type": "integer" } }
+      },
+      "Error": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["code"],
+            "properties": { "code": { "type": "string" }, "message": { "type": "string" } }
+          }
+        }
+      }
+    }
+  }
+}

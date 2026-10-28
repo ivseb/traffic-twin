@@ -1,0 +1,104 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1071-size-limit-both-bodies",
+  "category": "event-size",
+  "description": "Still over the limit after req.body: resp.body becomes trunc:size too.",
+  "spec": ["sanitizer.md#10.3"],
+  "ambiguities": ["A-EVENT-SIZE-BASE"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 1024,
+      "keep_max_bytes": 1024
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /bulk",
+            "request": {
+              "body": [
+                {
+                  "path": "$.*",
+                  "action": {
+                    "action": "keep"
+                  }
+                }
+              ]
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.*",
+                  "action": {
+                    "action": "keep"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/bulk",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["Content-Encoding", "gzip"]
+    ],
+    "req_body": {
+      "b64": "H4sIAAAAAAAC/+3auVHEQAAAwVzOxpB2tXrI6myK3KEIg+nOYbz5er23X6/P1xv4914ff8nvkodS8kPyUEp+Sh5KyR+Sh1LyS/JQSv6UPJSSvyQPpeRvyUMp+UfyEEp+d99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSH+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8tN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5w30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJJf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyp/sOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm776CU/OW+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJX+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSsk/7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Dy++a+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJb+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSskP9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn56b6DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuOyglf7jvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5KyS/3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKfnTfQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13UEr+ct9BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSv913kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQel5B/3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKPmxue8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DkrJ7+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8sN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSn667yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSskf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyy30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd1BK/nTfQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2Ukr/cd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HpeRv9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn5x30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTddxBKfm7uO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DUvK7+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvoJT8cN9BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSn+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8of7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu++glPxy30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJI/3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6XkL/cdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330Ep+dt9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5x30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdhJI/NvcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330Ep+d19B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSn647yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSslP9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn5w30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd1BKfrnvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5KyZ/uO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DUvKX+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvoJT87b6DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuOygl/7jvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5Cya/NfQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13UEp+d99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSH+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8tN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5w30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJJf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyp/sOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm776CU/OW+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJX+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSsk/7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g0jy3z8NE0axiUEJAA=="
+    },
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"],
+      ["Content-Encoding", "gzip"]
+    ],
+    "resp_body": {
+      "b64": "H4sIAAAAAAAC/+3auVHEQAAAwVzOxpB2tXoI61yK3KEIg+nOYbz5er23X6/P1xv4914ff8nvkodS8kPyUEp+Sh5KyR+Sh1LyS/JQSv6UPJSSvyQPpeRvyUMp+UfyEEp+d99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSH+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8tN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5w30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJJf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyp/sOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm776CU/OW+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJX+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSsk/7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Dy++a+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJb+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSskP9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn56b6DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuOyglf7jvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5KyS/3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKfnTfQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13UEr+ct9BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSv913kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQel5B/3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKPmxue8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DkrJ7+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8sN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSn667yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSskf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyy30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd1BK/nTfQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2Ukr/cd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HpeRv9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn5x30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTddxBKfm7uO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DUvK7+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvoJT8cN9BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSn+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8of7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu+8glbz7DlLJu++glPxy30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJI/3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6XkL/cdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330Ep+dt9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5x30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdhJI/NvcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330Ep+d19B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSn647yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSslP9x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSp59x2kknffQSn5w30HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd5BK3n0HqeTdd1BKfrnvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5KyZ/uO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DUvKX+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvoJT87b6DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuO0gl776DVPLuOygl/7jvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5SybvvIJW8+w5Cya/NfQep5N13kErefQep5N13kErefQep5N13kErefQep5N13kErefQep5N13UEp+d99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HaSSd99BKnn3HZSSH+47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNU8u47SCXvvoNS8tN9B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XeQSt59B6nk3XdQSv5w30EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdpJJ330EqefcdlJJf7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Lyp/sOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm776CU/OW+g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jsoJX+77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOUsm77yCVvPsOSsk/7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g1Ty7jtIJe++g0jy3z8gr4htiUEJAA=="
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /bulk\",\"req\":{\"body\":\"trunc:size\",\"ct\":\"application/json\",\"headers\":{\"content-encoding\":[\"drop:str:l8\"],\"content-type\":[\"drop:str:l32\"]},\"path\":\"/bulk\",\"size\":\"lmax\"},\"resp\":{\"body\":\"trunc:size\",\"ct\":\"application/json\",\"headers\":{\"content-encoding\":[\"drop:str:l8\"],\"content-type\":[\"drop:str:l32\"]},\"size\":\"lmax\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

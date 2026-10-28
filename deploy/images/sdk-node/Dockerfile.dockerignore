@@ -1,0 +1,7 @@
+**
+!sdk/node/package.json
+!sdk/node/package-lock.json
+!sdk/node/tsconfig.json
+!sdk/node/tsconfig.cjs.json
+!sdk/node/scripts/build.mjs
+!sdk/node/src/**

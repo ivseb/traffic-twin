@@ -1,0 +1,29 @@
+{
+  "apiVersion": "admission.k8s.io/v1",
+  "kind": "AdmissionReview",
+  "request": {
+    "uid": "11111111-0000-4000-8000-000000000009",
+    "kind": {"group": "", "version": "v1", "kind": "Pod"},
+    "namespace": "shop",
+    "operation": "CREATE",
+    "object": {
+      "metadata": {
+        "name": "cfg-app",
+        "namespace": "shop",
+        "annotations": {"traffic-twin.io/inject": "node", "traffic-twin.io/service-name": "Cfg App"}
+      },
+      "spec": {
+        "containers": [
+          {
+            "name": "app",
+            "image": "registry.example/cfg-app:1",
+            "env": [
+              {"name": "NODE_OPTIONS", "valueFrom": {"configMapKeyRef": {"name": "node-flags", "key": "options"}}},
+              {"name": "TT_ENROLL_URL", "value": "https://tt-core.prod.example:4318"}
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>TrafficTwin.Bench</RootNamespace>
+    <AssemblyName>TrafficTwin.Bench</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <ServerGarbageCollector>false</ServerGarbageCollector>
+    <TieredPGO>true</TieredPGO>
+    <NoWarn>$(NoWarn);CS0649;CS0414</NoWarn>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="8.0.10" />
+    <ProjectReference Include="../../src/TrafficTwin.Sdk/TrafficTwin.Sdk.csproj" />
+    <ProjectReference Include="../../src/TrafficTwin.Sdk.AspNetCore/TrafficTwin.Sdk.AspNetCore.csproj" />
+    <!-- The test helpers (fake tt-core on Kestrel, PKI, policy factory) are shared with the test project. -->
+    <Compile Include="../../tests/TrafficTwin.Sdk.Tests/Helpers/*.cs" LinkBase="Helpers" />
+  </ItemGroup>
+</Project>

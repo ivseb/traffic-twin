@@ -1,0 +1,45 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1425-envelope-id-mismatch",
+  "category": "refusal",
+  "description": "Envelope policy_id differs from the body: policy_rejected.",
+  "spec": ["policy.md#3"],
+  "policy_envelope": {
+    "format": "tt.policy.compiled/v1",
+    "policy_id": "p-other",
+    "version": 1,
+    "issued_seq": 1,
+    "hash": "sha256:482df1a7a1f1678dff42cd38c99c5566851ba9f6c95f8ab66cc86bb6afaea957",
+    "body_b64": "eyJjcmVhdGVkX2F0IjoiMjAyNi0xMC0yMFQwODowMDowMFoiLCJmb3JtYXQiOiJ0dC5wb2xpY3kuYm9keS92MSIsImdsb2JhbCI6eyJyZXF1ZXN0Ijp7ImJvZHkiOlt7ImFjdGlvbiI6eyJhY3Rpb24iOiJobWFjIiwiZG9tYWluIjoib3JkZXIifSwicGF0aCI6IiQub3JkZXJJZCJ9XX19LCJobWFjIjp7ImFjY2VwdF9raWRzIjpbXSwiZXBvY2giOiIyMDI2LTEwIiwia2lkIjoiazEifSwiaXNzdWVkX3NlcSI6MSwibGltaXRzIjp7ImtlZXBfbWF4X2J5dGVzIjo2NCwibWF4X2FycmF5IjozMiwibWF4X2JvZHlfYnl0ZXMiOjEwNDg1NzYsIm1heF9kZXB0aCI6MzIsIm1heF9rZXlzIjoyNTZ9LCJub3RfYWZ0ZXIiOiIyMDI2LTExLTE5VDA4OjAwOjAwWiIsInBvbGljeV9pZCI6InAtY29uZm9ybWFuY2UiLCJzYW1wbGluZyI6eyJwcm9wYWdhdGVfdG8iOltdLCJyYXRlX2JwIjoxMDAwMCwidHJ1c3RfYmFnZ2FnZSI6ZmFsc2V9LCJzZWdtZW50cyI6eyJhbGxvdyI6W10sImF1dG9fd29yZHMiOmZhbHNlLCJob3N0c19hbGxvdyI6W119LCJzZXJ2aWNlcyI6W10sInRhcmdldHMiOnsiZ3JvdXBzIjpbInNob3AiXX0sInZlcnNpb24iOjF9",
+    "signature": {
+      "alg": "Ed25519",
+      "kid": "fleet-test-1",
+      "sig": "9JR-I3MRTWOSrh223kCgYjc-AmXxBO7I1fpBzQ9RIijYApxxq5kfTmaQlvIRnH0pVKWt8PI-CnY6dzO8pNC6Cw"
+    }
+  },
+  "fleet_keys": {
+    "fleet-test-1": "JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0"
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJvcmRlcklkIjoiT1JELTIwMjYtMDAwMTg0In0=",
+      "text": "{\"orderId\":\"ORD-2026-000184\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "policy_rejected"
+  }
+}

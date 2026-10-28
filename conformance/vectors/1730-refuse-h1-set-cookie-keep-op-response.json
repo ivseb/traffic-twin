@@ -1,0 +1,89 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1730-refuse-h1-set-cookie-keep-op-response",
+  "category": "refusal",
+  "description": "H1: keep on header set-cookie in op response rules: the source refuses the policy.",
+  "spec": ["hardening.md#2.1", "hardening.md#2.2", "policy.md#4"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders/{id}",
+            "response": {
+              "headers": {
+                "set-cookie": {
+                  "action": "keep"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["Authorization", "Bearer t-1"],
+      ["Cookie", "sid=1"]
+    ],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"],
+      ["Set-Cookie", "sid=1"]
+    ],
+    "resp_body": {
+      "b64": "eyJhIjoxfQ==",
+      "text": "{\"a\":1}"
+    }
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "policy_rejected"
+  }
+}

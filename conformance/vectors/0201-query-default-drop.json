@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0201-query-default-drop",
+  "category": "query",
+  "description": "Query values are dropped by default; names follow the key rule.",
+  "spec": ["sanitizer.md#8.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/search",
+    "raw_query": "q=red+shirt&page=2&from=2026-10-01",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"from\":[\"drop:str:date\"],\"page\":[\"drop:str:digits\"],\"q\":[\"drop:str:l32\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

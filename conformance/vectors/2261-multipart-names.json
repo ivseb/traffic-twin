@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2261-multipart-names",
+  "category": "multipart",
+  "description": "Field names follow the name rule: files[], items[0][sku] and a 6-digit name collapse to {*}; escaped quotes in names.",
+  "spec": ["sanitizer.md#22.3", "sanitizer.md#9.3"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/uploads",
+    "req_headers": [
+      ["Content-Type", "multipart/form-data; boundary=----ttBoundary7MA4YWxk"]
+    ],
+    "req_body": {
+      "b64": "LS0tLS0tdHRCb3VuZGFyeTdNQTRZV3hrDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9ImZpbGVzW10iDQoNCmENCi0tLS0tLXR0Qm91bmRhcnk3TUE0WVd4aw0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPSJpdGVtc1swXVtza3VdIg0KDQpiDQotLS0tLS10dEJvdW5kYXJ5N01BNFlXeGsNCkNvbnRlbnQtRGlzcG9zaXRpb246IGZvcm0tZGF0YTsgbmFtZT0iYzEyMzQ1NiINCg0KYw0KLS0tLS0tdHRCb3VuZGFyeTdNQTRZV3hrDQpDb250ZW50LURpc3Bvc2l0aW9uOiBmb3JtLWRhdGE7IG5hbWU9InFcIngiDQoNCmQNCi0tLS0tLXR0Qm91bmRhcnk3TUE0WVd4aw0KQ29udGVudC1EaXNwb3NpdGlvbjogZm9ybS1kYXRhOyBuYW1lPXBsYWluDQoNCmUNCi0tLS0tLXR0Qm91bmRhcnk3TUE0WVd4aw0KY29udGVudC1kaXNwb3NpdGlvbjogRk9STS1EQVRBO25hbWU9Imxvd2VyIg0KDQpmDQotLS0tLS10dEJvdW5kYXJ5N01BNFlXeGstLQ==",
+      "text": "------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; name=\"files[]\"\u000d\u000a\u000d\u000aa\u000d\u000a------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; name=\"items[0][sku]\"\u000d\u000a\u000d\u000ab\u000d\u000a------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; name=\"c123456\"\u000d\u000a\u000d\u000ac\u000d\u000a------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; name=\"q\\\"x\"\u000d\u000a\u000d\u000ad\u000d\u000a------ttBoundary7MA4YWxk\u000d\u000aContent-Disposition: form-data; name=plain\u000d\u000a\u000d\u000ae\u000d\u000a------ttBoundary7MA4YWxk\u000d\u000acontent-disposition: FORM-DATA;name=\"lower\"\u000d\u000a\u000d\u000af\u000d\u000a------ttBoundary7MA4YWxk--"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"lower\":[\"drop:str:l8\"],\"plain\":[\"drop:str:l8\"],\"{*}\":[\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l8\",\"drop:str:l8\"]},\"ct\":\"multipart/form-data\",\"fmt\":\"multipart\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l1024\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

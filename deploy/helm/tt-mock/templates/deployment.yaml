@@ -1,0 +1,173 @@
+{{- $src := include "tt-mock.packSource" . -}}
+{{- $packPath := printf "/pack/%s" (trimPrefix "/" .Values.pack.path) | clean -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tt-mock.fullname" . }}
+  labels:
+    {{- include "tt-mock.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tt-mock.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tt-mock.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tt-mock.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if eq $src "image" }}
+      initContainers:
+        - name: fetch-pack
+          image: {{ include "tt-mock.packImage" . | quote }}
+          imagePullPolicy: {{ .Values.pack.image.pullPolicy }}
+          command:
+            {{- toYaml .Values.pack.image.command | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 200m, memory: 128Mi}
+          volumeMounts:
+            - name: pack
+              mountPath: /pack-out
+      {{- end }}
+      containers:
+        - name: tt-mock
+          image: {{ include "tt-mock.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - mock
+            {{- if eq $src "console" }}
+            - --console
+            - {{ .Values.console.url | quote }}
+            - --group
+            - {{ required "console.group is required in console mode" .Values.console.group | quote }}
+            - --public-url
+            - {{ include "tt-mock.publicURL" . | quote }}
+            - --report-interval
+            - {{ .Values.console.reportInterval | quote }}
+            {{- if .Values.console.caConfigMap }}
+            - --console-ca
+            - /etc/tt-mock/ca/{{ .Values.console.caKey }}
+            {{- end }}
+            {{- else }}
+            - --pack
+            - {{ $packPath | quote }}
+            {{- end }}
+            - --addr
+            - "0.0.0.0:8480"
+            {{- range .Values.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          env:
+            - name: TT_GATE_PUBKEYS
+              value: {{ .Values.gatePubKeys | quote }}
+            {{- if eq $src "console" }}
+            - name: TT_MOCK_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "console.tokenSecret is required in console mode" .Values.console.tokenSecret }}
+                  key: {{ .Values.console.tokenKey }}
+            {{- end }}
+            {{- if .Values.controlToken.existingSecret }}
+            - name: TT_CONTROL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.controlToken.existingSecret }}
+                  key: {{ .Values.controlToken.key }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8480
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /__tt/health
+              port: http
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /__tt/health
+              port: http
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- if eq $src "console" }}
+            {{- if .Values.console.caConfigMap }}
+            - name: console-ca
+              mountPath: /etc/tt-mock/ca
+              readOnly: true
+            {{- end }}
+            {{- else }}
+            - name: pack
+              mountPath: /pack
+              readOnly: true
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir:
+            # console mode: the downloaded package is verified here before it is served
+            sizeLimit: {{ if eq $src "console" }}1Gi{{ else }}64Mi{{ end }}
+        {{- if eq $src "console" }}
+        {{- if .Values.console.caConfigMap }}
+        - name: console-ca
+          configMap:
+            name: {{ .Values.console.caConfigMap }}
+            defaultMode: 0444
+        {{- end }}
+        {{- else }}
+        - name: pack
+          {{- if eq $src "pvc" }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.pack.persistentVolumeClaim }}
+            readOnly: true
+          {{- else if eq $src "configmap" }}
+          configMap:
+            name: {{ .Values.pack.configMap }}
+            defaultMode: 0444
+          {{- else }}
+          emptyDir:
+            sizeLimit: 512Mi
+          {{- end }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

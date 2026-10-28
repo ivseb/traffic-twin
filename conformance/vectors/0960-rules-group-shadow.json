@@ -1,0 +1,99 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0960-rules-group-shadow",
+  "category": "rules",
+  "description": "A keep on a container is ignored, so it does not shadow a weaker drop on the same container.",
+  "spec": ["sanitizer.md#5.0", "sanitizer.md#5.1"],
+  "ambiguities": ["A-CONTAINER-KEEP"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {
+      "response": {
+        "body": [
+          {
+            "path": "$.items",
+            "action": {
+              "action": "drop"
+            }
+          }
+        ]
+      }
+    },
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders",
+            "response": {
+              "body": [
+                {
+                  "path": "$.items",
+                  "action": {
+                    "action": "keep"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJpdGVtcyI6W3sic3RhdHVzIjoiT1BFTiJ9XX0=",
+      "text": "{\"items\":[{\"status\":\"OPEN\"}]}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders\",\"req\":{\"path\":\"/orders\",\"size\":\"l8\"},\"resp\":{\"body\":{\"items\":\"drop:arr:l8\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l32\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

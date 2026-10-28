@@ -1,0 +1,199 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2022-graphql-gate-closed-mixed-root",
+  "category": "graphql",
+  "description": "A document that also selects a data field closes the gate: the names stay shapes, arrays keep max_array.",
+  "spec": ["sanitizer.md#5.7", "policy.md#1.6"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "orders-graph",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /graphql",
+            "request": {
+              "body": [
+                {
+                  "path": "$.query",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.variables.id",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                }
+              ]
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.data.__schema.directives[*].locations[*]",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.directives[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.mutationType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.queryType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].enumValues[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].args[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "orders-graph",
+    "method": "POST",
+    "raw_path": "/graphql",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJxdWVyeSI6InsgX19zY2hlbWEgeyB0eXBlcyB7IG5hbWUga2luZCB9IH0gb3JkZXIoaWQ6IDEpIHsgaWQgfSB9In0=",
+      "text": "{\"query\":\"{ __schema { types { name kind } } order(id: 1) { id } }\"}"
+    },
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJkYXRhIjp7Il9fc2NoZW1hIjp7ImRpcmVjdGl2ZXMiOlt7ImFyZ3MiOltdLCJkZXNjcmlwdGlvbiI6IkluY2x1ZGUgd2hlbiB0cnVlIiwibG9jYXRpb25zIjpbIkZJRUxEIiwiRlJBR01FTlRfU1BSRUFEIl0sIm5hbWUiOiJpbmNsdWRlIn1dLCJtdXRhdGlvblR5cGUiOm51bGwsInF1ZXJ5VHlwZSI6eyJuYW1lIjoiUXVlcnkifSwidHlwZXMiOlt7ImRlc2NyaXB0aW9uIjoiUm9vdCBxdWVyeSBvZiBNYXJpbyBSb3NzaSdzIHNob3AiLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOlt7ImRlZmF1bHRWYWx1ZSI6IlwiT1JELTFcIiIsImRlc2NyaXB0aW9uIjpudWxsLCJuYW1lIjoiaWQiLCJ0eXBlIjp7ImtpbmQiOiJOT05fTlVMTCIsIm5hbWUiOm51bGwsIm9mVHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IklEIiwib2ZUeXBlIjpudWxsfX19XSwiZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjoiT25lIG9yZGVyIiwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6Im9yZGVyIiwidHlwZSI6eyJraW5kIjoiT0JKRUNUIiwibmFtZSI6Ik9yZGVyIiwib2ZUeXBlIjpudWxsfX1dLCJraW5kIjoiT0JKRUNUIiwibmFtZSI6IlF1ZXJ5In0seyJkZXNjcmlwdGlvbiI6bnVsbCwiZW51bVZhbHVlcyI6W3siZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjoic2VudCIsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJTSElQUEVEIn0seyJkZXByZWNhdGlvblJlYXNvbiI6InVzZSBTSElQUEVEIiwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6dHJ1ZSwibmFtZSI6IklOX1RSQU5TSVRfMiJ9XSwiZmllbGRzIjpudWxsLCJraW5kIjoiRU5VTSIsIm5hbWUiOiJPcmRlclN0YXR1cyJ9LHsiZGVzY3JpcHRpb24iOm51bGwsImVudW1WYWx1ZXMiOm51bGwsImZpZWxkcyI6W3siYXJncyI6W10sImRlcHJlY2F0aW9uUmVhc29uIjpudWxsLCJkZXNjcmlwdGlvbiI6bnVsbCwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6ImZpZWxkMCIsInR5cGUiOnsia2luZCI6IlNDQUxBUiIsIm5hbWUiOiJTdHJpbmciLCJvZlR5cGUiOm51bGx9fV0sImtpbmQiOiJPQkpFQ1QiLCJuYW1lIjoiVHlwZTAifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDEiLCJ0eXBlIjp7ImtpbmQiOiJTQ0FMQVIiLCJuYW1lIjoiU3RyaW5nIiwib2ZUeXBlIjpudWxsfX1dLCJraW5kIjoiT0JKRUNUIiwibmFtZSI6IlR5cGUxIn0seyJkZXNjcmlwdGlvbiI6bnVsbCwiZW51bVZhbHVlcyI6bnVsbCwiZmllbGRzIjpbeyJhcmdzIjpbXSwiZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjpudWxsLCJpc0RlcHJlY2F0ZWQiOmZhbHNlLCJuYW1lIjoiZmllbGQyIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMiJ9LHsiZGVzY3JpcHRpb24iOm51bGwsImVudW1WYWx1ZXMiOm51bGwsImZpZWxkcyI6W3siYXJncyI6W10sImRlcHJlY2F0aW9uUmVhc29uIjpudWxsLCJkZXNjcmlwdGlvbiI6bnVsbCwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6ImZpZWxkMyIsInR5cGUiOnsia2luZCI6IlNDQUxBUiIsIm5hbWUiOiJTdHJpbmciLCJvZlR5cGUiOm51bGx9fV0sImtpbmQiOiJPQkpFQ1QiLCJuYW1lIjoiVHlwZTMifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDQiLCJ0eXBlIjp7ImtpbmQiOiJTQ0FMQVIiLCJuYW1lIjoiU3RyaW5nIiwib2ZUeXBlIjpudWxsfX1dLCJraW5kIjoiT0JKRUNUIiwibmFtZSI6IlR5cGU0In0seyJkZXNjcmlwdGlvbiI6bnVsbCwiZW51bVZhbHVlcyI6bnVsbCwiZmllbGRzIjpbeyJhcmdzIjpbXSwiZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjpudWxsLCJpc0RlcHJlY2F0ZWQiOmZhbHNlLCJuYW1lIjoiZmllbGQ1IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlNSJ9LHsiZGVzY3JpcHRpb24iOm51bGwsImVudW1WYWx1ZXMiOm51bGwsImZpZWxkcyI6W3siYXJncyI6W10sImRlcHJlY2F0aW9uUmVhc29uIjpudWxsLCJkZXNjcmlwdGlvbiI6bnVsbCwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6ImZpZWxkNiIsInR5cGUiOnsia2luZCI6IlNDQUxBUiIsIm5hbWUiOiJTdHJpbmciLCJvZlR5cGUiOm51bGx9fV0sImtpbmQiOiJPQkpFQ1QiLCJuYW1lIjoiVHlwZTYifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDciLCJ0eXBlIjp7ImtpbmQiOiJTQ0FMQVIiLCJuYW1lIjoiU3RyaW5nIiwib2ZUeXBlIjpudWxsfX1dLCJraW5kIjoiT0JKRUNUIiwibmFtZSI6IlR5cGU3In0seyJkZXNjcmlwdGlvbiI6bnVsbCwiZW51bVZhbHVlcyI6bnVsbCwiZmllbGRzIjpbeyJhcmdzIjpbXSwiZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjpudWxsLCJpc0RlcHJlY2F0ZWQiOmZhbHNlLCJuYW1lIjoiZmllbGQ4IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlOCJ9LHsiZGVzY3JpcHRpb24iOm51bGwsImVudW1WYWx1ZXMiOm51bGwsImZpZWxkcyI6W3siYXJncyI6W10sImRlcHJlY2F0aW9uUmVhc29uIjpudWxsLCJkZXNjcmlwdGlvbiI6bnVsbCwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6ImZpZWxkOSIsInR5cGUiOnsia2luZCI6IlNDQUxBUiIsIm5hbWUiOiJTdHJpbmciLCJvZlR5cGUiOm51bGx9fV0sImtpbmQiOiJPQkpFQ1QiLCJuYW1lIjoiVHlwZTkifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDEwIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTAifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDExIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTEifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDEyIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTIifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDEzIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTMifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE0IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTQifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE1IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTUifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE2IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTYifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE3IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTcifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE4IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTgifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDE5IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMTkifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDIwIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjAifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDIxIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjEifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDIyIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjIifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDIzIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjMifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI0IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjQifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI1IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjUifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI2IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjYifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI3IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjcifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI4IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjgifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDI5IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMjkifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDMwIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzAifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDMxIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzEifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDMyIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzIifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDMzIiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzMifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDM0IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzQifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDM1IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzUifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDM2IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzYifSx7ImRlc2NyaXB0aW9uIjpudWxsLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOltdLCJkZXByZWNhdGlvblJlYXNvbiI6bnVsbCwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJmaWVsZDM3IiwidHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IlN0cmluZyIsIm9mVHlwZSI6bnVsbH19XSwia2luZCI6Ik9CSkVDVCIsIm5hbWUiOiJUeXBlMzcifV19fX0="
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /graphql\",\"req\":{\"body\":{\"query\":\"gql:{__schema{types{name kind}}order(id:?i){id}}\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/graphql\",\"size\":\"l128\"},\"resp\":{\"body\":{\"data\":{\"__schema\":{\"directives\":[{\"args\":[],\"description\":\"drop:str:l32\",\"locations\":[\"drop:str:l8\",\"drop:str:l32\"],\"name\":\"drop:str:l8\"}],\"mutationType\":\"drop:null\",\"queryType\":{\"name\":\"drop:str:l8\"},\"types\":[{\"description\":\"drop:str:l32\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[{\"defaultValue\":\"drop:str:l8\",\"description\":\"drop:null\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:null\",\"ofType\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}}],\"deprecationReason\":\"drop:null\",\"description\":\"drop:str:l32\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":[{\"deprecationReason\":\"drop:null\",\"description\":\"drop:str:l8\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\"},{\"deprecationReason\":\"drop:str:l32\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l32\"}],\"fields\":\"drop:null\",\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l32\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"drop:str:l8\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}],\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\"},\"trunc:n:l128\"]}}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"lmax\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"orders-graph\"}"
+  }
+}

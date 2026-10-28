@@ -1,0 +1,11 @@
+{"format":"tt.world/v1","seed":42,"t0":"2026-10-19T00:00:00Z","type":"meta"}
+{"archetype":"arch-03","id":"CUS-SYN-0007","profile":{"email":"giulia.neri@example.com","name":"Giulia Neri"},"type":"customer"}
+{"customer_id":"CUS-SYN-0007","entity":"order","id":"ORD-SYN-0042","state":{"customerId":"CUS-SYN-0007","id":"ORD-SYN-0042","status":"CREATED"},"type":"entity"}
+{"customer_id":"CUS-SYN-0007","entity":"order","id":"ORD-SYN-0043","state":{"customerId":"CUS-SYN-0007","id":"ORD-SYN-0043","status":"CREATED"},"type":"entity"}
+{"customer_id":"CUS-SYN-0007","entity":"order","id":"ORD-SYN-0044","state":{"customerId":"CUS-SYN-0007","id":"ORD-SYN-0044","status":"CREATED"},"type":"entity"}
+{"customer_id":"CUS-SYN-0007","entity":"shipment","id":"SHP-SYN-0091","state":{"orderId":"ORD-SYN-0042","shipmentId":"SHP-SYN-0091","status":"IN_TRANSIT"},"type":"entity"}
+{"customer_id":"CUS-SYN-0007","entity":"shipment","id":"SHP-SYN-0092","state":{"cancelReason":"ADDRESS_UNREACHABLE","orderId":"ORD-SYN-0043","shipmentId":"SHP-SYN-0092","status":"CANCELLED"},"type":"entity"}
+{"at":"2026-10-18T09:00:00Z","effect_id":"shipment-created","entity":"shipment","id":"SHP-SYN-0091","rule_id":"r-0007","seq":1,"state":{"orderId":"ORD-SYN-0042","shipmentId":"SHP-SYN-0091","status":"CREATED"},"type":"history"}
+{"at":"2026-10-18T13:00:00Z","effect_id":"shipment-in-transit","entity":"shipment","id":"SHP-SYN-0091","rule_id":"r-0007","seq":2,"state":{"orderId":"ORD-SYN-0042","shipmentId":"SHP-SYN-0091","status":"IN_TRANSIT"},"type":"history"}
+{"at":"2026-10-18T09:05:00Z","effect_id":"shipment-created","entity":"shipment","id":"SHP-SYN-0092","rule_id":"r-0007","seq":1,"state":{"orderId":"ORD-SYN-0043","shipmentId":"SHP-SYN-0092","status":"CREATED"},"type":"history"}
+{"at":"2026-10-18T10:05:00Z","effect_id":"shipment-cancelled","entity":"shipment","id":"SHP-SYN-0092","rule_id":"r-0007","seq":2,"state":{"cancelReason":"ADDRESS_UNREACHABLE","orderId":"ORD-SYN-0043","shipmentId":"SHP-SYN-0092","status":"CANCELLED"},"type":"history"}

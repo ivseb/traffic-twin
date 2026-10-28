@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1504-adv-pii-in-content-type",
+  "category": "adversarial",
+  "description": "PII in content-type parameters never reaches ct.",
+  "spec": ["sanitizer.md#8.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/",
+    "req_headers": [
+      ["Content-Type", "application/json; name=\"mario.rossi@example.com\"; charset=utf-8"]
+    ],
+    "req_body": {
+      "b64": "e30=",
+      "text": "{}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /\",\"req\":{\"body\":{},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

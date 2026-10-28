@@ -1,0 +1,112 @@
+# tt-core in production: keyguard on another host (or pod, namespace) and
+# reachable only over mTLS; tt-core pins keyguard, keyguard pins tt-core.
+# Every key is shown with its default unless marked "example".
+admin:
+  addr: 0.0.0.0:7443                            # example; non-loopback requires TLS
+  tls:
+    cert_file: /etc/tt/admin.crt                # example
+    key_file: /etc/tt/admin.key                 # example
+  shutdown_timeout: 10s
+
+intake:
+  addr: 0.0.0.0:4318                            # example; sources connect here (mTLS)
+  tls:
+    managed: true                               # Fleet CA certificate, pinned by enrollment tokens
+
+storage:
+  path: /var/lib/tt/tt-core.db                  # example; encrypted volume
+  max_bytes: 0                                  # size budget, e.g. 20GiB (0: none); shedding over critical_watermark_pct (90)
+
+auth:
+  session: {idle_timeout: 30m, absolute_timeout: 12h}
+  local: {enabled: true}
+  rate_limit: {requests_per_minute: 10, burst: 5}
+
+keyguard:
+  url: https://keyguard.tt.internal:7443        # example
+  client_cert_file: /etc/tt/tt-core-client.crt  # example; its SPKI pin goes in TT_KEYGUARD_CLIENT_PINS
+  client_key_file: /etc/tt/tt-core-client.key   # example
+  ca_file: /etc/tt/keyguard-ca.pem              # example; verifies chain and host name
+  server_pin: sha256:0000000000000000000000000000000000000000000000000000000000000000  # example: tt keyguard pin keyguard.crt
+  timeout: 2m
+
+fleet:
+  public_url: https://tt-core.tt.internal:4318  # example; required for a non-loopback intake
+  client_cert_ttl: 168h
+  heartbeat_interval: 30s
+  policy_poll_interval: 60s
+  policy_max_age: 24h
+  policy_validity: 720h
+  # A policy signing key can be revoked only once this fraction (1 = 100%) of the sources seen
+  # in the window confirmed the new key (policy.md 3.1). 0 only to revoke a compromised key at once.
+  key_rotation: {min_confirmed: 1, window: 24h}
+  # Observe phase (policy.md 7): codes lets the automatic version put `code` on status-like
+  # fields (sanitizer.md 5.6); false until every source is v1.11 or later (older ones refuse it).
+  # code_digits lets it propose code(alnum), short codes with digits (spec v1.19): false until every
+  # source is v1.19 or later.
+  observe: {enabled: true, after: 15m, min_events: 200, interval: 1m, codes: true, code_digits: true, graphql: true}
+  # Bodies written into the compiled policies (sanitizer.md 22, spec v1.19): XML/SOAP, multipart,
+  # base64 documents and large bodies (a source keeps up to max_large_body_bytes in memory).
+  # bodies: false until every source is v1.19 or later (older ones refuse the policy).
+  sanitizer: {bodies: true, xml: true, multipart: true, docs: true, max_large_body_bytes: 8388608, large_array: 50, large_nested_array: 5}
+  enroll_rate_limit:
+    ip: {requests_per_minute: 60, burst: 30}
+    token: {requests_per_minute: 120, burst: 60}
+
+contract:
+  snapshot_window: 24h
+  grace: 5m
+  min_samples: 20
+  k_min: 20                                     # >= gate.k_min (checked at start)
+  keep_snapshots: 400
+
+drift:
+  webhook_allow: [alerts.tt.internal]           # example; empty: no webhook allowed
+  webhook_allow_http: false
+  notify_non_breaking: true
+
+miner:
+  schedule: 6h                                  # 0: runs only from POST /api/v1/rules/mine
+  window: 336h
+  k_min: 20
+  max_events: 0                                 # 0: from the memory limit (half of it, ~1.5 KB per event of the window at the peak of a run); a larger value is lowered to what fits (docs/OPERATIONS.md 2.1)
+  min_birth_share: 0.6                          # entity accepted when >= 60% of its objects were seen being created (restarts do not drop it)
+  # candidate_max_events: 0                    # rules 1.9: groups above this many events get no candidates below k (0: default 2000000; -1: off)
+  stale_runs: 3                                 # an approved rule goes stale only after this many consecutive bad runs
+  # min_horizon: 1h                             # least span of captured traffic before a run decides anything (default 1h; lower it only for an accelerated demo)
+
+world:
+  k_min: 20
+  profile_window: 720h
+  locale: it
+
+gate:
+  k_min: 20
+  valid_days: 30
+  pii_detectors: true                           # cannot be turned off
+
+retention:                                      # docs/DATA_LIFECYCLE.md
+  events: 720h                                  # raw events (default 168h); then only the rollups below
+  purge_interval: 1h                            # maintenance job
+  exports: 24h
+  rollups: { hourly: 720h, daily: 8760h }       # then monthly forever
+  snapshots: { keep_all: 720h, weekly: 4320h }  # then one per month
+  audit: { archive_after: 4320h, archive_dir: /var/lib/tt/audit-archive, segment_entries: 50000 }   # WORM storage; 0 = never
+  deliveries: 720h
+  resolved_alerts: 8760h
+
+mock:                                           # the Mock page: mocks connected to the console (tt mock --console)
+  console_url: https://tt-core.traffic-twin.svc.cluster.local:7070   # how the mocks reach tt-core; empty: the URL of the browser
+  # console_ca_file: /etc/tt/tls/ca.crt         # CA of the admin certificate, given to the managed mocks
+  report_interval: 3s                           # longest wait of a held mock report (journal delay on the Mock page)
+  kubernetes:                                   # tt-core starts the mocks itself (deploy/helm/tt-core mockManager: Role in the namespace only)
+    enabled: false
+    namespace: bookings-test                    # default: the namespace of tt-core
+    route: auto                                 # OpenShift Route when the cluster has routes
+    cpu_request: 50m
+    memory_request: 64Mi
+    memory_limit: 512Mi
+
+log:
+  level: info
+  format: json

@@ -1,0 +1,68 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1212-discovery-form",
+  "category": "discovery",
+  "description": "Form fields: req.body.<name>, collapsed names as req.body.*.",
+  "spec": ["sanitizer.md#15", "sanitizer.md#9.1"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "discovery": {
+      "enabled": true,
+      "expires_at": "2026-10-26T10:00:00Z"
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/f",
+    "req_headers": [
+      ["Content-Type", "application/x-www-form-urlencoded"]
+    ],
+    "req_body": {
+      "b64": "YT0xJmI9MiZtYXJpbyU0MHNob3AuZXhhbXBsZT0z",
+      "text": "a=1&b=2&mario%40shop.example=3"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"disc\":{\"req.body.*\":\"tkd:uPzXbg\",\"req.body.a\":\"tkd:EJ4fDg\",\"req.body.b\":\"tkd:JeEF8Q\",\"req.headers.content-type\":\"tkd:FXhqUw\",\"req.path.0\":\"tkd:WizN8Q\"},\"op\":\"POST /{drop:str:l8}\",\"req\":{\"body\":{\"a\":[\"drop:str:digits\"],\"b\":[\"drop:str:digits\"],\"{*}\":[\"drop:str:digits\"]},\"ct\":\"application/x-www-form-urlencoded\",\"headers\":{\"content-type\":[\"drop:str:l128\"]},\"path\":\"/{drop:str:l8}\",\"size\":\"l32\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

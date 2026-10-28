@@ -1,0 +1,36 @@
+{{- if .Values.tls.certManager.enabled }}
+{{- $full := include "tt-core.fullname" . }}
+{{- $ns := .Release.Namespace }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ $full }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+spec:
+  secretName: {{ include "tt-core.tlsSecretName" . }}
+  duration: {{ .Values.tls.certManager.duration }}
+  renewBefore: {{ .Values.tls.certManager.renewBefore }}
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+    rotationPolicy: Always
+  usages: [digital signature, key encipherment, server auth]
+  dnsNames:
+    {{- range list $full (printf "%s.%s" $full $ns) (printf "%s.%s.svc" $full $ns) (printf "%s.%s.svc.cluster.local" $full $ns) }}
+    - {{ . }}
+    {{- end }}
+    {{- range list (printf "%s-intake" $full) }}
+    - {{ . }}
+    - {{ . }}.{{ $ns }}
+    - {{ . }}.{{ $ns }}.svc
+    - {{ . }}.{{ $ns }}.svc.cluster.local
+    {{- end }}
+    {{- range .Values.tls.certManager.dnsNames }}
+    - {{ . }}
+    {{- end }}
+  issuerRef:
+    name: {{ required "tls.certManager.issuerRef.name is required when tls.certManager.enabled=true" .Values.tls.certManager.issuerRef.name }}
+    kind: {{ .Values.tls.certManager.issuerRef.kind }}
+    group: {{ .Values.tls.certManager.issuerRef.group }}
+{{- end }}

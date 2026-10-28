@@ -1,0 +1,23 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1137-net-error",
+  "category": "routing",
+  "description": "net_error: no resp part (service is the host pattern, spec v1.5).",
+  "spec": ["sanitizer.md#2", "sanitizer.md#3.5"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "outbound",
+    "url_base": "https://payments.example",
+    "method": "GET",
+    "raw_path": "/v1/rates",
+    "req_headers": [],
+    "net_error": "timeout"
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}/{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}/{drop:str:l8}\",\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"host:payments.example\"}"
+  }
+}

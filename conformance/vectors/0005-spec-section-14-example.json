@@ -1,0 +1,119 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0005-spec-section-14-example",
+  "category": "default-drop",
+  "description": "The complete example of sanitizer.md section 14, with the real token.",
+  "spec": [
+    "sanitizer.md#14",
+    "sanitizer.md#5.3",
+    "sanitizer.md#5.4",
+    "sanitizer.md#5.5",
+    "sanitizer.md#8.1",
+    "sanitizer.md#8.2",
+    "sanitizer.md#9.1"
+  ],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": true,
+      "allow": [],
+      "hosts_allow": [],
+      "auto_words_expires_at": "2026-10-26T10:00:00Z"
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /orders",
+            "response": {
+              "body": [
+                {
+                  "path": "$.id",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                },
+                {
+                  "path": "$.status",
+                  "action": {
+                    "action": "keep"
+                  }
+                },
+                {
+                  "path": "$.total",
+                  "action": {
+                    "action": "bucket",
+                    "kind": "num",
+                    "bounds": [0, 50, 100, 250]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "raw_query": "promo=AUTUMN10",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["Cookie", "sid=9f8e7d6c5b4a"]
+    ],
+    "req_body": {
+      "b64": "eyJpdGVtcyI6W3sic2t1IjoiVFNISVJULVJFRC1NIiwicXR5IjoyfV0sImVtYWlsIjoiZ2l1bGlhLm5lcmlAZXhhbXBsZS5jb20iLCJub3RlIjoiIn0=",
+      "text": "{\"items\":[{\"sku\":\"TSHIRT-RED-M\",\"qty\":2}],\"email\":\"giulia.neri@example.com\",\"note\":\"\"}"
+    },
+    "status": 201,
+    "resp_headers": [
+      ["Content-Type", "application/json; charset=utf-8"]
+    ],
+    "resp_body": {
+      "b64": "eyJpZCI6Ik9SRC0yMDI2LTAwMDE4NCIsInN0YXR1cyI6IkNSRUFURUQiLCJ0b3RhbCI6NzMuNDB9",
+      "text": "{\"id\":\"ORD-2026-000184\",\"status\":\"CREATED\",\"total\":73.40}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /orders\",\"req\":{\"body\":{\"email\":\"drop:str:email\",\"items\":[{\"qty\":\"drop:int\",\"sku\":\"drop:str:l32\"}],\"note\":\"drop:str:l8\"},\"cookies\":{\"sid\":[\"drop:str:l32\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/orders\",\"query\":{\"promo\":[\"drop:str:l8\"]},\"size\":\"l128\"},\"resp\":{\"body\":{\"id\":\"tk1:k1:5QWSSNfrkE8dHsTh40ixTw\",\"status\":\"keep:CREATED\",\"total\":\"num:50-100\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2205-code-alnum-path-query-headers",
+  "category": "code-alnum",
+  "description": "code alnum on a path parameter, a query value and a header value.",
+  "spec": ["sanitizer.md#4.2", "sanitizer.md#5.6", "sanitizer.md#8.1", "sanitizer.md#8.3"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "request": {
+          "query": {
+            "version": {
+              "action": "code",
+              "shape": "alnum"
+            }
+          },
+          "headers": {
+            "x-store-code": {
+              "action": "code",
+              "shape": "alnum"
+            }
+          }
+        },
+        "ops": [
+          {
+            "op": "GET /items/{itemCode}",
+            "request": {
+              "path": {
+                "itemCode": {
+                  "action": "code",
+                  "shape": "alnum"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/items/0000123450",
+    "raw_query": "version=2.1&version=2%201",
+    "req_headers": [
+      ["X-Store-Code", "004711"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /items/{itemCode}\",\"req\":{\"headers\":{\"x-store-code\":[\"keep:004711\"]},\"path\":\"/items/{keep:0000123450}\",\"query\":{\"version\":[\"keep:2.1\",\"drop:str:l8\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

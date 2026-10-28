@@ -1,0 +1,57 @@
+[Unit]
+Description=traffic-twin core (intake, Fleet, analysis, admin API and UI)
+Documentation=https://github.com/ivseb/traffic-twin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tt-core
+Group=tt-core
+ExecStart=/usr/local/bin/tt core -config /etc/tt/core.yaml
+Restart=on-failure
+RestartSec=2s
+
+# Database, Fleet CA and exports live here (0700, owned by tt-core).
+StateDirectory=tt-core
+StateDirectoryMode=0700
+UMask=0077
+
+# Sandbox
+NoNewPrivileges=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+ProtectProc=invisible
+ProcSubset=pid
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+RemoveIPC=yes
+LimitNOFILE=65536
+
+# Memory. The host has 4 GiB; the rest is for sshd, journald and the page
+# cache. tt-core reads this limit from its cgroup and sizes on it the Go
+# soft limit (85 %), the miner window and the heavy jobs (docs/OPERATIONS.md
+# 2.1). Without it tt-core sees no limit at all: in an LXC container the limit is set above
+# the cgroup namespace (every memory.max says "max") and ProcSubset=pid
+# hides /proc/meminfo (the miner was OOM-killed that way).
+MemoryMax=3584M
+
+[Install]
+WantedBy=multi-user.target

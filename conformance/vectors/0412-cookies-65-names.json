@@ -1,0 +1,29 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0412-cookies-65-names",
+  "category": "cookies",
+  "description": "65 distinct cookie names: 64 kept, then {trunc} = [\"trunc:keys:<class>\"].",
+  "spec": ["sanitizer.md#8.2", "sanitizer.md#8.1"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      [
+        "Cookie",
+        "c00=v; c01=v; c02=v; c03=v; c04=v; c05=v; c06=v; c07=v; c08=v; c09=v; c10=v; c11=v; c12=v; c13=v; c14=v; c15=v; c16=v; c17=v; c18=v; c19=v; c20=v; c21=v; c22=v; c23=v; c24=v; c25=v; c26=v; c27=v; c28=v; c29=v; c30=v; c31=v; c32=v; c33=v; c34=v; c35=v; c36=v; c37=v; c38=v; c39=v; c40=v; c41=v; c42=v; c43=v; c44=v; c45=v; c46=v; c47=v; c48=v; c49=v; c50=v; c51=v; c52=v; c53=v; c54=v; c55=v; c56=v; c57=v; c58=v; c59=v; c60=v; c61=v; c62=v; c63=v; c64=v"
+      ]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"cookies\":{\"c00\":[\"drop:str:l8\"],\"c01\":[\"drop:str:l8\"],\"c02\":[\"drop:str:l8\"],\"c03\":[\"drop:str:l8\"],\"c04\":[\"drop:str:l8\"],\"c05\":[\"drop:str:l8\"],\"c06\":[\"drop:str:l8\"],\"c07\":[\"drop:str:l8\"],\"c08\":[\"drop:str:l8\"],\"c09\":[\"drop:str:l8\"],\"c10\":[\"drop:str:l8\"],\"c11\":[\"drop:str:l8\"],\"c12\":[\"drop:str:l8\"],\"c13\":[\"drop:str:l8\"],\"c14\":[\"drop:str:l8\"],\"c15\":[\"drop:str:l8\"],\"c16\":[\"drop:str:l8\"],\"c17\":[\"drop:str:l8\"],\"c18\":[\"drop:str:l8\"],\"c19\":[\"drop:str:l8\"],\"c20\":[\"drop:str:l8\"],\"c21\":[\"drop:str:l8\"],\"c22\":[\"drop:str:l8\"],\"c23\":[\"drop:str:l8\"],\"c24\":[\"drop:str:l8\"],\"c25\":[\"drop:str:l8\"],\"c26\":[\"drop:str:l8\"],\"c27\":[\"drop:str:l8\"],\"c28\":[\"drop:str:l8\"],\"c29\":[\"drop:str:l8\"],\"c30\":[\"drop:str:l8\"],\"c31\":[\"drop:str:l8\"],\"c32\":[\"drop:str:l8\"],\"c33\":[\"drop:str:l8\"],\"c34\":[\"drop:str:l8\"],\"c35\":[\"drop:str:l8\"],\"c36\":[\"drop:str:l8\"],\"c37\":[\"drop:str:l8\"],\"c38\":[\"drop:str:l8\"],\"c39\":[\"drop:str:l8\"],\"c40\":[\"drop:str:l8\"],\"c41\":[\"drop:str:l8\"],\"c42\":[\"drop:str:l8\"],\"c43\":[\"drop:str:l8\"],\"c44\":[\"drop:str:l8\"],\"c45\":[\"drop:str:l8\"],\"c46\":[\"drop:str:l8\"],\"c47\":[\"drop:str:l8\"],\"c48\":[\"drop:str:l8\"],\"c49\":[\"drop:str:l8\"],\"c50\":[\"drop:str:l8\"],\"c51\":[\"drop:str:l8\"],\"c52\":[\"drop:str:l8\"],\"c53\":[\"drop:str:l8\"],\"c54\":[\"drop:str:l8\"],\"c55\":[\"drop:str:l8\"],\"c56\":[\"drop:str:l8\"],\"c57\":[\"drop:str:l8\"],\"c58\":[\"drop:str:l8\"],\"c59\":[\"drop:str:l8\"],\"c60\":[\"drop:str:l8\"],\"c61\":[\"drop:str:l8\"],\"c62\":[\"drop:str:l8\"],\"c63\":[\"drop:str:l8\"],\"{trunc}\":[\"trunc:keys:l128\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

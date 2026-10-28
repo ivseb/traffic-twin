@@ -1,0 +1,72 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2304-xml-namespaces",
+  "category": "xml",
+  "description": "Namespaces: default, prefixed, unqualified children ({none}), undeclaration, value-like segments, urn, @ in the URI.",
+  "spec": ["sanitizer.md#22.2"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [],
+    "bodies": {
+      "xml": true,
+      "multipart": true,
+      "docs": true,
+      "max_large_body_bytes": 0,
+      "large_array": 50,
+      "large_nested_array": 5
+    }
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/ws/StockService.asmx",
+    "req_headers": [
+      ["Content-Type", "application/xml"]
+    ],
+    "req_body": {
+      "b64": "PHIgeG1sbnM9Imh0dHA6Ly9hLmV4YW1wbGUvbnMvdjEiPjxwOnggeG1sbnM6cD0idXJuOmV4YW1wbGU6b3JkZXJzOjIwMjYiPjx5Lz48L3A6eD48eiB4bWxucz0iIj48dy8+PC96PjxjIHhtbG5zPSJodHRwOi8vYS5leGFtcGxlL2N1c3RvbWVycy8zOTEyMzQ1Njc4L2RlYWRiZWVmY2FmZTEyIi8+PGQgeG1sbnM9Im1haWx0bzptYXJpby5yb3NzaUBleGFtcGxlLmNvbSIvPjxlIHhtbG5zPSJodHRwOi8vYS5leGFtcGxlL25zL3YxIi8+PGYgeG1sbnM9Imh0dHA6Ly9iLmV4YW1wbGUvJTdFdXNlciIvPjxnIHhtbG5zPSJodHRwOi8vYi5leGFtcGxlL3t4fSIvPjwvcj4=",
+      "text": "<r xmlns=\"http://a.example/ns/v1\"><p:x xmlns:p=\"urn:example:orders:2026\"><y/></p:x><z xmlns=\"\"><w/></z><c xmlns=\"http://a.example/customers/3912345678/deadbeefcafe12\"/><d xmlns=\"mailto:mario.rossi@example.com\"/><e xmlns=\"http://a.example/ns/v1\"/><f xmlns=\"http://b.example/%7Euser\"/><g xmlns=\"http://b.example/{x}\"/></r>"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l8}/{drop:str:l32}\",\"req\":{\"body\":{\"r\":{\"c\":\"drop:str:l8\",\"d\":\"drop:str:l8\",\"e\":\"drop:str:l8\",\"f\":\"drop:str:l8\",\"g\":\"drop:str:l8\",\"x\":{\"y\":\"drop:str:l8\"},\"z\":{\"w\":\"drop:str:l8\"}}},\"ct\":\"application/xml\",\"fmt\":\"xml\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/{drop:str:l8}/{drop:str:l32}\",\"size\":\"l1024\",\"xmlns\":{\"$.r\":\"ns:http://a.example/ns/v1\",\"$.r.c\":\"ns:http://a.example/customers/{*}/{*}\",\"$.r.d\":\"ns:{*}\",\"$.r.f\":\"ns:http://b.example/%7Euser\",\"$.r.g\":\"ns:{*}\",\"$.r.x\":\"ns:urn:example:orders:2026\",\"$.r.x.y\":\"ns:http://a.example/ns/v1\",\"$.r.z\":\"ns:{none}\"}},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

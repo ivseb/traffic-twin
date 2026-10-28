@@ -1,0 +1,45 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1427-envelope-padded-body",
+  "category": "refusal",
+  "description": "body_b64 with \"=\" padding is not base64url without padding: policy_rejected.",
+  "spec": ["policy.md#3"],
+  "policy_envelope": {
+    "format": "tt.policy.compiled/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "hash": "sha256:c18e0e4e6f729c8362f067c862022718898ea924ea1ab6355ffddd337a8d6dac",
+    "body_b64": "eyJjcmVhdGVkX2F0IjoiMjAyNi0xMC0yMFQwODowMDowMFoiLCJmb3JtYXQiOiJ0dC5wb2xpY3kuYm9keS92MSIsImdsb2JhbCI6eyJyZXF1ZXN0Ijp7ImJvZHkiOlt7ImFjdGlvbiI6eyJhY3Rpb24iOiJobWFjIiwiZG9tYWluIjoib3JkIn0sInBhdGgiOiIkLm9yZGVySWQifV19fSwiaG1hYyI6eyJhY2NlcHRfa2lkcyI6W10sImVwb2NoIjoiMjAyNi0xMCIsImtpZCI6ImsxIn0sImlzc3VlZF9zZXEiOjEsImxpbWl0cyI6eyJrZWVwX21heF9ieXRlcyI6NjQsIm1heF9hcnJheSI6MzIsIm1heF9ib2R5X2J5dGVzIjoxMDQ4NTc2LCJtYXhfZGVwdGgiOjMyLCJtYXhfa2V5cyI6MjU2fSwibm90X2FmdGVyIjoiMjAyNi0xMS0xOVQwODowMDowMFoiLCJwb2xpY3lfaWQiOiJwLWNvbmZvcm1hbmNlIiwic2FtcGxpbmciOnsicHJvcGFnYXRlX3RvIjpbXSwicmF0ZV9icCI6MTAwMDAsInRydXN0X2JhZ2dhZ2UiOmZhbHNlfSwic2VnbWVudHMiOnsiYWxsb3ciOltdLCJhdXRvX3dvcmRzIjpmYWxzZSwiaG9zdHNfYWxsb3ciOltdfSwic2VydmljZXMiOltdLCJ0YXJnZXRzIjp7Imdyb3VwcyI6WyJzaG9wIl19LCJ2ZXJzaW9uIjoxfQ==",
+    "signature": {
+      "alg": "Ed25519",
+      "kid": "fleet-test-1",
+      "sig": "ZxBXJjDcR6o4I2T131ocvFG7SGJl7OBRwWIN-8X0LepxUteC-qBK4sRCP5FYIZ8yBzIbt2hCwRVS_s-Ouae-AQ"
+    }
+  },
+  "fleet_keys": {
+    "fleet-test-1": "JUO5L_EJVRFHatyDadtt3JM2ZaEZeN2hQE7hBmypVZ0"
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/orders",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJvcmRlcklkIjoiT1JELTIwMjYtMDAwMTg0In0=",
+      "text": "{\"orderId\":\"ORD-2026-000184\"}"
+    },
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "policy_rejected"
+  }
+}

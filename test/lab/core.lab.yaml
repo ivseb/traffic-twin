@@ -1,0 +1,80 @@
+# tt-core of the lab (core host): deploy/examples/core.production.yaml with the
+# lab addresses. deploy-infra.sh replaces __KG_PIN__ (tt keyguard pin),
+# __KG_HOST__ and __CORE_HOST__ (LAB_HOST_KEYGUARD, LAB_HOST_CORE).
+admin:
+  addr: 0.0.0.0:7443
+  tls:
+    cert_file: /etc/tt/admin.crt
+    key_file: /etc/tt/secrets/admin.key
+  shutdown_timeout: 10s
+
+intake:
+  addr: 0.0.0.0:4318
+  tls:
+    managed: true
+
+storage:
+  path: /var/lib/tt-core/tt-core.db
+
+auth:
+  session: {idle_timeout: 30m, absolute_timeout: 12h}
+  local: {enabled: true}
+  rate_limit: {requests_per_minute: 10, burst: 5}
+
+keyguard:
+  url: https://__KG_HOST__:7443
+  client_cert_file: /etc/tt/tt-core-client.crt
+  client_key_file: /etc/tt/secrets/tt-core-client.key
+  ca_file: /etc/tt/lab-ca.pem
+  server_pin: __KG_PIN__
+  timeout: 2m
+
+fleet:
+  public_url: https://__CORE_HOST__:4318
+  server_names: [__CORE_HOST__]
+  egress_hosts: ["tt-egress:9090"]     # how the shop reaches tt-egress: an SDK calling it double-captures
+  client_cert_ttl: 168h
+  heartbeat_interval: 30s
+  policy_poll_interval: 60s
+  policy_max_age: 24h
+  policy_validity: 720h
+  enroll_rate_limit:
+    ip: {requests_per_minute: 60, burst: 30}
+    token: {requests_per_minute: 120, burst: 60}
+
+contract:
+  snapshot_window: 24h
+  grace: 5m
+  min_samples: 20
+  k_min: 20
+  keep_snapshots: 400
+
+drift:
+  webhook_allow: []
+  webhook_allow_http: false
+  notify_non_breaking: true
+
+miner:
+  schedule: 6h
+  window: 336h
+  k_min: 20
+  max_events: 0          # from MemoryMax of the unit (3.5 GiB: ~1.25 M events per run); a fixed 5 M does not fit in 4 GiB
+
+world:
+  k_min: 20
+  profile_window: 720h
+  locale: it
+
+gate:
+  k_min: 20
+  valid_days: 30
+  pii_detectors: true
+
+retention:
+  events: 48h
+  purge_interval: 1h
+  exports: 24h
+
+log:
+  level: info
+  format: json

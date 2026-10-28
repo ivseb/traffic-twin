@@ -1,0 +1,436 @@
+name: publish-sdks
+
+# Publishes the SDKs to their registries. One independent job per registry, so
+# a failure in one does not block the others:
+#
+#   npm (@traffic-twin/sdk)              token now, trusted publishing (OIDC) later
+#   PyPI (traffic-twin)                  trusted publishing (OIDC), no token
+#   NuGet (TrafficTwin.Sdk[.AspNetCore]) trusted publishing (OIDC), short-lived key
+#   Maven Central (io.github.ivseb.traffictwin)  Central Portal token + GPG key
+#   Packagist (traffic-twin/sdk)         pushes the subtree split of sdk/php + the tag
+#                                        to the mirror repository ivseb/traffic-twin-php
+#
+# The Go modules are NOT published here: they only need git tags (RELEASING.md).
+#
+# Triggers
+#   release: published   the version is the tag of the release (vX.Y.Z). A GitHub
+#                        pre-release only runs the dry run.
+#   workflow_dispatch    version = X.Y.Z; dry_run defaults to true. To really publish,
+#                        select the tag vX.Y.Z as "Use workflow from".
+#
+# Every job checks that the manifests carry exactly the requested version
+# (scripts/sdk-version.sh), runs the tests of the SDK, builds the package
+# (scripts/sdk-package.sh) and only then publishes. A dry run does everything but
+# the last step. Publishing is idempotent where the registry allows it
+# (skip-existing / skip-duplicate / "already published" checks), so a failed run can
+# simply be re-run. The registries never let a version be replaced: see RELEASING.md.
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish, without the leading v (for example 0.1.0)"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run: test and build every package, publish nothing"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-sdks-${{ github.event_name == 'release' && github.event.release.tag_name || inputs.version }}
+  cancel-in-progress: false
+
+# Third-party actions are pinned by commit SHA (the tag is in the comment).
+jobs:
+  prepare:
+    name: resolve version and mode
+    if: github.repository == 'ivseb/traffic-twin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.resolve.outputs.version }}
+      dry_run: ${{ steps.resolve.outputs.dry_run }}
+    steps:
+      - name: resolve
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          PRERELEASE: ${{ github.event.release.prerelease }}
+          REF: ${{ github.ref }}
+        run: |
+          set -eu
+          if [ "$EVENT_NAME" = release ]; then
+            case "$TAG_NAME" in
+              v*) version=${TAG_NAME#v} ;;
+              *) echo "::error::the release tag '$TAG_NAME' does not start with v"; exit 1 ;;
+            esac
+            dry_run=false
+            if [ "$PRERELEASE" = true ]; then
+              dry_run=true
+              echo "::notice::pre-release $TAG_NAME: dry run only, nothing is published"
+            fi
+          else
+            version=$INPUT_VERSION
+            dry_run=$INPUT_DRY_RUN
+          fi
+          if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$'; then
+            echo "::error::'$version' is not a version like 0.1.0 (no leading v)"
+            exit 1
+          fi
+          case "$dry_run" in true|false) ;; *) echo "::error::bad dry_run value '$dry_run'"; exit 1 ;; esac
+          # What is published must be the tagged source.
+          if [ "$dry_run" = false ] && [ "$REF" != "refs/tags/v$version" ]; then
+            echo "::error::a real publish must run on the tag v$version (this run is on $REF): choose the tag in 'Use workflow from'"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "dry_run=$dry_run" >> "$GITHUB_OUTPUT"
+          {
+            echo "### publish-sdks"
+            echo "- version: \`$version\`"
+            echo "- mode: $([ "$dry_run" = true ] && echo 'dry run (nothing is published)' || echo 'PUBLISH')"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  npm:
+    name: npm (@traffic-twin/sdk)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # npm provenance and, once enabled, trusted publishing
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      DRY_RUN: ${{ needs.prepare.outputs.dry_run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: manifest version is the requested one
+        run: scripts/sdk-version.sh node "$VERSION"
+      - name: test
+        run: scripts/sdk-test.sh node all
+      - name: package
+        run: scripts/sdk-package.sh node "$RUNNER_TEMP/npm"
+      - name: package contents
+        run: tar tzf "$RUNNER_TEMP/npm/traffic-twin-sdk-$VERSION.tgz"
+      - name: keep the package for inspection
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publish-npm
+          path: ${{ runner.temp }}/npm
+          retention-days: 14
+          if-no-files-found: error
+      # With NPM_TOKEN set the token is used (first publish). Without it npm >= 11.5.1
+      # authenticates through trusted publishing (OIDC) configured on npmjs.com for
+      # this repository, workflow publish-sdks.yml and environment release.
+      - name: publish
+        if: env.DRY_RUN == 'false'
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -eu
+          if [ "$(npm view "@traffic-twin/sdk@$VERSION" version 2>/dev/null || true)" = "$VERSION" ]; then
+            echo "::notice::@traffic-twin/sdk@$VERSION is already on npm: nothing to do"
+            exit 0
+          fi
+          if [ -n "${NPM_TOKEN:-}" ]; then
+            echo "::notice::publishing with NPM_TOKEN"
+            umask 077
+            printf '//registry.npmjs.org/:_authToken=%s\n' "$NPM_TOKEN" > "$RUNNER_TEMP/npmrc"
+            export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/npmrc"
+          else
+            echo "::notice::NPM_TOKEN not set: publishing with npm trusted publishing (OIDC)"
+            need=11.5.1
+            have=$(npm --version)
+            if [ "$(printf '%s\n%s\n' "$need" "$have" | sort -V | head -n 1)" != "$need" ]; then
+              npm install -g "npm@^$need"
+            fi
+          fi
+          tag=latest
+          case "$VERSION" in *-*) tag=next ;; esac
+          npm publish "$RUNNER_TEMP/npm/traffic-twin-sdk-$VERSION.tgz" --provenance --access public --tag "$tag"
+          rm -f "$RUNNER_TEMP/npmrc"
+
+  pypi:
+    name: PyPI (traffic-twin)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # PyPI trusted publishing (no token)
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      DRY_RUN: ${{ needs.prepare.outputs.dry_run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.13"
+      - name: manifest version is the requested one
+        run: scripts/sdk-version.sh python "$VERSION"
+      - name: test
+        run: scripts/sdk-test.sh python all
+      - name: package
+        run: scripts/sdk-package.sh python "$RUNNER_TEMP/dist"
+      - name: check the metadata renders on PyPI
+        run: |
+          python -m pip install --quiet --disable-pip-version-check --no-input twine
+          python -m twine check --strict "$RUNNER_TEMP"/dist/*
+      - name: keep the package for inspection
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publish-pypi
+          path: ${{ runner.temp }}/dist
+          retention-days: 14
+          if-no-files-found: error
+      - name: publish
+        if: env.DRY_RUN == 'false'
+        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+        with:
+          packages-dir: ${{ runner.temp }}/dist
+          skip-existing: true
+
+  nuget:
+    name: NuGet (TrafficTwin.Sdk, TrafficTwin.Sdk.AspNetCore)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+      id-token: write # NuGet trusted publishing: OIDC token exchanged for a short-lived API key
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      DRY_RUN: ${{ needs.prepare.outputs.dry_run }}
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      DOTNET_NOLOGO: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: 8.0.x
+      - name: manifest version is the requested one
+        run: scripts/sdk-version.sh dotnet "$VERSION"
+      - name: test
+        run: scripts/sdk-test.sh dotnet all
+      - name: package
+        run: scripts/sdk-package.sh dotnet "$RUNNER_TEMP/nupkg"
+      - name: both packages exist with the requested version
+        run: |
+          set -eu
+          for id in TrafficTwin.Sdk TrafficTwin.Sdk.AspNetCore; do
+            test -f "$RUNNER_TEMP/nupkg/$id.$VERSION.nupkg" || { echo "::error::missing $id.$VERSION.nupkg"; ls -l "$RUNNER_TEMP/nupkg"; exit 1; }
+          done
+      - name: keep the packages for inspection
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publish-nuget
+          path: ${{ runner.temp }}/nupkg
+          retention-days: 14
+          if-no-files-found: error
+      # Trusted Publishing policy on nuget.org: owner ivseb, repository ivseb/traffic-twin,
+      # workflow publish-sdks.yml, environment release, packages TrafficTwin.*.
+      - name: nuget.org login (OIDC)
+        if: env.DRY_RUN == 'false'
+        id: login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ivseb
+      # TrafficTwin.Sdk first: the ASP.NET Core package depends on it.
+      - name: publish
+        if: env.DRY_RUN == 'false'
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          set -eu
+          for id in TrafficTwin.Sdk TrafficTwin.Sdk.AspNetCore; do
+            dotnet nuget push "$RUNNER_TEMP/nupkg/$id.$VERSION.nupkg" \
+              --source https://api.nuget.org/v3/index.json \
+              --api-key "$NUGET_API_KEY" \
+              --skip-duplicate
+          done
+
+  maven:
+    name: Maven Central (io.github.ivseb.traffictwin)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # the Central Portal validates and publishes before the job ends
+    environment: release
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      DRY_RUN: ${{ needs.prepare.outputs.dry_run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+          cache-dependency-path: sdk/java/**/pom.xml
+          # settings.xml with the "central" server; the values come from the environment of the publish step.
+          server-id: central
+          server-username: MAVEN_CENTRAL_USERNAME
+          server-password: MAVEN_CENTRAL_PASSWORD
+      - name: manifest version is the requested one
+        run: scripts/sdk-version.sh java "$VERSION"
+      - name: test
+        run: scripts/sdk-test.sh java all
+      # Release profile without signing: sources and javadoc jars must build.
+      - name: package
+        run: scripts/sdk-package.sh java "$RUNNER_TEMP/maven"
+      - name: keep the packages for inspection
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: publish-maven
+          path: ${{ runner.temp }}/maven
+          retention-days: 14
+          if-no-files-found: error
+      - name: credentials
+        id: creds
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          set -eu
+          missing=""
+          [ -n "${MAVEN_CENTRAL_USERNAME:-}" ] || missing="$missing MAVEN_CENTRAL_USERNAME"
+          [ -n "${MAVEN_CENTRAL_PASSWORD:-}" ] || missing="$missing MAVEN_CENTRAL_PASSWORD"
+          [ -n "${GPG_PRIVATE_KEY:-}" ] || missing="$missing GPG_PRIVATE_KEY"
+          [ -n "${GPG_PASSPHRASE:-}" ] || missing="$missing GPG_PASSPHRASE"
+          if [ -n "$missing" ]; then
+            echo "::notice::Maven Central publishing skipped: secrets missing in the release environment:$missing"
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: already on Maven Central?
+        id: central
+        if: env.DRY_RUN == 'false' && steps.creds.outputs.present == 'true'
+        run: |
+          set -eu
+          url="https://repo.maven.apache.org/maven2/io/github/ivseb/traffictwin/sdk-parent/$VERSION/sdk-parent-$VERSION.pom"
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+          if [ "$code" = 200 ]; then
+            echo "::notice::io.github.ivseb.traffictwin:*:$VERSION is already on Maven Central: nothing to do"
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: import the GPG key
+        if: env.DRY_RUN == 'false' && steps.creds.outputs.present == 'true' && steps.central.outputs.published == 'false'
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        run: printf '%s\n' "$GPG_PRIVATE_KEY" | gpg --batch --yes --import
+      # Signs (release profile, loopback pinentry), uploads the bundle to the Central
+      # Portal and waits until it is published (autoPublish, waitUntil published).
+      - name: deploy
+        if: env.DRY_RUN == 'false' && steps.creds.outputs.present == 'true' && steps.central.outputs.published == 'false'
+        working-directory: sdk/java
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw -B -ntp -P release -DskipTests deploy
+      - name: forget the GPG key
+        if: always() && env.DRY_RUN == 'false' && steps.creds.outputs.present == 'true'
+        run: gpgconf --kill gpg-agent || true; rm -rf "$HOME/.gnupg"
+
+  php:
+    name: Packagist mirror (traffic-twin/sdk)
+    needs: prepare
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: release
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.prepare.outputs.version }}
+      DRY_RUN: ${{ needs.prepare.outputs.dry_run }}
+      MIRROR: git@github.com:ivseb/traffic-twin-php.git
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0 # git subtree split walks the whole history of sdk/php
+      - name: manifest version is the requested one
+        run: scripts/sdk-version.sh php "$VERSION"
+      # Runs the tests in the php:8.3-cli image (Docker is on the runner).
+      - name: test
+        run: scripts/sdk-test.sh php all 8.3
+      - name: validate composer.json
+        run: scripts/sdk-package.sh php "$RUNNER_TEMP/php"
+      # Packagist needs composer.json at the root of a repository: the mirror holds
+      # only the history of sdk/php, tagged vX.Y.Z like this repository.
+      - name: split sdk/php
+        id: split
+        run: |
+          set -eu
+          sha=$(git subtree split --prefix=sdk/php HEAD)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "sdk/php of $(git rev-parse --short HEAD) is $sha in the mirror"
+          git ls-tree --name-only "$sha"
+          git show "$sha:composer.json" > /dev/null
+      - name: push to the mirror
+        if: env.DRY_RUN == 'false'
+        env:
+          PHP_MIRROR_DEPLOY_KEY: ${{ secrets.PHP_MIRROR_DEPLOY_KEY }}
+          SPLIT_SHA: ${{ steps.split.outputs.sha }}
+        run: |
+          set -eu
+          if [ -z "${PHP_MIRROR_DEPLOY_KEY:-}" ]; then
+            echo "::notice::Packagist mirror skipped: secret PHP_MIRROR_DEPLOY_KEY is missing in the release environment (see RELEASING.md)"
+            exit 0
+          fi
+          umask 077
+          key="$RUNNER_TEMP/php_mirror_key"
+          known_hosts="$RUNNER_TEMP/known_hosts"
+          printf '%s\n' "$PHP_MIRROR_DEPLOY_KEY" > "$key"
+          # GitHub's published ed25519 host key (https://api.github.com/meta, ssh_keys;
+          # SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU), pinned: no ssh-keyscan at run time.
+          echo 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$known_hosts"
+          GIT_SSH_COMMAND="ssh -i $key -o IdentitiesOnly=yes -o UserKnownHostsFile=$known_hosts -o StrictHostKeyChecking=yes -o HostKeyAlgorithms=ssh-ed25519"
+          export GIT_SSH_COMMAND
+          tag="v$VERSION"
+          remote_tag=$(git ls-remote --tags "$MIRROR" "refs/tags/$tag" | cut -f 1)
+          if [ -n "$remote_tag" ] && [ "$remote_tag" != "$SPLIT_SHA" ]; then
+            echo "::error::the mirror already has $tag at $remote_tag, but this run would put it at $SPLIT_SHA"
+            exit 1
+          fi
+          # Fast-forward only: the split is deterministic, so every release extends the mirror history.
+          git push "$MIRROR" "$SPLIT_SHA:refs/heads/main"
+          if [ -n "$remote_tag" ]; then
+            echo "::notice::the mirror already has $tag at the right commit"
+          else
+            # No local tag: a tag vX.Y.Z already exists here, on the commit of the monorepo.
+            git push "$MIRROR" "$SPLIT_SHA:refs/tags/$tag"
+          fi
+          echo "::notice::mirror updated; Packagist picks up $tag through its GitHub hook (first time: submit https://github.com/ivseb/traffic-twin-php on packagist.org)"
+      - name: remove the deploy key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/php_mirror_key" "$RUNNER_TEMP/known_hosts"

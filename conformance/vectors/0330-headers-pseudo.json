@@ -1,0 +1,28 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0330-headers-pseudo",
+  "category": "headers",
+  "description": "HTTP/2 pseudo-headers (names starting with \":\") are removed before anything else.",
+  "spec": ["sanitizer.md#8.0"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      [":authority", "shop.example"],
+      [":path", "/orders?email=mario.rossi%40example.com"],
+      ["X-A", "a"]
+    ],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"headers\":{\"x-a\":[\"drop:str:l8\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

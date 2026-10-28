@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.github.ivseb.traffictwin</groupId>
+    <artifactId>sdk-parent</artifactId>
+    <version>0.1.0</version>
+  </parent>
+  <artifactId>sdk-otel-extension</artifactId>
+  <name>traffic-twin extension for the OpenTelemetry Java agent</name>
+  <description>Read-only hook for the OpenTelemetry Java agent (-Dotel.javaagent.extensions=): shares the route template of server spans with the traffic-twin SDK. No runtime dependency: the agent provides the OpenTelemetry classes.</description>
+
+  <dependencies>
+    <!-- Provided by the agent (or by the application when the extension is used with the SDK autoconfigure). -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk-extension-autoconfigure-spi</artifactId>
+      <version>${otel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk</artifactId>
+      <version>${otel.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Test only: the SDK side of the hint protocol, and an in-memory exporter. -->
+    <dependency>
+      <groupId>io.github.ivseb.traffictwin</groupId>
+      <artifactId>sdk</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk-testing</artifactId>
+      <version>${otel.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+    </dependency>
+  </dependencies>
+</project>

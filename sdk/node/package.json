@@ -1,0 +1,77 @@
+{
+  "name": "@traffic-twin/sdk",
+  "version": "0.1.0",
+  "description": "traffic-twin capture SDK for Node.js: sanitizes HTTP exchanges in process and exports them to tt-core over mTLS.",
+  "license": "Apache-2.0",
+  "author": "traffic-twin maintainers (https://github.com/ivseb)",
+  "homepage": "https://github.com/ivseb/traffic-twin/tree/main/sdk/node#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivseb/traffic-twin.git",
+    "directory": "sdk/node"
+  },
+  "bugs": {
+    "url": "https://github.com/ivseb/traffic-twin/issues"
+  },
+  "keywords": [
+    "traffic-twin",
+    "http",
+    "capture",
+    "sanitizer",
+    "opentelemetry",
+    "mtls"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "./dist/cjs/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/esm/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/cjs/index.d.ts",
+        "default": "./dist/cjs/index.js"
+      }
+    },
+    "./register": {
+      "import": "./dist/esm/register.js",
+      "require": "./dist/cjs/register.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "sideEffects": [
+    "./dist/esm/register.js",
+    "./dist/cjs/register.js"
+  ],
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test --test-concurrency=1 test/unit/*.test.mjs test/integration/*.test.mjs",
+    "test:unit": "npm run build && node --test test/unit/*.test.mjs",
+    "test:integration": "npm run build && node --test --test-concurrency=1 test/integration/*.test.mjs",
+    "vectors": "npm run build && node scripts/run-vectors.mjs",
+    "bench": "npm run build && node bench/overhead.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@opentelemetry/api": "1.10.0",
+    "@opentelemetry/instrumentation-http": "0.300.0",
+    "@opentelemetry/sdk-node": "0.300.0",
+    "@opentelemetry/sdk-trace": "3.0.0",
+    "@types/node": "20.19.43",
+    "typescript": "5.9.3"
+  }
+}

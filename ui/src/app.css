@@ -1,0 +1,167 @@
+/* Design system tokens. Light and dark share one definition through light-dark();
+   the theme toggle only flips color-scheme (data-theme on <html>).
+   Palette: neutral slate + one accent. Semantic colors are used only for status.
+   Contrast is checked by src/lib/contrast.test.ts (WCAG AA, both themes). */
+:root {
+  color-scheme: light dark;
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+
+  --bg: light-dark(#f5f6f8, #0d1015);
+  --surface: light-dark(#ffffff, #151921);
+  --surface-2: light-dark(#f2f4f7, #1b2029);
+  --surface-3: light-dark(#e6e9ee, #242a35);
+  --border: light-dark(#e1e5ea, #2a303b);
+  --border-strong: light-dark(#c3c9d2, #3b4352);
+  /* edge of an input or a switch: it is the only thing that shows where the control is, so 3:1 (WCAG 1.4.11) */
+  --control-border: light-dark(#7d8696, #6b7587);
+  --fg: light-dark(#14181f, #e6e9ef);
+  --fg-muted: light-dark(#424b59, #aeb6c4);
+  --fg-subtle: light-dark(#596373, #8e97a6);
+
+  --accent: light-dark(#1f5fd6, #6ea8ff);
+  --accent-strong: light-dark(#184cae, #9cc2ff);
+  --accent-soft: light-dark(#e8f0fe, #1b2a47);
+  --accent-fg: light-dark(#ffffff, #07122b);
+
+  --success: light-dark(#137a43, #43c585);
+  --success-soft: light-dark(#e3f4ea, #0f2e1e);
+  --warning: light-dark(#8a5300, #e6b34a);
+  --warning-soft: light-dark(#fdf0d3, #33290e);
+  --danger: light-dark(#b3261e, #ff8b82);
+  --danger-soft: light-dark(#fde9e7, #3a1717);
+  --info: light-dark(#0b5f96, #62b8ee);
+  --info-soft: light-dark(#e1effa, #0e2b3f);
+
+  --diff-add: light-dark(#e3f4ea, #12301f);
+  --diff-del: light-dark(#fde9e7, #3b1818);
+
+  --focus: light-dark(#1f5fd6, #9cc2ff);
+  --shadow-sm: 0 1px 1px light-dark(rgb(16 24 40 / 6%), rgb(0 0 0 / 30%));
+  --shadow-md: 0 6px 20px light-dark(rgb(16 24 40 / 12%), rgb(0 0 0 / 50%));
+  --backdrop: light-dark(rgb(16 24 40 / 40%), rgb(0 0 0 / 62%));
+
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  /* 4/8 px spacing scale */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --sidebar-w: 224px;
+  --header-h: 48px;
+  --banner-h: 0px;
+
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+  font-feature-settings: 'cv11', 'ss01';
+}
+:root[data-theme='light'] { color-scheme: light; }
+:root[data-theme='dark'] { color-scheme: dark; }
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  overflow-wrap: break-word;
+}
+/* Type scale: 12 / 13 / 14 / 16 / 20 / 24 */
+h1, h2, h3, h4 { line-height: 1.25; margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.15rem; }
+h3 { font-size: 1rem; }
+h4 { font-size: 0.9rem; }
+/* Visual size is independent of the outline level (the page title is the h1, sections are h2): */
+.fs-3 { font-size: 1rem; }
+.fs-4 { font-size: 0.9rem; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { color: var(--accent-strong); }
+code, kbd, samp, pre { font-family: var(--font-mono); font-size: 0.88em; }
+kbd { border: 1px solid var(--border-strong); border-bottom-width: 2px; border-radius: var(--r-sm); padding: 0 5px; background: var(--surface-2); font-size: 0.78rem; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 3px; }
+/* scroll containers made focusable by the keyboard rule: draw the ring inside, an overflow clip would cut it */
+[tabindex='0']:is(.scroll, .table-wrap, pre):focus-visible { outline-offset: -2px; }
+::selection { background: var(--accent-soft); }
+
+/* Form controls (shared by every page) */
+input:not([type='checkbox'], [type='radio'], [type='range']), select, textarea {
+  font: inherit;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--control-border);
+  border-radius: var(--r-md);
+  padding: 5px 10px;
+  min-height: 32px;
+  width: 100%;
+  max-width: 100%;
+}
+textarea { min-height: 72px; resize: vertical; }
+input::placeholder, textarea::placeholder { color: var(--fg-subtle); }
+input:disabled, select:disabled, textarea:disabled { opacity: 0.6; cursor: not-allowed; background: var(--surface-2); }
+input[type='checkbox'], input[type='radio'] { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; }
+input[type='range'] { accent-color: var(--accent); width: 100%; }
+label { font-weight: 500; font-size: 0.9rem; }
+
+/* Layout helpers */
+.stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.stack-sm { display: flex; flex-direction: column; gap: var(--s-2); }
+.row { display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap; }
+.row-tight { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.spread { justify-content: space-between; }
+.grow { flex: 1 1 auto; min-width: 0; }
+.grid { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 256px), 1fr)); }
+.grid-2 { display: grid; gap: var(--s-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 352px), 1fr)); }
+.muted { color: var(--fg-muted); }
+.subtle { color: var(--fg-subtle); font-size: 0.86rem; }
+.mono { font-family: var(--font-mono); font-size: 0.88em; }
+.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+.trunc { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+.stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat b { font-size: 1.5rem; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.2; letter-spacing: -0.02em; }
+.stat span { color: var(--fg-muted); font-size: 0.86rem; overflow-wrap: anywhere; }
+.stat span.subtle { font-size: 0.8rem; }
+.stat span.num { white-space: normal; }
+.callout {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--info);
+  background: var(--info-soft);
+  border-radius: var(--r-md);
+  padding: var(--s-3) var(--s-4);
+  font-size: 0.93rem;
+  min-width: 0;
+}
+.callout.warn { border-left-color: var(--warning); background: var(--warning-soft); }
+.callout.danger { border-left-color: var(--danger); background: var(--danger-soft); }
+.callout.ok { border-left-color: var(--success); background: var(--success-soft); }
+.link-btn { background: none; border: 0; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-decoration: underline; }
+
+/* Data tables outside the Table component: always scroll inside their card, never past it. */
+.table-wrap { overflow-x: auto; max-width: 100%; }
+table.data { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+table.data th, table.data td { padding: 8px var(--s-4); text-align: left; border-top: 1px solid var(--border); vertical-align: middle; }
+table.data thead th { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--fg-muted); font-weight: 600; background: var(--surface-2); border-top: 0; white-space: nowrap; }
+table.data td.r, table.data th.r { text-align: right; font-variant-numeric: tabular-nums; }
+table.data td.trunc-cell { max-width: 18rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Skeletons replace spinners */
+.skeleton { display: block; border-radius: var(--r-sm); background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%); background-size: 200% 100%; animation: skeleton 1.6s ease-in-out infinite; }
+@keyframes skeleton { to { background-position: -200% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+  .skeleton { animation: none; }
+}

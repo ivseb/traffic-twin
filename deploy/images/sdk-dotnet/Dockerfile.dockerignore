@@ -1,0 +1,5 @@
+**
+!sdk/dotnet/Directory.Build.props
+!sdk/dotnet/src/**
+**/bin
+**/obj

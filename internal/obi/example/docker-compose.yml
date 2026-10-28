@@ -1,0 +1,104 @@
+# OBI + app della demo + ponte "tt obi", su un host Linux (o Docker Desktop).
+#
+#   loadgen ──▶ shop (Node.js :3000) ──▶ carrier (Go :8080)
+#                 ▲   │
+#     eBPF        │   └── OBI osserva il processo di shop (ingresso e uscita)
+#                 │
+#   obi ──OTLP/JSON, solo locale──▶ tt-obi ──eventi sanificati, mTLS──▶ tt-core
+#
+# Prima di avviare:
+#   1. in tt-core: crea un gruppo di sorgenti con il servizio "shop-api" e un
+#      token di iscrizione; assegna al gruppo la policy di esempio
+#      (policy.demo-shop.yaml in questa cartella) e falla approvare;
+#   2. esporta le variabili qui sotto (nessun segreto è scritto in questo file):
+#        export TT_ENROLL_URL=https://<tt-core>:4318     # listener sorgenti
+#        export TT_ENROLL_TOKEN=tte_...                  # token di iscrizione
+#        export TT_HMAC_KEY="k1:<base64url, almeno 32 byte>"
+#
+#   docker compose up --build
+#
+# Il file di configurazione di OBI lo scrive tt-obi quando la policy è accettata
+# (volume obi-config). OBI lo legge solo all'avvio: finché il file non esiste
+# parte e si ferma, e Docker lo riavvia; dopo un cambio di policy:
+#   docker compose restart obi
+
+name: tt-obi-demo
+
+x-clock: &clock
+  TIME_SCALE: "60"
+  SIM_EPOCH: "2026-10-19T06:00:00Z"
+  SEED: "42"
+
+services:
+  carrier:
+    build: ../../../demo
+    image: tt-demo-go:local
+    command: ["carrier"]
+    environment:
+      <<: *clock
+      PORT: "8080"
+
+  shop:
+    build: ../../../demo/shop
+    image: tt-demo-shop:local
+    environment:
+      <<: *clock
+      PORT: "3000"
+      CARRIER_BASE_URL: http://carrier:8080
+    depends_on: [carrier]
+
+  loadgen:
+    image: tt-demo-go:local
+    command: ["loadgen"]
+    environment:
+      <<: *clock
+      SHOP_BASE_URL: http://shop:3000
+      CUSTOMERS: "200"
+      MAX_RPS: "5"
+      DURATION: "0s"
+    depends_on: [shop]
+
+  # Il ponte. Riceve gli span di OBI, applica la policy con il sanitizer e
+  # manda solo eventi sanificati a tt-core. Gli span grezzi non lasciano mai
+  # questo container.
+  tt-obi:
+    build:
+      context: ../../..
+      dockerfile: Dockerfile
+    image: traffic-twin:local
+    command:
+      - obi
+      - --service-name=shop-api          # nome assegnato nell'iscrizione
+      - --listen=127.0.0.1:4318          # solo locale: OBI condivide la rete di questo container
+      - --open-ports=3000                # cosa strumenta OBI: il processo che ascolta su :3000
+      - --config-out=/etc/tt-obi/obi.yaml
+    user: "0:0"                          # i volumi con nome nascono di root; in produzione usa un uid fisso
+    environment:
+      TT_ENROLL_URL: ${TT_ENROLL_URL:?imposta TT_ENROLL_URL}
+      TT_ENROLL_TOKEN: ${TT_ENROLL_TOKEN:?imposta TT_ENROLL_TOKEN}
+      TT_HMAC_KEY: ${TT_HMAC_KEY:?imposta TT_HMAC_KEY}
+      TT_STATE_DIR: /var/lib/tt-obi
+    volumes:
+      - obi-config:/etc/tt-obi
+      - obi-state:/var/lib/tt-obi
+    restart: unless-stopped
+
+  # OBI (eBPF). Serve Linux con il BTF del kernel e i permessi per caricare
+  # sonde eBPF: qui "privileged", in produzione si restringe alle capability
+  # necessarie (vedi la documentazione di OBI). Condivide la rete di tt-obi,
+  # così l'endpoint OTLP è 127.0.0.1:4318 e non esce dal container.
+  obi:
+    image: otel/ebpf-instrument:v0.15.2
+    network_mode: "service:tt-obi"
+    pid: host
+    privileged: true
+    environment:
+      OTEL_EBPF_CONFIG_PATH: /etc/tt-obi/obi.yaml
+    volumes:
+      - obi-config:/etc/tt-obi:ro
+    depends_on: [tt-obi, shop]
+    restart: on-failure
+
+volumes:
+  obi-config:
+  obi-state:

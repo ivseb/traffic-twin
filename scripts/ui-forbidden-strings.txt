@@ -1,0 +1,26 @@
+# Strings that must never appear in the production UI bundle (internal/ui/dist).
+# One fixed string per line, case-insensitive; lines starting with # are comments.
+# They come from the mock adapter and the demo-only screens (ui/src/lib/api/mock,
+# ui/src/lib/i18n). Keep them distinctive enough not to match real content.
+
+# demo mode banners and logins (en)
+Demo mode
+Demo data
+Demo: switch to another role
+Simulate first run
+invented in-memory data
+with password “demo”
+# demo mode banners and logins (it)
+Modalità dimostrativa
+Dati dimostrativi
+Demo: entra con un altro ruolo
+Simula il primo avvio
+# sample users of the mock fixtures
+elena.admin
+olga.operator
+rita.reviewer
+
+# axe-core must never ship in the production bundle
+axe-core
+axe.run
+Deque Systems

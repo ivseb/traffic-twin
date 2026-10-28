@@ -1,0 +1,22 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1408-refuse-no-policy",
+  "category": "refusal",
+  "description": "No policy: no_policy.",
+  "spec": ["sanitizer.md#7.1"],
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "refused",
+    "code": "no_policy"
+  }
+}

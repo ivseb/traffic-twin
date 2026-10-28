@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0209-query-dynamic-names",
+  "category": "query",
+  "description": "Names that break the key rule (e-mail, hex, uuid, empty, digit-first) collapse into {*}, in order of appearance.",
+  "spec": ["sanitizer.md#8.3", "sanitizer.md#9.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/s",
+    "raw_query": "mario.rossi%40example.com=1&deadbeefdeadbeef=2&ok=3&=4&9lives=5&a50e8400-e29b-41d4-a716-446655440000=6",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"ok\":[\"drop:str:digits\"],\"{*}\":[\"drop:str:digits\",\"drop:str:digits\",\"drop:str:digits\",\"drop:str:digits\",\"drop:str:digits\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

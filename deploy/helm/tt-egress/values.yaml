@@ -1,0 +1,138 @@
+# tt-egress: reverse proxy for outbound calls of stacks without an SDK (ARCHITECTURE 3.1, decision D2).
+# The application changes the base URL of an external service from https://api.carrier.example to
+# http://<this service>:9090/carrier ; tt-egress continues over TLS and captures a sanitized copy.
+#
+# Two ways to run it:
+#   * standalone Deployment (default): one Service for the whole namespace;
+#   * sidecar (sidecar.enabled=true): the chart publishes a ConfigMap with the container snippet to
+#     paste into the pod of the application (the application then calls http://127.0.0.1:9090/carrier).
+
+image:
+  repository: ghcr.io/ivseb/traffic-twin
+  tag: ""
+  digest: ""
+  pullPolicy: IfNotPresent
+imagePullSecrets: []
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+replicaCount: 1
+
+# -- Port the proxy listens on inside the pod (the Deployment configuration listens on all interfaces).
+listenPort: 9090
+
+# -- External services reachable at /<alias>/ . `url` may be http:// only inside a trusted network.
+# captureOrigin: origin the policy knows the service by, when different from `url`. caFile: extra CA (PEM, mounted by you).
+upstreams: []
+#  - alias: carrier
+#    url: https://api.carrier.example
+#    captureOrigin: ""
+#    caFile: ""
+
+# -- Extra keys merged into the tt-egress YAML configuration (dial_timeout, capture: {...}, ...).
+extraConfig: {}
+
+# -- Enrollment of the proxy as a source of tt-core (Fleet). Without enroll.url the proxy only forwards.
+enroll:
+  # -- https://<tt-core-intake-service>.<ns>.svc.cluster.local:4318
+  url: ""
+  # -- Name given to this source; must be allowed for the group of the token. Empty: the release name.
+  serviceName: ""
+  tokenSecret:
+    # -- Secret with the enrollment token (tte_<secret>.<CA pin>). Use a GROUP token: each replica enrolls on its
+    # own and the state is not persisted across pod restarts.
+    name: ""
+    key: token
+
+# -- Secret with the local HMAC key (lines "<kid>:<base64url>"), same key as the SDKs of the group.
+hmacKey:
+  existingSecret: ""
+  key: hmac-key
+
+service:
+  type: ClusterIP
+  port: 9090
+  annotations: {}
+
+sidecar:
+  # -- Publish ConfigMaps with the sidecar configuration and the container/volume snippet.
+  enabled: false
+  # -- Listen address inside the pod. Loopback only: only the application container can use it.
+  listen: "127.0.0.1:9090"
+
+# -- Egress is limited to DNS, tt-core and the upstream hosts.
+networkPolicy:
+  enabled: true
+  ingress:
+    # -- Who may call the proxy. Default: the pods of this namespace.
+    from:
+      - podSelector: {}
+  egress:
+    dns:
+      enabled: true
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: kube-system
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    core:
+      # -- Where tt-core's intake runs.
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: traffic-twin
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: tt-core
+      port: 4318
+    # -- Destinations of the external services: [{cidr: 203.0.113.0/24, port: 443}]. Empty means none: add them.
+    upstreams: []
+
+probes:
+  liveness:
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    timeoutSeconds: 3
+    failureThreshold: 6
+  readiness:
+    initialDelaySeconds: 2
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 512Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65532
+  runAsGroup: 65532
+  fsGroup: 65532
+  seccompProfile:
+    type: RuntimeDefault
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+podAnnotations: {}
+podLabels: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+priorityClassName: ""
+terminationGracePeriodSeconds: 30
+extraEnv: []
+extraVolumes: []
+extraVolumeMounts: []

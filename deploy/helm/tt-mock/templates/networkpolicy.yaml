@@ -1,0 +1,45 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tt-mock.fullname" . }}
+  labels:
+    {{- include "tt-mock.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "tt-mock.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        {{- toYaml .Values.networkPolicy.ingress.from | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: 8480
+  {{- if .Values.console.url }}
+  # Console mode: DNS and the console only (packages in, reports out).
+  egress:
+    {{- if .Values.networkPolicy.egress.dns.enabled }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml .Values.networkPolicy.egress.dns.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml .Values.networkPolicy.egress.dns.podSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    - ports:
+        - protocol: TCP
+          port: {{ include "tt-mock.consolePort" . | int }}
+      {{- with .Values.networkPolicy.egress.console.to }}
+      to:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- else }}
+  # The mock never calls out: it has the package in its own volume.
+  egress: []
+  {{- end }}
+{{- end }}

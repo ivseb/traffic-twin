@@ -1,0 +1,30 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0309-headers-cookie-excluded",
+  "category": "headers",
+  "description": "cookie and set-cookie never appear in headers.",
+  "spec": ["sanitizer.md#8.1", "sanitizer.md#8.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Cookie", "a=1"],
+      ["X-A", "x"]
+    ],
+    "status": 200,
+    "resp_headers": [
+      ["Set-Cookie", "b=2"],
+      ["X-B", "y"]
+    ]
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"cookies\":{\"a\":[\"drop:str:digits\"]},\"headers\":{\"x-a\":[\"drop:str:l8\"]},\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"cookies\":{\"b\":[\"drop:str:digits\"]},\"headers\":{\"x-b\":[\"drop:str:l8\"]},\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

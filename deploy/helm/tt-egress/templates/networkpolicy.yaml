@@ -1,0 +1,51 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $eg := .Values.networkPolicy.egress }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "tt-egress.fullname" . }}
+  labels:
+    {{- include "tt-egress.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "tt-egress.selectorLabels" . | nindent 6 }}
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from:
+        {{- toYaml .Values.networkPolicy.ingress.from | nindent 8 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.listenPort }}
+  egress:
+    {{- if $eg.dns.enabled }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml $eg.dns.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml $eg.dns.podSelector | nindent 12 }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    {{- end }}
+    {{- if .Values.enroll.url }}
+    - to:
+        - namespaceSelector:
+            {{- toYaml $eg.core.namespaceSelector | nindent 12 }}
+          podSelector:
+            {{- toYaml $eg.core.podSelector | nindent 12 }}
+      ports:
+        - protocol: TCP
+          port: {{ $eg.core.port }}
+    {{- end }}
+    {{- range $eg.upstreams }}
+    - to:
+        - ipBlock:
+            cidr: {{ .cidr | quote }}
+      ports:
+        - protocol: TCP
+          port: {{ .port | default 443 }}
+    {{- end }}
+{{- end }}

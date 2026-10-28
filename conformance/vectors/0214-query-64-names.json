@@ -1,0 +1,25 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0214-query-64-names",
+  "category": "query",
+  "description": "Exactly 64 distinct names: no {trunc}.",
+  "spec": ["sanitizer.md#8.3"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/s",
+    "raw_query": "p0=1&p1=1&p2=1&p3=1&p4=1&p5=1&p6=1&p7=1&p8=1&p9=1&p10=1&p11=1&p12=1&p13=1&p14=1&p15=1&p16=1&p17=1&p18=1&p19=1&p20=1&p21=1&p22=1&p23=1&p24=1&p25=1&p26=1&p27=1&p28=1&p29=1&p30=1&p31=1&p32=1&p33=1&p34=1&p35=1&p36=1&p37=1&p38=1&p39=1&p40=1&p41=1&p42=1&p43=1&p44=1&p45=1&p46=1&p47=1&p48=1&p49=1&p50=1&p51=1&p52=1&p53=1&p54=1&p55=1&p56=1&p57=1&p58=1&p59=1&p60=1&p61=1&p62=1&p63=1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /{drop:str:l8}\",\"req\":{\"path\":\"/{drop:str:l8}\",\"query\":{\"p0\":[\"drop:str:digits\"],\"p1\":[\"drop:str:digits\"],\"p10\":[\"drop:str:digits\"],\"p11\":[\"drop:str:digits\"],\"p12\":[\"drop:str:digits\"],\"p13\":[\"drop:str:digits\"],\"p14\":[\"drop:str:digits\"],\"p15\":[\"drop:str:digits\"],\"p16\":[\"drop:str:digits\"],\"p17\":[\"drop:str:digits\"],\"p18\":[\"drop:str:digits\"],\"p19\":[\"drop:str:digits\"],\"p2\":[\"drop:str:digits\"],\"p20\":[\"drop:str:digits\"],\"p21\":[\"drop:str:digits\"],\"p22\":[\"drop:str:digits\"],\"p23\":[\"drop:str:digits\"],\"p24\":[\"drop:str:digits\"],\"p25\":[\"drop:str:digits\"],\"p26\":[\"drop:str:digits\"],\"p27\":[\"drop:str:digits\"],\"p28\":[\"drop:str:digits\"],\"p29\":[\"drop:str:digits\"],\"p3\":[\"drop:str:digits\"],\"p30\":[\"drop:str:digits\"],\"p31\":[\"drop:str:digits\"],\"p32\":[\"drop:str:digits\"],\"p33\":[\"drop:str:digits\"],\"p34\":[\"drop:str:digits\"],\"p35\":[\"drop:str:digits\"],\"p36\":[\"drop:str:digits\"],\"p37\":[\"drop:str:digits\"],\"p38\":[\"drop:str:digits\"],\"p39\":[\"drop:str:digits\"],\"p4\":[\"drop:str:digits\"],\"p40\":[\"drop:str:digits\"],\"p41\":[\"drop:str:digits\"],\"p42\":[\"drop:str:digits\"],\"p43\":[\"drop:str:digits\"],\"p44\":[\"drop:str:digits\"],\"p45\":[\"drop:str:digits\"],\"p46\":[\"drop:str:digits\"],\"p47\":[\"drop:str:digits\"],\"p48\":[\"drop:str:digits\"],\"p49\":[\"drop:str:digits\"],\"p5\":[\"drop:str:digits\"],\"p50\":[\"drop:str:digits\"],\"p51\":[\"drop:str:digits\"],\"p52\":[\"drop:str:digits\"],\"p53\":[\"drop:str:digits\"],\"p54\":[\"drop:str:digits\"],\"p55\":[\"drop:str:digits\"],\"p56\":[\"drop:str:digits\"],\"p57\":[\"drop:str:digits\"],\"p58\":[\"drop:str:digits\"],\"p59\":[\"drop:str:digits\"],\"p6\":[\"drop:str:digits\"],\"p60\":[\"drop:str:digits\"],\"p61\":[\"drop:str:digits\"],\"p62\":[\"drop:str:digits\"],\"p63\":[\"drop:str:digits\"],\"p7\":[\"drop:str:digits\"],\"p8\":[\"drop:str:digits\"],\"p9\":[\"drop:str:digits\"]},\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

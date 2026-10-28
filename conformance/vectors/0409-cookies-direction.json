@@ -1,0 +1,28 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0409-cookies-direction",
+  "category": "cookies",
+  "description": "A set-cookie in a request and a cookie in a response are not parsed (and never in headers).",
+  "spec": ["sanitizer.md#8.1", "sanitizer.md#8.2"],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/",
+    "req_headers": [
+      ["Set-Cookie", "x=1"]
+    ],
+    "status": 200,
+    "resp_headers": [
+      ["Cookie", "y=2"]
+    ]
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /\",\"req\":{\"path\":\"/\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

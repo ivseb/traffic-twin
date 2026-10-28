@@ -1,0 +1,48 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "0001-default-drop",
+  "category": "default-drop",
+  "description": "Empty policy: every part of an inbound exchange (path, query, headers, cookies, JSON bodies, set-cookie) leaves only shapes.",
+  "spec": [
+    "sanitizer.md#13",
+    "sanitizer.md#4.2",
+    "sanitizer.md#8.1",
+    "sanitizer.md#8.2",
+    "sanitizer.md#8.3",
+    "sanitizer.md#9.2"
+  ],
+  "policy_ref": "policies/empty.json",
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "POST",
+    "raw_path": "/customers/mario.rossi%40example.com/orders",
+    "raw_query": "promo=AUTUMN10&email=giulia.neri%40example.com",
+    "req_headers": [
+      ["Content-Type", "application/json"],
+      ["Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjLTEwMDQyIn0.c2lnbmF0dXJl"],
+      ["X-Request-Id", "550e8400-e29b-41d4-a716-446655440000"],
+      ["Cookie", "sid=9f8e7d6c5b4a; cart=CART-778812"]
+    ],
+    "req_body": {
+      "b64": "eyJjdXN0b21lciI6eyJuYW1lIjoiTWFyaW8gUm9zc2kiLCJwaG9uZSI6IiszOTAyMTIzNDU2NzgifSwiaXRlbXMiOlt7InNrdSI6IlRTSElSVC1SRUQtTSIsInF0eSI6MiwicHJpY2UiOjE5LjkwfV0sImdpZnQiOmZhbHNlLCJjb3Vwb24iOm51bGx9",
+      "text": "{\"customer\":{\"name\":\"Mario Rossi\",\"phone\":\"+390212345678\"},\"items\":[{\"sku\":\"TSHIRT-RED-M\",\"qty\":2,\"price\":19.90}],\"gift\":false,\"coupon\":null}"
+    },
+    "status": 201,
+    "resp_headers": [
+      ["Content-Type", "application/json; charset=utf-8"],
+      ["Set-Cookie", "sid=9f8e7d6c5b4a; Path=/; HttpOnly"]
+    ],
+    "resp_body": {
+      "b64": "eyJpZCI6Ik9SRC0yMDI2LTAwMDE4NCIsInN0YXR1cyI6IkNSRUFURUQiLCJ0b3RhbCI6MzkuODAsImV0YSI6IjIwMjYtMTAtMjEifQ==",
+      "text": "{\"id\":\"ORD-2026-000184\",\"status\":\"CREATED\",\"total\":39.80,\"eta\":\"2026-10-21\"}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /{drop:str:l32}/{drop:str:email}/{drop:str:l8}\",\"req\":{\"body\":{\"coupon\":\"drop:null\",\"customer\":{\"name\":\"drop:str:l32\",\"phone\":\"drop:str:phone\"},\"gift\":\"drop:bool\",\"items\":[{\"price\":\"drop:dec\",\"qty\":\"drop:int\",\"sku\":\"drop:str:l32\"}]},\"cookies\":{\"cart\":[\"drop:str:l32\"],\"sid\":[\"drop:str:l32\"]},\"ct\":\"application/json\",\"headers\":{\"authorization\":[\"drop:str:l128\"],\"content-type\":[\"drop:str:l32\"],\"x-request-id\":[\"drop:str:uuid\"]},\"path\":\"/{drop:str:l32}/{drop:str:email}/{drop:str:l8}\",\"query\":{\"email\":[\"drop:str:email\"],\"promo\":[\"drop:str:l8\"]},\"size\":\"l1024\"},\"resp\":{\"body\":{\"eta\":\"drop:str:date\",\"id\":\"drop:str:l32\",\"status\":\"drop:str:l8\",\"total\":\"drop:dec\"},\"cookies\":{\"sid\":[\"drop:str:l32\"]},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l128\"},\"route_source\":\"raw\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

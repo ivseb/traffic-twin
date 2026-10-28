@@ -1,0 +1,41 @@
+{{- if .Values.mockManager.enabled }}
+{{- $ns := default .Release.Namespace .Values.mockManager.namespace }}
+# tt-core starts the mocks of the console ("Prepara e avvia il mock") in {{ $ns }}: a Role on the objects of a mock
+# (Secret, Service, Deployment, OpenShift Route) in that namespace only. Nothing cluster-wide, no pods/exec, no
+# other namespace. The mock pods get no service account token.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "tt-core.fullname" . }}-mock-manager
+  namespace: {{ $ns }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+# Least privilege: server-side apply needs create + patch, stop needs delete; only Deployments are read
+# (their status). No get/list/watch/update on Secrets: tt-core never reads a Secret of the namespace.
+rules:
+  - apiGroups: [""]
+    resources: [secrets, services]
+    verbs: [create, patch, delete]
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [get, create, patch, delete]
+  - apiGroups: [route.openshift.io]
+    resources: [routes]
+    verbs: [create, patch, delete]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "tt-core.fullname" . }}-mock-manager
+  namespace: {{ $ns }}
+  labels:
+    {{- include "tt-core.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "tt-core.fullname" . }}-mock-manager
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "tt-core.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

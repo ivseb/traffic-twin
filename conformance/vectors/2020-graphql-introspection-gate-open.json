@@ -1,0 +1,200 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "2020-graphql-introspection-gate-open",
+  "category": "graphql",
+  "description": "The standard introspection query opens the gate: type, field, argument, enum and directive names leave; descriptions, default values and deprecation reasons are shapes.",
+  "spec": ["sanitizer.md#5.7", "policy.md#1.6"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "orders-graph",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "POST /graphql",
+            "request": {
+              "body": [
+                {
+                  "path": "$.query",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.variables.id",
+                  "action": {
+                    "action": "hmac",
+                    "domain": "order"
+                  }
+                }
+              ]
+            },
+            "response": {
+              "body": [
+                {
+                  "path": "$.data.__schema.directives[*].locations[*]",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.directives[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.mutationType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.queryType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].enumValues[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].args[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].fields[*].type.ofType.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__schema.types[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.fields[*].name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.kind",
+                  "action": {
+                    "action": "graphql"
+                  }
+                },
+                {
+                  "path": "$.data.__type.name",
+                  "action": {
+                    "action": "graphql"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "orders-graph",
+    "method": "POST",
+    "raw_path": "/graphql",
+    "req_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "req_body": {
+      "b64": "eyJvcGVyYXRpb25OYW1lIjoiSW50cm9zcGVjdGlvblF1ZXJ5IiwicXVlcnkiOiJxdWVyeSBJbnRyb3NwZWN0aW9uUXVlcnkgeyBfX3NjaGVtYSB7IHF1ZXJ5VHlwZSB7IG5hbWUgfSBtdXRhdGlvblR5cGUgeyBuYW1lIH0gdHlwZXMgeyAuLi5GdWxsVHlwZSB9IGRpcmVjdGl2ZXMgeyBuYW1lIGRlc2NyaXB0aW9uIGxvY2F0aW9ucyBhcmdzIHsgLi4uSW5wdXRWYWx1ZSB9IH0gfSB9XHUwMDBhZnJhZ21lbnQgRnVsbFR5cGUgb24gX19UeXBlIHsga2luZCBuYW1lIGRlc2NyaXB0aW9uIGZpZWxkcyhpbmNsdWRlRGVwcmVjYXRlZDogdHJ1ZSkgeyBuYW1lIGRlc2NyaXB0aW9uIGFyZ3MgeyAuLi5JbnB1dFZhbHVlIH0gdHlwZSB7IC4uLlR5cGVSZWYgfSBpc0RlcHJlY2F0ZWQgZGVwcmVjYXRpb25SZWFzb24gfSBlbnVtVmFsdWVzKGluY2x1ZGVEZXByZWNhdGVkOiB0cnVlKSB7IG5hbWUgZGVzY3JpcHRpb24gaXNEZXByZWNhdGVkIGRlcHJlY2F0aW9uUmVhc29uIH0gfVx1MDAwYWZyYWdtZW50IElucHV0VmFsdWUgb24gX19JbnB1dFZhbHVlIHsgbmFtZSBkZXNjcmlwdGlvbiB0eXBlIHsgLi4uVHlwZVJlZiB9IGRlZmF1bHRWYWx1ZSB9XHUwMDBhZnJhZ21lbnQgVHlwZVJlZiBvbiBfX1R5cGUgeyBraW5kIG5hbWUgb2ZUeXBlIHsga2luZCBuYW1lIG9mVHlwZSB7IGtpbmQgbmFtZSB9IH0gfSJ9",
+      "text": "{\"operationName\":\"IntrospectionQuery\",\"query\":\"query IntrospectionQuery { __schema { queryType { name } mutationType { name } types { ...FullType } directives { name description locations args { ...InputValue } } } }\\u000afragment FullType on __Type { kind name description fields(includeDeprecated: true) { name description args { ...InputValue } type { ...TypeRef } isDeprecated deprecationReason } enumValues(includeDeprecated: true) { name description isDeprecated deprecationReason } }\\u000afragment InputValue on __InputValue { name description type { ...TypeRef } defaultValue }\\u000afragment TypeRef on __Type { kind name ofType { kind name ofType { kind name } } }\"}"
+    },
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJkYXRhIjp7Il9fc2NoZW1hIjp7ImRpcmVjdGl2ZXMiOlt7ImFyZ3MiOltdLCJkZXNjcmlwdGlvbiI6IkluY2x1ZGUgd2hlbiB0cnVlIiwibG9jYXRpb25zIjpbIkZJRUxEIiwiRlJBR01FTlRfU1BSRUFEIl0sIm5hbWUiOiJpbmNsdWRlIn1dLCJtdXRhdGlvblR5cGUiOm51bGwsInF1ZXJ5VHlwZSI6eyJuYW1lIjoiUXVlcnkifSwidHlwZXMiOlt7ImRlc2NyaXB0aW9uIjoiUm9vdCBxdWVyeSBvZiBNYXJpbyBSb3NzaSdzIHNob3AiLCJlbnVtVmFsdWVzIjpudWxsLCJmaWVsZHMiOlt7ImFyZ3MiOlt7ImRlZmF1bHRWYWx1ZSI6IlwiT1JELTFcIiIsImRlc2NyaXB0aW9uIjpudWxsLCJuYW1lIjoiaWQiLCJ0eXBlIjp7ImtpbmQiOiJOT05fTlVMTCIsIm5hbWUiOm51bGwsIm9mVHlwZSI6eyJraW5kIjoiU0NBTEFSIiwibmFtZSI6IklEIiwib2ZUeXBlIjpudWxsfX19XSwiZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjoiT25lIG9yZGVyIiwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6Im9yZGVyIiwidHlwZSI6eyJraW5kIjoiT0JKRUNUIiwibmFtZSI6Ik9yZGVyIiwib2ZUeXBlIjpudWxsfX1dLCJraW5kIjoiT0JKRUNUIiwibmFtZSI6IlF1ZXJ5In0seyJkZXNjcmlwdGlvbiI6bnVsbCwiZW51bVZhbHVlcyI6W3siZGVwcmVjYXRpb25SZWFzb24iOm51bGwsImRlc2NyaXB0aW9uIjoic2VudCIsImlzRGVwcmVjYXRlZCI6ZmFsc2UsIm5hbWUiOiJTSElQUEVEIn0seyJkZXByZWNhdGlvblJlYXNvbiI6InVzZSBTSElQUEVEIiwiZGVzY3JpcHRpb24iOm51bGwsImlzRGVwcmVjYXRlZCI6dHJ1ZSwibmFtZSI6IklOX1RSQU5TSVRfMiJ9XSwiZmllbGRzIjpudWxsLCJraW5kIjoiRU5VTSIsIm5hbWUiOiJPcmRlclN0YXR1cyJ9LHsiZGVzY3JpcHRpb24iOm51bGwsImVudW1WYWx1ZXMiOm51bGwsImZpZWxkcyI6W3siYXJncyI6W10sImRlcHJlY2F0aW9uUmVhc29uIjpudWxsLCJkZXNjcmlwdGlvbiI6bnVsbCwiaXNEZXByZWNhdGVkIjpmYWxzZSwibmFtZSI6ImZpZWxkMCIsInR5cGUiOnsia2luZCI6IlNDQUxBUiIsIm5hbWUiOiJTdHJpbmciLCJvZlR5cGUiOm51bGx9fV0sImtpbmQiOiJPQkpFQ1QiLCJuYW1lIjoiVHlwZTAifV19fX0=",
+      "text": "{\"data\":{\"__schema\":{\"directives\":[{\"args\":[],\"description\":\"Include when true\",\"locations\":[\"FIELD\",\"FRAGMENT_SPREAD\"],\"name\":\"include\"}],\"mutationType\":null,\"queryType\":{\"name\":\"Query\"},\"types\":[{\"description\":\"Root query of Mario Rossi's shop\",\"enumValues\":null,\"fields\":[{\"args\":[{\"defaultValue\":\"\\\"ORD-1\\\"\",\"description\":null,\"name\":\"id\",\"type\":{\"kind\":\"NON_NULL\",\"name\":null,\"ofType\":{\"kind\":\"SCALAR\",\"name\":\"ID\",\"ofType\":null}}}],\"deprecationReason\":null,\"description\":\"One order\",\"isDeprecated\":false,\"name\":\"order\",\"type\":{\"kind\":\"OBJECT\",\"name\":\"Order\",\"ofType\":null}}],\"kind\":\"OBJECT\",\"name\":\"Query\"},{\"description\":null,\"enumValues\":[{\"deprecationReason\":null,\"description\":\"sent\",\"isDeprecated\":false,\"name\":\"SHIPPED\"},{\"deprecationReason\":\"use SHIPPED\",\"description\":null,\"isDeprecated\":true,\"name\":\"IN_TRANSIT_2\"}],\"fields\":null,\"kind\":\"ENUM\",\"name\":\"OrderStatus\"},{\"description\":null,\"enumValues\":null,\"fields\":[{\"args\":[],\"deprecationReason\":null,\"description\":null,\"isDeprecated\":false,\"name\":\"field0\",\"type\":{\"kind\":\"SCALAR\",\"name\":\"String\",\"ofType\":null}}],\"kind\":\"OBJECT\",\"name\":\"Type0\"}]}}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"POST /graphql\",\"req\":{\"body\":{\"operationName\":\"drop:str:l32\",\"query\":\"gql:query IntrospectionQuery{__schema{queryType{name}mutationType{name}types{...FullType}directives{name description locations args{...InputValue}}}}fragment FullType on __Type{kind name description fields(includeDeprecated:?b){name description args{...InputValue}type{...TypeRef}isDeprecated deprecationReason}enumValues(includeDeprecated:?b){name description isDeprecated deprecationReason}}fragment InputValue on __InputValue{name description type{...TypeRef}defaultValue}fragment TypeRef on __Type{kind name ofType{kind name ofType{kind name}}}\"},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"path\":\"/graphql\",\"size\":\"l1024\"},\"resp\":{\"body\":{\"data\":{\"__schema\":{\"directives\":[{\"args\":[],\"description\":\"drop:str:l32\",\"locations\":[\"gql:FIELD\",\"gql:FRAGMENT_SPREAD\"],\"name\":\"gql:include\"}],\"mutationType\":\"drop:null\",\"queryType\":{\"name\":\"gql:Query\"},\"types\":[{\"description\":\"drop:str:l32\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[{\"defaultValue\":\"drop:str:l8\",\"description\":\"drop:null\",\"name\":\"gql:id\",\"type\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:null\",\"ofType\":{\"kind\":\"drop:str:l8\",\"name\":\"drop:str:l8\",\"ofType\":\"drop:null\"}}}],\"deprecationReason\":\"drop:null\",\"description\":\"drop:str:l32\",\"isDeprecated\":\"drop:bool\",\"name\":\"gql:order\",\"type\":{\"kind\":\"gql:OBJECT\",\"name\":\"gql:Order\",\"ofType\":\"drop:null\"}}],\"kind\":\"gql:OBJECT\",\"name\":\"gql:Query\"},{\"description\":\"drop:null\",\"enumValues\":[{\"deprecationReason\":\"drop:null\",\"description\":\"drop:str:l8\",\"isDeprecated\":\"drop:bool\",\"name\":\"gql:SHIPPED\"},{\"deprecationReason\":\"drop:str:l32\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"gql:IN_TRANSIT_2\"}],\"fields\":\"drop:null\",\"kind\":\"gql:ENUM\",\"name\":\"gql:OrderStatus\"},{\"description\":\"drop:null\",\"enumValues\":\"drop:null\",\"fields\":[{\"args\":[],\"deprecationReason\":\"drop:null\",\"description\":\"drop:null\",\"isDeprecated\":\"drop:bool\",\"name\":\"gql:field0\",\"type\":{\"kind\":\"gql:SCALAR\",\"name\":\"gql:String\",\"ofType\":\"drop:null\"}}],\"kind\":\"gql:OBJECT\",\"name\":\"gql:Type0\"}]}}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"lmax\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"orders-graph\"}"
+  }
+}

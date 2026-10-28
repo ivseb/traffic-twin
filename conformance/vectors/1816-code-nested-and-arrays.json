@@ -1,0 +1,105 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1816-code-nested-and-arrays",
+  "category": "code",
+  "description": "Nested paths and array elements: each leaf is checked on its own.",
+  "spec": ["sanitizer.md#5.6", "policy.md#1.5"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /orders/{id}",
+            "response": {
+              "body": [
+                {
+                  "path": "$.events[*].type",
+                  "action": {
+                    "action": "code"
+                  }
+                },
+                {
+                  "path": "$.items[*].status",
+                  "action": {
+                    "action": "code"
+                  }
+                },
+                {
+                  "path": "$.order.payment.method",
+                  "action": {
+                    "action": "code"
+                  }
+                },
+                {
+                  "path": "$.order.payment.status",
+                  "action": {
+                    "action": "code"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/orders/1",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": [
+      ["Content-Type", "application/json"]
+    ],
+    "resp_body": {
+      "b64": "eyJldmVudHMiOlt7InR5cGUiOiJvcmRlcl9jcmVhdGVkIn0seyJ0eXBlIjoib3JkZXIudXBkYXRlZCJ9XSwiaXRlbXMiOlt7InN0YXR1cyI6IlNISVBQRUQifSx7InN0YXR1cyI6ImJhY2sgb3JkZXIifSx7InN0YXR1cyI6IlJFVFVSTkVEIn0seyJzdGF0dXMiOjd9XSwib3JkZXIiOnsicGF5bWVudCI6eyJtZXRob2QiOiJjYXJkIiwic3RhdHVzIjoiQVVUSE9SSVpFRCJ9fX0=",
+      "text": "{\"events\":[{\"type\":\"order_created\"},{\"type\":\"order.updated\"}],\"items\":[{\"status\":\"SHIPPED\"},{\"status\":\"back order\"},{\"status\":\"RETURNED\"},{\"status\":7}],\"order\":{\"payment\":{\"method\":\"card\",\"status\":\"AUTHORIZED\"}}}"
+    }
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /orders/{id}\",\"req\":{\"path\":\"/orders/{drop:str:digits}\",\"size\":\"l8\"},\"resp\":{\"body\":{\"events\":[{\"type\":\"keep:order_created\"},{\"type\":\"drop:str:l32\"}],\"items\":[{\"status\":\"keep:SHIPPED\"},{\"status\":\"drop:str:l32\"},{\"status\":\"keep:RETURNED\"},{\"status\":\"drop:int\"}],\"order\":{\"payment\":{\"method\":\"keep:card\",\"status\":\"keep:AUTHORIZED\"}}},\"ct\":\"application/json\",\"headers\":{\"content-type\":[\"drop:str:l32\"]},\"size\":\"l1024\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}

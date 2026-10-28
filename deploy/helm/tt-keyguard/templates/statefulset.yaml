@@ -1,0 +1,206 @@
+{{- $keyDir := include "tt-keyguard.keyDir" . -}}
+{{- $installer := .Values.keys.installer.enabled -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tt-keyguard.fullname" . }}
+  labels:
+    {{- include "tt-keyguard.labels" . | nindent 4 }}
+spec:
+  # One replica: keyguard serialises approvals, issued_seq and its audit chain in one SQLite file.
+  replicas: 1
+  serviceName: {{ include "tt-keyguard.fullname" . }}
+  podManagementPolicy: OrderedReady
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      {{- include "tt-keyguard.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tt-keyguard.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tt-keyguard.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if $installer }}
+      initContainers:
+        # Copies the key material into a memory-backed volume owned by the keyguard user, mode 0400
+        # (keyguard rejects key files readable by group or others). Root, but only CAP_CHOWN, no
+        # network use, read-only root filesystem.
+        - name: install-keys
+          image: {{ include "tt-keyguard.installerImage" . | quote }}
+          imagePullPolicy: {{ .Values.keys.installer.image.pullPolicy }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              for f in /in/*; do
+                n=$(basename "$f")
+                cp -L "$f" "{{ $keyDir }}/$n"
+                chmod 0400 "{{ $keyDir }}/$n"
+                chown {{ .Values.podSecurityContext.runAsUser }}:{{ .Values.podSecurityContext.runAsGroup }} "{{ $keyDir }}/$n"
+              done
+          securityContext:
+            runAsUser: 0
+            runAsNonRoot: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN]
+            seccompProfile:
+              type: RuntimeDefault
+          resources:
+            {{- toYaml .Values.keys.installer.resources | nindent 12 }}
+          volumeMounts:
+            - name: key-material
+              mountPath: /in
+              readOnly: true
+            - name: keys
+              mountPath: {{ $keyDir }}
+      {{- end }}
+      containers:
+        - name: keyguard
+          image: {{ include "tt-keyguard.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["keyguard"]
+          env:
+            - name: TT_KEYGUARD_LISTEN
+              value: {{ .Values.listen | quote }}
+            - name: TT_KEYGUARD_TLS_CERT_FILE
+              value: {{ $keyDir }}/tls.crt
+            - name: TT_KEYGUARD_TLS_KEY_FILE
+              value: {{ $keyDir }}/tls.key
+            - name: TT_KEYGUARD_CLIENT_PINS
+              value: {{ join "," .Values.clientPins | quote }}
+            {{- if .Values.tls.clientCASecret }}
+            - name: TT_KEYGUARD_CLIENT_CA_FILE
+              value: {{ $keyDir }}/client-ca.crt
+            {{- end }}
+            - name: TT_KEYGUARD_DB
+              value: /data/tt-keyguard.db
+            - name: TT_KEYGUARD_HMAC_KEYS_FILE
+              value: {{ $keyDir }}/hmac-keys
+            - name: TT_KEYGUARD_POLICY_SIGNING_KEY_FILE
+              value: {{ $keyDir }}/policy-signing-key
+            - name: TT_KEYGUARD_PACK_SIGNING_KEY_FILE
+              value: {{ $keyDir }}/pack-signing-key
+            {{- range $k, $v := .Values.settings }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+            {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: keyguard
+              containerPort: {{ include "tt-keyguard.port" . }}
+              protocol: TCP
+          livenessProbe:
+            tcpSocket:
+              port: keyguard
+            {{- toYaml .Values.probes.liveness | nindent 12 }}
+          readinessProbe:
+            tcpSocket:
+              port: keyguard
+            {{- toYaml .Values.probes.readiness | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: tmp
+              mountPath: /tmp
+            - name: {{ ternary "keys" "key-material" $installer }}
+              mountPath: {{ $keyDir }}
+              readOnly: true
+      volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
+            sizeLimit: 16Mi
+        - name: key-material
+          projected:
+            defaultMode: 0400
+            sources:
+              - secret:
+                  name: {{ include "tt-keyguard.tlsSecret" . }}
+                  items:
+                    - {key: tls.crt, path: tls.crt}
+                    - {key: tls.key, path: tls.key}
+              - secret:
+                  name: {{ include "tt-keyguard.keysSecret" . }}
+                  items:
+                    - {key: {{ .Values.keys.hmacKeysKey }}, path: hmac-keys}
+                    - {key: {{ .Values.keys.policySigningKey }}, path: policy-signing-key}
+                    - {key: {{ .Values.keys.packSigningKey }}, path: pack-signing-key}
+              {{- if .Values.tls.clientCASecret }}
+              - secret:
+                  name: {{ .Values.tls.clientCASecret }}
+                  items:
+                    - {key: {{ .Values.tls.clientCAKey }}, path: client-ca.crt}
+              {{- end }}
+        {{- if $installer }}
+        - name: keys
+          emptyDir:
+            medium: Memory
+            sizeLimit: 4Mi
+        {{- end }}
+        {{- if not .Values.persistence.enabled }}
+        - name: data
+          emptyDir: {}
+        {{- else if .Values.persistence.existingClaim }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- if and .Values.persistence.enabled (not .Values.persistence.existingClaim) }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "tt-keyguard.selectorLabels" . | nindent 10 }}
+      spec:
+        accessModes:
+          {{- toYaml .Values.persistence.accessModes | nindent 10 }}
+        {{- with .Values.persistence.storageClassName }}
+        storageClassName: {{ . | quote }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+  {{- end }}

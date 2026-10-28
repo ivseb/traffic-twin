@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "tt-injector.fullname" . }}
+  labels:
+    {{- include "tt-injector.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "tt-injector.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "tt-injector.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "tt-injector.serviceAccountName" . }}
+      # The injector never calls the Kubernetes API.
+      automountServiceAccountToken: false
+      enableServiceLinks: false
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      {{- if gt (int .Values.replicaCount) 1 }}
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              {{- include "tt-injector.selectorLabels" . | nindent 14 }}
+      {{- end }}
+      containers:
+        - name: injector
+          image: {{ include "tt-injector.image" . | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - injector
+            - -listen=:8443
+            - -tls-cert-file=/etc/tt/tls/tls.crt
+            - -tls-key-file=/etc/tt/tls/tls.key
+            {{- range $lang, $img := .Values.sdkImages }}
+            {{- if $img }}
+            - {{ printf "-sdk-image=%s=%s" $lang $img | quote }}
+            {{- end }}
+            {{- end }}
+            - -pull-policy={{ .Values.sdkPullPolicy }}
+            - -enroll-secret={{ .Values.enrollSecret }}
+            - -hmac-secret={{ .Values.hmacSecret }}
+            - -hmac-mode={{ .Values.hmacMode }}
+            - -log-level={{ .Values.logLevel }}
+            {{- if .Values.denyUnknown }}
+            - -deny-unknown
+            {{- end }}
+          ports:
+            - name: https
+              containerPort: 8443
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 2
+            periodSeconds: 10
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: https
+              scheme: HTTPS
+            initialDelaySeconds: 1
+            periodSeconds: 5
+            timeoutSeconds: 2
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tls
+              mountPath: /etc/tt/tls
+              readOnly: true
+      volumes:
+        - name: tls
+          secret:
+            secretName: {{ include "tt-injector.tlsSecretName" . }}
+            defaultMode: 0440
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,84 @@
+{
+  "format": "tt.conformance.vector/v1",
+  "id": "1177-framework-aspnetcore-fallback",
+  "category": "framework",
+  "description": "aspnetcore route /api/orders/{id?} cannot be normalized: fall back to policy templates (route_source policy).",
+  "spec": ["sanitizer.md#3.3", "sanitizer.md#3.4"],
+  "policy": {
+    "format": "tt.policy.body/v1",
+    "policy_id": "p-conformance",
+    "version": 1,
+    "issued_seq": 1,
+    "created_at": "2026-10-20T08:00:00Z",
+    "not_after": "2026-11-19T08:00:00Z",
+    "targets": {
+      "groups": ["shop"]
+    },
+    "hmac": {
+      "kid": "k1",
+      "accept_kids": [],
+      "epoch": "2026-10"
+    },
+    "sampling": {
+      "rate_bp": 10000,
+      "trust_baggage": false,
+      "propagate_to": []
+    },
+    "segments": {
+      "auto_words": false,
+      "allow": [],
+      "hosts_allow": []
+    },
+    "limits": {
+      "max_body_bytes": 1048576,
+      "max_depth": 32,
+      "max_array": 32,
+      "max_keys": 256,
+      "keep_max_bytes": 64
+    },
+    "global": {},
+    "services": [
+      {
+        "name": "shop-api",
+        "match": {
+          "inbound": true,
+          "internal": false
+        },
+        "ops": [
+          {
+            "op": "GET /api/files/{name}"
+          },
+          {
+            "op": "GET /api/orders/{id}",
+            "request": {
+              "path": {
+                "id": {
+                  "action": "hmac",
+                  "domain": "order"
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "source_group": "shop",
+  "hmac_key": "k1:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8",
+  "now": "2026-10-23T10:00:00Z",
+  "input": {
+    "dir": "inbound",
+    "service_name": "shop-api",
+    "method": "GET",
+    "raw_path": "/api/orders/ORD-2026-000184",
+    "framework": "aspnetcore",
+    "framework_route": "/api/orders/{id?}",
+    "req_headers": [],
+    "status": 200,
+    "resp_headers": []
+  },
+  "expected": {
+    "outcome": "event",
+    "canonical": "{\"op\":\"GET /api/orders/{id}\",\"req\":{\"path\":\"/api/orders/{tk1:k1:5QWSSNfrkE8dHsTh40ixTw}\",\"size\":\"l8\"},\"resp\":{\"size\":\"l8\"},\"route_source\":\"policy\",\"sampled_by\":\"random\",\"service\":\"shop-api\"}"
+  }
+}
