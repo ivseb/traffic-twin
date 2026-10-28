@@ -56,7 +56,9 @@ test('OpenTelemetry spans are unchanged with the SDK loaded, and events reuse th
     assert.ok(await core.waitFor((s) => s.policyFetches > 0 && s.heartbeats.length > 0), 'enrolled');
     await new Promise((r) => setTimeout(r, 300));
     withTt = await exercise(withSdk);
-    assert.ok(await core.waitFor((s) => s.events.filter((e) => e.event.dir === 'inbound').length >= 3), 'events exported');
+    // All the events of the exercise (>= 15, see below) before stopping the app,
+    // not just the first ones: the export is batched every 200 ms.
+    assert.ok(await core.waitFor((s) => s.events.length >= 15), 'events exported');
   } finally {
     await withSdk.stop();
     await core.close();
