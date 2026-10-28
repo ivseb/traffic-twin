@@ -124,7 +124,7 @@ jobs" perché la pubblicazione è idempotente (`--skip-existing`, `--skip-duplic
 
 | Job | Pacchetto | Autenticazione |
 |---|---|---|
-| `npm` | `@traffic-twin/sdk` (npm), con `--provenance --access public` | oggi il segreto `NPM_TOKEN`; se manca, trusted publishing (OIDC, npm >= 11.5.1) |
+| `npm` | `@traffic-twin/sdk` (npm), con `--provenance --access public` | trusted publishing (OIDC, npm >= 11.5.1); il segreto `NPM_TOKEN`, se presente, ha la precedenza |
 | `pypi` | `traffic-twin` (PyPI), con attestazioni | trusted publishing (OIDC), nessun token |
 | `nuget` | `TrafficTwin.Sdk`, poi `TrafficTwin.Sdk.AspNetCore` (NuGet) | trusted publishing: `NuGet/login` (OIDC) dà una chiave a vita breve |
 | `maven` | `io.github.ivseb.traffictwin:sdk-parent`, `sdk`, `sdk-servlet-javax`, `sdk-otel-extension`, `sdk-agent` (Maven Central) | token utente del Central Portal + chiave GPG (segreti sotto); se mancano, il job **salta con una notice** |
@@ -146,8 +146,12 @@ Go: nessun job, vedi la sezione successiva.
 
 ### Impostazione una tantum già fatta
 
-- npm: organizzazione `traffic-twin`, pacchetto `@traffic-twin/sdk`, segreto `NPM_TOKEN`
-  nell'environment `release`.
+- npm: organizzazione `traffic-twin`, pacchetto `@traffic-twin/sdk`. La v0.1.0 è uscita col token;
+  poi è stato registrato il Trusted Publisher (GitHub Actions, `ivseb/traffic-twin`,
+  `publish-sdks.yml`, environment `release`, "Allow npm publish") ed è stato eliminato `NPM_TOKEN`.
+  npm considera la connessione *Pending validation* finché non c'è una pubblicazione via OIDC:
+  se al rilascio successivo risulta scaduta, va registrata di nuovo (Settings del pacchetto →
+  *Trusted Publisher*) prima di lanciare `publish-sdks`.
 - PyPI: pending trusted publisher per il progetto `traffic-twin` (owner `ivseb`, repository
   `traffic-twin`, workflow `publish-sdks.yml`, environment `release`). Dopo la prima
   pubblicazione diventa un publisher normale, senza altro da fare.
@@ -173,12 +177,9 @@ Go: nessun job, vedi la sezione successiva.
    `release`; poi cancella i due file locali. Dopo il primo push registra il mirror su
    packagist.org (*Submit*, URL `https://github.com/ivseb/traffic-twin-php`) e controlla che
    l'aggiornamento automatico (hook GitHub) sia attivo.
-3. **npm: passare al trusted publishing.** Dopo la prima pubblicazione col token, su npmjs.com
-   (Settings del pacchetto → *Trusted Publisher*) registra GitHub Actions con owner `ivseb`,
-   repository `traffic-twin`, workflow `publish-sdks.yml`, environment `release`. Poi **elimina il
-   segreto `NPM_TOKEN`** dall'environment, revoca il token su npm e, nelle impostazioni del
-   pacchetto, imposta "Require two-factor authentication and disallow tokens". Dal rilascio
-   successivo il job usa da solo l'OIDC.
+3. **npm: revocare il vecchio token.** Il trusted publishing è attivo e `NPM_TOKEN` non è più su
+   GitHub: revoca anche il token su npmjs.com (Access Tokens) e, nelle impostazioni del pacchetto,
+   imposta "Require two-factor authentication and disallow tokens".
 4. Facoltativo: nell'environment `release` metti dei *required reviewers*, così ogni pubblicazione
    (e ogni dry run) chiede una conferma; limita i tag deployabili a `v*`.
 
