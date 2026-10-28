@@ -219,7 +219,7 @@ public class EndToEndTests
         var attrs = rl.GetProperty("resource").GetProperty("attributes").EnumerateArray().ToDictionary(a => a.GetProperty("key").GetString()!, a => a.GetProperty("value").GetProperty("stringValue").GetString()!);
         Assert.Equal("shop-api", attrs["service.name"]);
         Assert.Equal("sdk-dotnet", attrs["tt.source.kind"]);
-        Assert.Equal("0.1.0", attrs["tt.source.version"]);
+        Assert.Equal(SdkInfo.Version, attrs["tt.source.version"]);
         Assert.StartsWith("src-", attrs["tt.source.id"]);
         var sl = rl.GetProperty("scopeLogs")[0];
         Assert.Equal("traffic-twin", sl.GetProperty("scope").GetProperty("name").GetString());

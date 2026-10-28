@@ -25,10 +25,10 @@ replicaCount: 2
 # -- SDK init images (deploy/images/sdk-<lang>), by language. A language without image is refused with a warning.
 # go and php need none: for them the injector only provides the TT_* environment.
 sdkImages:
-  node: ghcr.io/ivseb/traffic-twin/sdk-node:0.1.0
-  python: ghcr.io/ivseb/traffic-twin/sdk-python:0.1.0
-  java: ghcr.io/ivseb/traffic-twin/sdk-java:0.1.0
-  dotnet: ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.0
+  node: ghcr.io/ivseb/traffic-twin/sdk-node:0.1.1
+  python: ghcr.io/ivseb/traffic-twin/sdk-python:0.1.1
+  java: ghcr.io/ivseb/traffic-twin/sdk-java:0.1.1
+  dotnet: ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.1
 sdkPullPolicy: IfNotPresent
 
 # -- Defaults looked up in the namespace of the pod being created (overridable per pod with the annotations

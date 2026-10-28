@@ -39,7 +39,7 @@ signed policy explicitly allows leave it; every artifact passes a publication
 gate before it reaches development or CI. It is open source (Apache-2.0)
 and self-hosted.
 
-> **Status: first public release (v0.1.0).** The whole pipeline runs end to
+> **Status: early public release (v0.1.1).** The whole pipeline runs end to
 > end, but formats, APIs and SDK options may still change before 1.0. Read the
 > [known limits](CHANGELOG.md#known-limits) and the
 > [production security checklist](https://ivseb.github.io/traffic-twin/guide/operations#production-security-checklist)
@@ -239,7 +239,7 @@ has a GitHub Actions step.
 | Go | `go get github.com/ivseb/traffic-twin/sdk/go` | Go 1.25 | [sdk/go](sdk/go/README.md) |
 | Node.js | `npm i @traffic-twin/sdk` | Node 20 (full `fetch` bodies from 24) | [sdk/node](sdk/node/README.md) |
 | Python | `pip install traffic-twin` | Python 3.9 | [sdk/python](sdk/python/README.md) |
-| Java | Maven `io.github.ivseb.traffictwin:sdk:0.1.0` (also `sdk-servlet-javax`, `sdk-otel-extension`, `sdk-agent`); Gradle `implementation("io.github.ivseb.traffictwin:sdk:0.1.0")` | Java 17 | [sdk/java](sdk/java/README.md) |
+| Java | Maven `io.github.ivseb.traffictwin:sdk:0.1.1` (also `sdk-servlet-javax`, `sdk-otel-extension`, `sdk-agent`); Gradle `implementation("io.github.ivseb.traffictwin:sdk:0.1.1")` | Java 17 | [sdk/java](sdk/java/README.md) |
 | .NET | `dotnet add package TrafficTwin.Sdk` (and `TrafficTwin.Sdk.AspNetCore`) | .NET 8 | [sdk/dotnet](sdk/dotnet/README.md) |
 | PHP | from source: [`sdk/php`](sdk/php) as a Composer `path` repository (`traffic-twin/sdk`, not on Packagist yet) | PHP 8.1 with ext-sodium | [sdk/php](sdk/php/README.md) |
 
@@ -257,7 +257,7 @@ both: Fleet flags `double_capture`.
   command is `core -config /etc/tt/core.yaml`):
 
   ```sh
-  docker run --rm ghcr.io/ivseb/traffic-twin:0.1.0 version
+  docker run --rm ghcr.io/ivseb/traffic-twin:0.1.1 version
   ```
 
 - **Kubernetes:** Helm charts for `tt-core`, `tt-keyguard`, `tt-egress`,
@@ -274,8 +274,8 @@ by digest:
 cosign verify-blob --bundle checksums.txt.sigstore.json \
   --certificate-identity-regexp '^https://github.com/ivseb/traffic-twin/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com checksums.txt
-slsa-verifier verify-artifact tt_0.1.0_linux_amd64.tar.gz --provenance-path multiple.intoto.jsonl \
-  --source-uri github.com/ivseb/traffic-twin --source-tag v0.1.0
+slsa-verifier verify-artifact tt_0.1.1_linux_amd64.tar.gz --provenance-path multiple.intoto.jsonl \
+  --source-uri github.com/ivseb/traffic-twin --source-tag v0.1.1
 ```
 
 The full procedure, image included, is in [RELEASING.md](RELEASING.md#3-controllare-la-bozza-e-pubblicarla).

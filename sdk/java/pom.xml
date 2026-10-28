@@ -5,7 +5,7 @@
 
   <groupId>io.github.ivseb.traffictwin</groupId>
   <artifactId>sdk-parent</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <packaging>pom</packaging>
   <name>traffic-twin Java SDK (parent)</name>
   <description>Capture SDK for the JVM: sanitizes HTTP exchanges in process and exports them to tt-core over mTLS.</description>

@@ -40,7 +40,7 @@ final class PackageTest extends TestCase
         self::assertFileExists($dir . '/vendor/bin/tt-shipper');
         [$code, $out] = Proc::run([PHP_BINARY, $dir . '/vendor/bin/tt-shipper', '--version'], [], 30);
         self::assertSame(0, $code, $out);
-        self::assertSame('0.1.0', trim($out));
+        self::assertSame(\TrafficTwin\Version::SDK, trim($out));
         [$code, $out] = Proc::run([PHP_BINARY, $dir . '/vendor/bin/tt-shipper', '--once'], ['TT_STATE_DIR' => ''], 30);
         self::assertSame(2, $code, 'TT_STATE_DIR is required');
         self::assertStringContainsString('TT_STATE_DIR', $out);

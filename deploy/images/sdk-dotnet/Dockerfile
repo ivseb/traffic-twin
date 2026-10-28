@@ -11,7 +11,7 @@
 # and needs no reference to any of these assemblies.
 #
 # Build from the repository root:
-#   docker build -f deploy/images/sdk-dotnet/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.0 .
+#   docker build -f deploy/images/sdk-dotnet/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.1 .
 #
 # Base images are pinned by digest; bump tag and digest together.
 

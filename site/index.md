@@ -38,7 +38,7 @@ features:
 
 <div class="tt-home">
 
-<p class="tt-status"><strong>Status: first public release, v0.1.0.</strong> The whole pipeline runs end to end, but formats, APIs and SDK options may still change. Read the <a href="./guide/operations#production-security-checklist">production checklist</a> before you point it at real traffic.</p>
+<p class="tt-status"><strong>Status: early public release, v0.1.1.</strong> The whole pipeline runs end to end, but formats, APIs and SDK options may still change. Read the <a href="./guide/operations#production-security-checklist">production checklist</a> before you point it at real traffic.</p>
 
 ## How it works
 

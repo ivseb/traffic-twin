@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import https from 'node:https';
 import { Exporter } from '../../dist/esm/export/exporter.js';
 import { buildEvent, otlpBody } from '../../dist/esm/export/event.js';
+import { SDK_VERSION } from '../../dist/esm/version.js';
 import { generateCsr } from '../../dist/esm/fleet/asn1.js';
 import { startFakeCore } from '../helpers/fake-core.mjs';
 
@@ -46,7 +47,7 @@ test('retries 503 with backoff over mTLS, then delivers', async () => {
 test('event assembly adds source fields and stays canonical', () => {
   const out = new Map([['service', 'shop-api'], ['op', 'GET /'], ['route_source', 'raw'], ['sampled_by', 'random'], ['req', new Map([['path', '/']])], ['resp', new Map([['size', 'l8']])]]);
   const s = buildEvent(out, { policyId: 'p-shop', policyVersion: 3, policyHash: 'sha256:' + 'a'.repeat(64), sourceId: 'src-1', dir: 'inbound', tsMs: Date.UTC(2026, 9, 19, 10, 0, 0, 412), latencyMs: 12.9, status: 200, traceId: '4bf92f3577b34da6a3ce929d0e0e4736', spanId: '00f067aa0ba902b7' });
-  assert.equal(s, '{"dir":"inbound","latency_ms":12,"op":"GET /","policy":{"hash":"sha256:' + 'a'.repeat(64) + '","id":"p-shop","version":3},"req":{"path":"/"},"resp":{"size":"l8"},"route_source":"raw","sampled_by":"random","schema":"tt.http.exchange/v1","service":"shop-api","source":{"id":"src-1","kind":"sdk-node","version":"0.1.0"},"span_id":"00f067aa0ba902b7","status":200,"trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","ts":"2026-10-19T10:00:00.412Z"}');
+  assert.equal(s, '{"dir":"inbound","latency_ms":12,"op":"GET /","policy":{"hash":"sha256:' + 'a'.repeat(64) + '","id":"p-shop","version":3},"req":{"path":"/"},"resp":{"size":"l8"},"route_source":"raw","sampled_by":"random","schema":"tt.http.exchange/v1","service":"shop-api","source":{"id":"src-1","kind":"sdk-node","version":"' + SDK_VERSION + '"},"span_id":"00f067aa0ba902b7","status":200,"trace_id":"4bf92f3577b34da6a3ce929d0e0e4736","ts":"2026-10-19T10:00:00.412Z"}');
   const withErr = buildEvent(out, { policyId: 'p', policyVersion: 1, policyHash: 'sha256:x', sourceId: 'src-1', dir: 'outbound', tsMs: 0, latencyMs: 0, netError: 'timeout' });
   assert.ok(!withErr.includes('"resp"') && withErr.includes('"net_error":"timeout"'));
   const body = JSON.parse(otlpBody([{ json: s, tsMs: 1792404000412, policyHash: 'sha256:x' }], { serviceName: 'shop-api', sourceId: 'src-1' }, 1792404000700));

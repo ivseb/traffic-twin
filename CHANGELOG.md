@@ -7,6 +7,27 @@ more detailed changelog in [`docs/spec/README.md`](docs/spec/README.md#changelog
 The project follows [Semantic Versioning](https://semver.org/). Before 1.0.0, minor
 versions may change interfaces; every such change is called out below.
 
+## [0.1.1] — 2026-10-28
+
+Maintenance release: no change to formats, APIs or the behaviour of the core and the SDKs.
+
+### Fixed
+
+- The self-contained `Dockerfile` now copies `go.sum` and the user manual the console
+  embeds; `docker build .` works again.
+- PHP SDK tests run on case-sensitive file systems (`tests/Support`).
+- Flaky tests made deterministic: Python inbound grace period, Node OpenTelemetry
+  coexistence, observe-phase end-to-end test; latency budgets are logged, not enforced, on
+  shared CI runners.
+
+### Changed
+
+- npm packages are published with trusted publishing (OIDC) and provenance; no long-lived
+  token is stored any more.
+- README and documentation site: badges, install table, release verification, Mermaid
+  diagrams, search-engine metadata.
+- Helm charts and the SDK images point at 0.1.1.
+
 ## [0.1.0] — 2026-10-28
 
 First public release. Interfaces are still evolving.
@@ -85,4 +106,5 @@ that become stale until a reviewer confirms them again. This is intended.
   an empty mock namespace means tt-core's namespace; a real name typed by hand into a
   rule passes the detectors.
 
+[0.1.1]: https://github.com/ivseb/traffic-twin/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ivseb/traffic-twin/releases/tag/v0.1.0

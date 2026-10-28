@@ -51,7 +51,7 @@
 package ttsdk
 
 // Version is the SDK version reported in events and at enrollment.
-const Version = "0.1.0"
+const Version = "0.1.1"
 
 // Kind is the source kind of the events (docs/spec/event.md).
 const Kind = "sdk-go"

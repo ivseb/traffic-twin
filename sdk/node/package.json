@@ -1,6 +1,6 @@
 {
   "name": "@traffic-twin/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "traffic-twin capture SDK for Node.js: sanitizes HTTP exchanges in process and exports them to tt-core over mTLS.",
   "license": "Apache-2.0",
   "author": "traffic-twin maintainers (https://github.com/ivseb)",

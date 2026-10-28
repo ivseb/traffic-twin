@@ -38,7 +38,7 @@ features:
 
 <div class="tt-home">
 
-<p class="tt-status"><strong>Stato: primo rilascio pubblico, v0.1.0.</strong> La pipeline gira tutta da un capo all'altro, ma formati, API e opzioni degli SDK possono ancora cambiare. Prima di usarlo su traffico vero leggi la <a href="./docs/operations#9-checklist-di-sicurezza-per-la-produzione">checklist di sicurezza per la produzione</a>.</p>
+<p class="tt-status"><strong>Stato: primi rilasci pubblici, v0.1.1.</strong> La pipeline gira tutta da un capo all'altro, ma formati, API e opzioni degli SDK possono ancora cambiare. Prima di usarlo su traffico vero leggi la <a href="./docs/operations#9-checklist-di-sicurezza-per-la-produzione">checklist di sicurezza per la produzione</a>.</p>
 
 ## Come funziona
 

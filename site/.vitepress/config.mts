@@ -88,7 +88,7 @@ export default defineConfig({
             applicationCategory: 'DeveloperApplication',
             operatingSystem: 'Linux, macOS, Windows',
             license: 'https://www.apache.org/licenses/LICENSE-2.0',
-            softwareVersion: '0.1.0',
+            softwareVersion: '0.1.1',
             codeRepository: REPO,
             downloadUrl: `${REPO}/releases`,
             image: `${SITE}og-image.png`,
@@ -137,7 +137,7 @@ export default defineConfig({
           { text: 'Guide', link: '/guide/getting-started', activeMatch: '^/guide/' },
           { text: 'Reference (IT)', link: '/it/docs/getting-started', activeMatch: '^/it/docs/' },
           {
-            text: 'v0.1.0',
+            text: 'v0.1.1',
             items: [
               { text: 'Releases', link: `${REPO}/releases` },
               { text: 'Security policy', link: '/it/docs/security' },
@@ -166,7 +166,7 @@ export default defineConfig({
           { text: 'Documentazione', link: '/it/docs/getting-started', activeMatch: '^/it/docs/' },
           { text: 'Specifiche', link: '/it/docs/spec/', activeMatch: '^/it/docs/spec/' },
           {
-            text: 'v0.1.0',
+            text: 'v0.1.1',
             items: [
               { text: 'Release', link: `${REPO}/releases` },
               { text: 'Sicurezza', link: '/it/docs/security' },

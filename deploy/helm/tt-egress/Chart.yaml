@@ -2,8 +2,8 @@ apiVersion: v2
 name: tt-egress
 description: "traffic-twin tt-egress, the outbound reverse proxy for stacks without an SDK. Install it as a standalone Deployment, or use the generated sidecar snippet."
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.1
+appVersion: "0.1.1"
 kubeVersion: ">=1.25.0-0"
 home: https://github.com/ivseb/traffic-twin
 sources:

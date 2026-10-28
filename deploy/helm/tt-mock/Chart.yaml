@@ -2,8 +2,8 @@ apiVersion: v2
 name: tt-mock
 description: "traffic-twin tt-mock, the stateful mock that serves a signed twin package. For CI and test clusters (zone C): synthetic data only, no outbound traffic."
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 0.1.1
+appVersion: "0.1.1"
 kubeVersion: ">=1.25.0-0"
 home: https://github.com/ivseb/traffic-twin
 sources:

@@ -395,10 +395,10 @@ spec:
 Si costruiscono dalla radice del repository (il contesto è la radice; ogni cartella ha il suo `Dockerfile.dockerignore`):
 
 ```bash
-docker build -f deploy/images/sdk-node/Dockerfile   -t ghcr.io/ivseb/traffic-twin/sdk-node:0.1.0 .
-docker build -f deploy/images/sdk-python/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-python:0.1.0 .
-docker build -f deploy/images/sdk-java/Dockerfile   -t ghcr.io/ivseb/traffic-twin/sdk-java:0.1.0 .
-docker build -f deploy/images/sdk-dotnet/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.0 .
+docker build -f deploy/images/sdk-node/Dockerfile   -t ghcr.io/ivseb/traffic-twin/sdk-node:0.1.1 .
+docker build -f deploy/images/sdk-python/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-python:0.1.1 .
+docker build -f deploy/images/sdk-java/Dockerfile   -t ghcr.io/ivseb/traffic-twin/sdk-java:0.1.1 .
+docker build -f deploy/images/sdk-dotnet/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-dotnet:0.1.1 .
 ```
 
 Sono minime (busybox musl, circa 3 MiB, utente 65532, solo `cp`), con le immagini di base fissate per digest
