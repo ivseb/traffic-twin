@@ -64,9 +64,14 @@ class OtelAgentIT {
             assertTrue(app.output.stream().anyMatch(l -> l.contains(" CLIENT ")), "no OpenTelemetry client span logged");
 
             // traffic-twin reads OpenTelemetry's ids, it does not make its own.
+            // Several POST server spans are logged (warm-up requests, the downstream call, which can
+            // finish first): the inbound event must carry the ids of one of them, not of the first.
             Map<String, Object> in = AgentIT.orderEvents(app).stream().filter(e -> e.get("dir").equals("inbound")).findFirst().orElseThrow();
-            assertEquals(server[0].group(1), in.get("trace_id"));
-            assertEquals(server[0].group(2), in.get("span_id"));
+            String ids = in.get("trace_id") + " " + in.get("span_id");
+            assertTrue(app.core.waitFor(c -> app.output.stream().anyMatch(l -> {
+                Matcher m = SERVER_SPAN.matcher(l);
+                return m.find() && ids.equals(m.group(1) + " " + m.group(2));
+            }), 15_000), "no OpenTelemetry server span with the ids of the inbound event (" + ids + "):\n" + String.join("\n", app.output));
             // The application never saw our agent set anything global: the OpenTelemetry agent's own SDK is the only one.
             assertNotNull(app.output);
         }
