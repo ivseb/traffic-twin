@@ -229,6 +229,7 @@
           <systemPropertyVariables>
             <tt.agent.jar>${project.build.directory}/traffic-twin-agent-${project.version}.jar</tt.agent.jar>
             <tt.it.libs>${it.libs}</tt.it.libs>
+            <tt.otel.extension.jar>${project.basedir}/../sdk-otel-extension/target/sdk-otel-extension-${project.version}.jar</tt.otel.extension.jar>
           </systemPropertyVariables>
         </configuration>
       </plugin>

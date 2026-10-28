@@ -34,7 +34,7 @@ final class ChildApp implements AutoCloseable {
     static final String AGENT = System.getProperty("tt.agent.jar");
     static final Path LIBS = Path.of(System.getProperty("tt.it.libs", "target/it-libs"));
     static final Path OTEL_AGENT = LIBS.resolve("opentelemetry-javaagent.jar");
-    static final Path OTEL_EXTENSION = Path.of("..", "sdk-otel-extension", "target", "sdk-otel-extension-0.1.0.jar").toAbsolutePath().normalize();
+    static final Path OTEL_EXTENSION = Path.of(System.getProperty("tt.otel.extension.jar")).toAbsolutePath().normalize();
 
     /** A request seen by the carrier. */
     record Seen(String method, String uri, Map<String, List<String>> headers, String body) {}

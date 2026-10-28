@@ -162,7 +162,7 @@ corpo i passi `.@nome` e `.#text`. Un SDK precedente rifiuta una policy con ques
 
 ```bash
 java -javaagent:opentelemetry-javaagent.jar \
-     -Dotel.javaagent.extensions=sdk-otel-extension-0.1.0.jar \
+     -Dotel.javaagent.extensions=sdk-otel-extension-0.1.1.jar \
      -jar app.jar          # con TT_* come sopra e il filtro servlet registrato
 ```
 
@@ -184,7 +184,7 @@ riflessione. Verificato con l'agent 2.10.0 reale (vedi "Sviluppo"). `TT_DISABLED
 
 ## Iniezione senza codice (`-javaagent`)
 
-`sdk-agent` produce **un solo jar senza dipendenze** (`traffic-twin-agent-0.1.0.jar`) con `Premain-Class` e `Agent-Class`.
+`sdk-agent` produce **un solo jar senza dipendenze** (`traffic-twin-agent-0.1.1.jar`) con `Premain-Class` e `Agent-Class`.
 Basta avviare la JVM con il flag e le variabili `TT_*`: nessuna modifica all'applicazione, nessun filtro da registrare.
 
 ```bash
@@ -324,5 +324,5 @@ di test** (scaricato da Maven in `target/it-libs`) in entrambi gli ordini dei fl
 di test. `./mvnw verify` esegue tutto (anche il solo `-Dit.test=OtelAgentIT`).
 
 Verifica manuale con l'agent reale in modalità libreria (non è nella suite, scarica 21 MB): avviare un'app Jetty con
-`-javaagent:opentelemetry-javaagent-2.10.0.jar -Dotel.javaagent.extensions=sdk-otel-extension-0.1.0.jar`
+`-javaagent:opentelemetry-javaagent-2.10.0.jar -Dotel.javaagent.extensions=sdk-otel-extension-0.1.1.jar`
 e controllare che `OtelContext.active()` restituisca gli id dello span server.

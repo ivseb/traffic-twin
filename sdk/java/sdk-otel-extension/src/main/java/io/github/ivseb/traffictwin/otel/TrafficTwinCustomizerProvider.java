@@ -19,7 +19,7 @@ import java.util.function.Supplier;
  *
  * <pre>
  * java -javaagent:opentelemetry-javaagent.jar \
- *      -Dotel.javaagent.extensions=sdk-otel-extension-0.1.0.jar \
+ *      -Dotel.javaagent.extensions=sdk-otel-extension-0.1.1.jar \
  *      -jar app.jar
  * </pre>
  *
