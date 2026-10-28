@@ -54,6 +54,15 @@ export default defineConfig({
       const codeInline = md.renderer.rules.code_inline!
       md.renderer.rules.code_inline = (tokens, idx, options, env, self) =>
         codeInline(tokens, idx, options, env, self).replace(/^<code/, '<code v-pre')
+      // ```mermaid fences become diagrams drawn in the browser (theme/Mermaid.vue).
+      const fence = md.renderer.rules.fence!
+      md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+        const t = tokens[idx]
+        if (t.info.trim() === 'mermaid') {
+          return `<Mermaid code="${encodeURIComponent(t.content)}" />`
+        }
+        return fence(tokens, idx, options, env, self)
+      }
     }
   },
   locales: {
