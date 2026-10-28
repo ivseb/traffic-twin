@@ -1,8 +1,9 @@
-import { defineConfig, type DefaultTheme } from 'vitepress'
+import { defineConfig, type DefaultTheme, type HeadConfig } from 'vitepress'
 import { italianSidebar } from '../scripts/docs-map.mjs'
 
 const REPO = 'https://github.com/ivseb/traffic-twin'
 const BASE = '/traffic-twin/'
+const SITE = 'https://ivseb.github.io/traffic-twin/'
 
 // GitHub-compatible heading ids, so the anchors written in docs/*.md for
 // GitHub (e.g. `#2-dimensionamento`) keep working on the site.
@@ -42,7 +43,67 @@ export default defineConfig({
   // The Italian local-search index covers ~7,000 lines of reference docs and
   // is loaded only when search is opened; it is expected to be large.
   vite: { build: { chunkSizeWarningLimit: 1024 } },
+  sitemap: { hostname: SITE },
+  // Per page: canonical URL, language alternates of the home pages, Open Graph
+  // and Twitter cards, and structured data on the home pages.
+  transformHead({ pageData, siteData }) {
+    const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+    const url = SITE + path
+    const it = path.startsWith('it/')
+    const desc = pageData.frontmatter.description || pageData.description || siteData.locales[it ? 'it' : 'root']?.description || ''
+    const title = pageData.frontmatter.layout === 'home'
+      ? `traffic-twin | ${pageData.frontmatter.titleTemplate ?? ''}`
+      : `${pageData.title} | traffic-twin`
+    const head: HeadConfig[] = [
+      ['link', { rel: 'canonical', href: url }],
+      ['meta', { property: 'og:type', content: pageData.frontmatter.layout === 'home' ? 'website' : 'article' }],
+      ['meta', { property: 'og:site_name', content: 'traffic-twin' }],
+      ['meta', { property: 'og:title', content: title }],
+      ['meta', { property: 'og:description', content: desc }],
+      ['meta', { property: 'og:url', content: url }],
+      ['meta', { property: 'og:image', content: `${SITE}og-image.png` }],
+      ['meta', { property: 'og:image:width', content: '1200' }],
+      ['meta', { property: 'og:image:height', content: '630' }],
+      ['meta', { property: 'og:image:alt', content: 'traffic-twin: stateful API mocks learned from production traffic' }],
+      ['meta', { property: 'og:locale', content: it ? 'it_IT' : 'en_US' }],
+      ['meta', { name: 'twitter:card', content: 'summary_large_image' }],
+      ['meta', { name: 'twitter:title', content: title }],
+      ['meta', { name: 'twitter:description', content: desc }],
+      ['meta', { name: 'twitter:image', content: `${SITE}og-image.png` }]
+    ]
+    if (path === '' || path === 'it/') {
+      head.push(
+        ['link', { rel: 'alternate', hreflang: 'en', href: SITE }],
+        ['link', { rel: 'alternate', hreflang: 'it', href: `${SITE}it/` }],
+        ['link', { rel: 'alternate', hreflang: 'x-default', href: SITE }],
+        [
+          'script',
+          { type: 'application/ld+json' },
+          JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'traffic-twin',
+            description: desc,
+            url: SITE,
+            applicationCategory: 'DeveloperApplication',
+            operatingSystem: 'Linux, macOS, Windows',
+            license: 'https://www.apache.org/licenses/LICENSE-2.0',
+            softwareVersion: '0.1.0',
+            codeRepository: REPO,
+            downloadUrl: `${REPO}/releases`,
+            image: `${SITE}og-image.png`,
+            offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+            keywords:
+              'API mocking, stateful mock, production traffic, OpenAPI inference, synthetic data, test data, privacy, data masking, contract testing, k-anonymity'
+          })
+        ]
+      )
+    }
+    return head
+  },
   head: [
+    ['meta', { name: 'keywords', content: 'API mock, stateful mock server, production traffic, OpenAPI inference, synthetic test data, data masking, privacy, contract testing, service virtualization, k-anonymity' }],
+    ['meta', { name: 'author', content: 'traffic-twin contributors' }],
     ['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE}logo.svg` }],
     ['meta', { name: 'theme-color', content: '#0f766e' }],
     ['meta', { name: 'referrer', content: 'no-referrer' }]

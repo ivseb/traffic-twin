@@ -1,3 +1,7 @@
+---
+description: "Running traffic-twin in production: deployment layout, sizing, retention, upgrades, releases and how to verify signatures and provenance."
+---
+
 # Operations summary
 
 For whoever installs and runs traffic-twin: layouts, sizing, backups and the checks to make before production. This is an English summary of the [operations guide](/it/docs/operations) (Italian), which has every configuration key and command; data retention is in [Ciclo di vita dei dati](/it/docs/data-lifecycle) and the performance budgets in [Prestazioni](/it/docs/performance).

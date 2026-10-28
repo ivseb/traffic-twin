@@ -1,3 +1,7 @@
+---
+description: "Install traffic-twin, connect a service through an SDK, approve the policy and run a stateful mock of your API in your tests."
+---
+
 # Getting started
 
 From nothing to a **stateful mock running in CI**, starting from the traffic of a demo shop. This is an English summary of the 15-minute tour; every command and screen is described step by step in the full guide, [Primo giro in 15 minuti](/it/docs/getting-started) (Italian).

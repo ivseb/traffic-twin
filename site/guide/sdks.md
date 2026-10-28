@@ -1,3 +1,7 @@
+---
+description: "traffic-twin capture SDKs for Go, Node.js, Python, Java, .NET and PHP: install, frameworks supported and how values are sanitized in process."
+---
+
 # SDKs
 
 Six native capture SDKs observe the inbound and outbound HTTP calls of a process, **sanitize them in the process** according to the signed policy, and send `tt-core` only shapes, HMAC tokens and the values the policy allows, as OTLP/HTTP JSON over mTLS. Each SDK has a detailed README in its folder (Italian), linked below.

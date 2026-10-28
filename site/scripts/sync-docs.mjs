@@ -103,8 +103,47 @@ function transform(source, page) {
     out.push(rewriteProse(line, page))
   }
   // JSON strings are valid YAML scalars.
-  const front = ['---', `title: ${JSON.stringify(page.label)}`, `source: ${JSON.stringify(page.src)}`, '---', ''].join('\n')
+  const front = [
+    '---',
+    `title: ${JSON.stringify(page.label)}`,
+    `description: ${JSON.stringify(describe(source))}`,
+    `source: ${JSON.stringify(page.src)}`,
+    '---',
+    ''
+  ].join('\n')
   return front + out.join('\n')
+}
+
+// describe returns the first prose paragraph of a document as plain text, cut
+// at a word boundary to the ~160 characters search engines show.
+function describe(src) {
+  let fence = false
+  const para = []
+  for (const raw of src.split('\n')) {
+    const line = raw.trim()
+    if (/^(```|~~~)/.test(line)) {
+      fence = !fence
+      continue
+    }
+    if (fence) continue
+    if (!line) {
+      if (para.length) break
+      continue
+    }
+    if (/^(#|>|\||[-*+] |\d+\. |<|---)/.test(line)) {
+      if (para.length) break
+      continue
+    }
+    para.push(line)
+  }
+  let text = para
+    .join(' ')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[`*_]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+  if (text.length > 160) text = text.slice(0, 157).replace(/\s+\S*$/, '') + '…'
+  return text
 }
 
 const outRoot = path.join(SITE_DIR, OUT_DIR)

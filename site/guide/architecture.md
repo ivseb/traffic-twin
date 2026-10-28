@@ -1,3 +1,7 @@
+---
+description: "How traffic-twin works: three trust zones, an in-process sanitizer, tt-core, the keyguard and the publication gate between production and CI."
+---
+
 # Architecture overview
 
 traffic-twin observes the HTTP traffic of an application in production **without ever exporting real values**, infers **contracts** and **cause → effect rules** from it, and produces a **stateful mock** for tests, populated with consistent **synthetic customers**.

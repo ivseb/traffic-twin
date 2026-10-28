@@ -1,3 +1,7 @@
+---
+description: "The security model of traffic-twin: verifiable properties, deny-by-default sanitization, signed artifacts, k-anonymity and the residual risks, stated plainly."
+---
+
 # Security model
 
 100% security cannot be promised. traffic-twin promises **verifiable properties** instead, and states openly what it does **not** guarantee. This page summarizes the [threat model](/it/docs/threat-model) (Italian, STRIDE for security and LINDDUN for privacy); read it in full before an installation on real traffic.
