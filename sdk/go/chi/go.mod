@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/go-chi/chi/v5 v5.5.0
-	github.com/ivseb/traffic-twin v0.0.0
+	github.com/ivseb/traffic-twin v0.1.0
 )
 
 require (
@@ -24,5 +24,3 @@ require (
 	modernc.org/memory v1.12.1 // indirect
 	modernc.org/sqlite v1.59.0 // indirect
 )
-
-replace github.com/ivseb/traffic-twin => ../../..

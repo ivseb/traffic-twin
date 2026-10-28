@@ -3,7 +3,7 @@ module github.com/ivseb/traffic-twin/sdk/go/otelctx
 go 1.25.0
 
 require (
-	github.com/ivseb/traffic-twin v0.0.0
+	github.com/ivseb/traffic-twin v0.1.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0
 	go.opentelemetry.io/otel v1.38.0
 	go.opentelemetry.io/otel/sdk v1.38.0
@@ -32,5 +32,3 @@ require (
 	modernc.org/memory v1.12.1 // indirect
 	modernc.org/sqlite v1.59.0 // indirect
 )
-
-replace github.com/ivseb/traffic-twin => ../../..
