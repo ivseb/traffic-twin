@@ -149,9 +149,7 @@ Go: nessun job, vedi la sezione successiva.
 - npm: organizzazione `traffic-twin`, pacchetto `@traffic-twin/sdk`. La v0.1.0 è uscita col token;
   poi è stato registrato il Trusted Publisher (GitHub Actions, `ivseb/traffic-twin`,
   `publish-sdks.yml`, environment `release`, "Allow npm publish") ed è stato eliminato `NPM_TOKEN`.
-  npm considera la connessione *Pending validation* finché non c'è una pubblicazione via OIDC:
-  se al rilascio successivo risulta scaduta, va registrata di nuovo (Settings del pacchetto →
-  *Trusted Publisher*) prima di lanciare `publish-sdks`.
+  La v0.1.1 è la prima pubblicata via OIDC, che ha validato la connessione.
 - PyPI: pending trusted publisher per il progetto `traffic-twin` (owner `ivseb`, repository
   `traffic-twin`, workflow `publish-sdks.yml`, environment `release`). Dopo la prima
   pubblicazione diventa un publisher normale, senza altro da fare.
