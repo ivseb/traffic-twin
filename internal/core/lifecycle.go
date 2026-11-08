@@ -63,8 +63,10 @@ func dirBytes(dir string) int64 {
 
 // protectedSnapshots: snapshots referenced by drift alerts, and the
 // contract baseline of every published pack (the newest snapshot of each of
-// its services at the time it was built).
-func (c *Core) protectedSnapshots(ctx context.Context) (map[int64]bool, error) {
+// its services at the time it was built). A service name limits the pack
+// baselines to that service (the prune after each snapshot): one lookup per
+// pack instead of one per pack and service.
+func (c *Core) protectedSnapshots(ctx context.Context, service string) (map[int64]bool, error) {
 	out := map[int64]bool{}
 	ids, err := c.drift.ReferencedSnapshots(ctx)
 	if err != nil {
@@ -81,6 +83,9 @@ func (c *Core) protectedSnapshots(ctx context.Context) (map[int64]bool, error) {
 	}
 	for _, p := range pubs {
 		for _, svc := range p.Services {
+			if service != "" && svc != service {
+				continue
+			}
 			seqs, err := c.eng.Snapshots().NewestAtEachGroup(ctx, svc, p.CreatedAt)
 			if err != nil {
 				return nil, err

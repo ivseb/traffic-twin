@@ -45,8 +45,10 @@ func DefaultSnapshotPolicy() SnapshotPolicy {
 }
 
 // Protector returns the snapshot sequence numbers that must never be
-// deleted.
-type Protector func(ctx context.Context) (map[int64]bool, error)
+// deleted. service "" asks for every service (Compact); a service name asks
+// only for the protected snapshots of that service (Prune, after each
+// snapshot): the result may hold others too.
+type Protector func(ctx context.Context, service string) (map[int64]bool, error)
 
 // ParseSnapshotID returns the sequence number of a snapshot id ("sn-...").
 func ParseSnapshotID(id string) (int64, bool) { return parseSnapshotID(id) }
@@ -61,14 +63,16 @@ func (s *SnapshotStore) SetProtector(p Protector) {
 	protectorMu.Unlock()
 }
 
-func (s *SnapshotStore) protected(ctx context.Context) (map[int64]bool, error) {
+// protected returns the protected snapshots of service ("": of every
+// service).
+func (s *SnapshotStore) protected(ctx context.Context, service string) (map[int64]bool, error) {
 	protectorMu.RLock()
 	p := s.protect
 	protectorMu.RUnlock()
 	if p == nil {
 		return map[int64]bool{}, nil
 	}
-	m, err := p(ctx)
+	m, err := p(ctx, service)
 	if err != nil {
 		return nil, fmt.Errorf("contract: protected snapshots: %w", err)
 	}
@@ -134,7 +138,7 @@ func (s *SnapshotStore) Compact(ctx context.Context, now time.Time, p SnapshotPo
 	if p.Weekly < p.KeepAll {
 		p.Weekly = p.KeepAll
 	}
-	prot, err := s.protected(ctx)
+	prot, err := s.protected(ctx, "")
 	if err != nil {
 		return res, err
 	}
@@ -185,6 +189,14 @@ func (s *SnapshotStore) Compact(ctx context.Context, now time.Time, p SnapshotPo
 	return res, nil
 }
 
+// The pack baselines: one lookup per published pack and service when the
+// snapshots are compacted, both served by the contract_snapshots_created
+// index (covering: id is the rowid).
+const (
+	newestAtEachGroupSQL = `SELECT max(id) FROM contract_snapshots WHERE service = ? AND created_ms <= ? GROUP BY grp`
+	newestAtSQL          = `SELECT max(id) FROM contract_snapshots WHERE grp = ? AND service = ? AND created_ms <= ?`
+)
+
 // NewestAt returns the sequence number of the newest snapshot of service
 // created at or before t (the contract baseline at that moment).
 func (s *SnapshotStore) NewestAt(ctx context.Context, service string, t time.Time) (int64, bool, error) {
@@ -195,7 +207,7 @@ func (s *SnapshotStore) NewestAt(ctx context.Context, service string, t time.Tim
 // created at or before t, the sequence number of its newest one (the
 // baseline of a pack built then, whatever group it was built for).
 func (s *SnapshotStore) NewestAtEachGroup(ctx context.Context, service string, t time.Time) ([]int64, error) {
-	rows, err := s.db.QueryContext(ctx, `SELECT max(id) FROM contract_snapshots WHERE service = ? AND created_ms <= ? GROUP BY grp`, service, t.UnixMilli())
+	rows, err := s.db.QueryContext(ctx, newestAtEachGroupSQL, service, t.UnixMilli())
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +226,7 @@ func (s *SnapshotStore) NewestAtEachGroup(ctx context.Context, service string, t
 // NewestAtIn is NewestAt for (group, service).
 func (s *SnapshotStore) NewestAtIn(ctx context.Context, group, service string, t time.Time) (int64, bool, error) {
 	var id sql.NullInt64
-	if err := s.db.QueryRowContext(ctx, `SELECT max(id) FROM contract_snapshots WHERE grp = ? AND service = ? AND created_ms <= ?`, group, service, t.UnixMilli()).Scan(&id); err != nil {
+	if err := s.db.QueryRowContext(ctx, newestAtSQL, group, service, t.UnixMilli()).Scan(&id); err != nil {
 		return 0, false, err
 	}
 	return id.Int64, id.Valid, nil

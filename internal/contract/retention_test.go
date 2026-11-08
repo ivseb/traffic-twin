@@ -3,6 +3,7 @@ package contract
 import (
 	"context"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -36,7 +37,7 @@ func TestCompactSnapshotsKeepsRecentWeeklyMonthlyAndProtected(t *testing.T) {
 	// Snapshot of day 10 of service a is referenced by a drift alert.
 	protectedID := ids[10]
 	seq, _ := ParseSnapshotID(protectedID)
-	st.SetProtector(func(context.Context) (map[int64]bool, error) { return map[int64]bool{seq: true}, nil })
+	st.SetProtector(func(context.Context, string) (map[int64]bool, error) { return map[int64]bool{seq: true}, nil })
 
 	res, err := st.Compact(ctx, now, DefaultSnapshotPolicy())
 	if err != nil {
@@ -85,5 +86,67 @@ func TestCompactSnapshotsKeepsRecentWeeklyMonthlyAndProtected(t *testing.T) {
 	list, _ = st.List(ctx, "a", 1000)
 	if len(list) != 6 || list[len(list)-1].SnapshotID != protectedID {
 		t.Fatalf("after prune: %d, oldest %s", len(list), list[len(list)-1].SnapshotID)
+	}
+}
+
+// The pack baselines are looked up per published pack and service: by an
+// index, never by walking every snapshot (minutes on a year of history).
+func TestNewestAtQueriesUseTheCreatedIndex(t *testing.T) {
+	ctx := context.Background()
+	db, err := store.Open(ctx, filepath.Join(t.TempDir(), "c.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	for _, q := range []struct {
+		sql  string
+		args []any
+	}{
+		{newestAtEachGroupSQL, []any{"a", int64(1)}},
+		{newestAtSQL, []any{"", "a", int64(1)}},
+	} {
+		rows, err := db.QueryContext(ctx, "EXPLAIN QUERY PLAN "+q.sql, q.args...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var plan []string
+		for rows.Next() {
+			var id, parent, notused int
+			var detail string
+			if err := rows.Scan(&id, &parent, &notused, &detail); err != nil {
+				t.Fatal(err)
+			}
+			plan = append(plan, detail)
+		}
+		rows.Close()
+		joined := strings.Join(plan, "; ")
+		if !strings.Contains(joined, "COVERING INDEX contract_snapshots_created") || !strings.Contains(joined, "service=?") {
+			t.Fatalf("%s: plan %q", q.sql, joined)
+		}
+	}
+}
+
+// Prune asks the protector for its service only; Compact for every service.
+func TestProtectorScope(t *testing.T) {
+	ctx := context.Background()
+	db, err := store.Open(ctx, filepath.Join(t.TempDir(), "c.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	st := NewSnapshotStore(db)
+	var asked []string
+	st.SetProtector(func(_ context.Context, service string) (map[int64]bool, error) {
+		asked = append(asked, service)
+		return nil, nil
+	})
+	if err := st.PruneIn(ctx, "g", "a", 5); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.Compact(ctx, time.Now(), DefaultSnapshotPolicy()); err != nil {
+		t.Fatal(err)
+	}
+	if len(asked) != 2 || asked[0] != "a" || asked[1] != "" {
+		t.Fatalf("protector asked for %q", asked)
 	}
 }

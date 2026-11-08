@@ -23,11 +23,12 @@ type jobResp struct {
 	Error  any            `json:"error"`
 }
 
-// waitJob polls a job until it is no longer running.
+// waitJob polls a job until it is done or failed: heavy jobs wait in the
+// queue ("queued") before "running".
 func (h *harness) waitJob(j *jobResp, limit time.Duration) error {
-	for deadline := time.Now().Add(limit); j.Status == "running"; {
+	for deadline := time.Now().Add(limit); j.Status == "running" || j.Status == "queued"; {
 		if time.Now().After(deadline) {
-			return errors.New("job still running")
+			return fmt.Errorf("job %s still %s", j.JobID, j.Status)
 		}
 		time.Sleep(50 * time.Millisecond)
 		if err := h.admin.json(200, "GET", "/api/v1/jobs/"+j.JobID, nil, j); err != nil {
@@ -38,6 +39,29 @@ func (h *harness) waitJob(j *jobResp, limit time.Duration) error {
 		return fmt.Errorf("job %s: %v", j.Status, j.Error)
 	}
 	return nil
+}
+
+// snapshot takes a contract snapshot of a service: 201 when it ends within the
+// synchronous wait, otherwise 202 with a Job to follow (a long snapshot).
+// found is false for a service without contract (404).
+func (h *harness) snapshot(svc string) (found bool, err error) {
+	code, b, _, err := h.admin.do("POST", "/api/v1/contracts/"+url.PathEscape(svc)+"/snapshots", nil)
+	if err != nil {
+		return false, err
+	}
+	switch code {
+	case 201:
+		return true, nil
+	case 404:
+		return false, nil
+	case 202:
+		var j jobResp
+		if err := json.Unmarshal(b, &j); err != nil {
+			return false, err
+		}
+		return true, h.waitJob(&j, 30*time.Minute)
+	}
+	return false, fmt.Errorf("snapshot %s = %d: %.200s", svc, code, b)
 }
 
 func (h *harness) postJob(path string, body any) (*jobResp, error) {
@@ -71,15 +95,12 @@ func (h *harness) firstJobs(ctx context.Context) error {
 		var worstSvc string
 		n := 0
 		for _, s := range append(append([]string{}, in...), out...) {
-			code, b, d, err := h.admin.do("POST", "/api/v1/contracts/"+url.PathEscape(s)+"/snapshots", nil)
-			if err != nil {
+			began := time.Now()
+			if _, err := h.snapshot(s); err != nil {
 				return nil, err
 			}
-			if code != 201 && code != 404 {
-				return nil, fmt.Errorf("snapshot %s = %d: %.200s", s, code, b)
-			}
 			n++
-			if ms := d.Seconds() * 1000; ms > worst {
+			if ms := time.Since(began).Seconds() * 1000; ms > worst {
 				worst, worstSvc = ms, s
 			}
 		}
@@ -338,14 +359,11 @@ func (h *harness) history(ctx context.Context) error {
 func (h *harness) benchJobs(ctx context.Context) {
 	svc := h.ids["service"]
 	h.job("contract.snapshot.one_service", func() (map[string]any, error) {
-		code, b, _, err := h.admin.do("POST", "/api/v1/contracts/"+url.PathEscape(svc)+"/snapshots", nil)
-		if err != nil {
-			return nil, err
+		found, err := h.snapshot(svc)
+		if err == nil && !found {
+			err = fmt.Errorf("snapshot %s: no contract", svc)
 		}
-		if code != 201 {
-			return nil, fmt.Errorf("snapshot = %d: %.200s", code, b)
-		}
-		return nil, nil
+		return nil, err
 	})
 	h.job("rules.mine", func() (map[string]any, error) {
 		j, err := h.postJob("/api/v1/rules/mine", nil)

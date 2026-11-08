@@ -65,6 +65,12 @@ DROP TABLE contract_snapshots;
 ALTER TABLE contract_snapshots_g RENAME TO contract_snapshots;
 CREATE INDEX contract_snapshots_service ON contract_snapshots (grp, service, id);
 `},
+		// The baseline of a published pack (NewestAtEachGroup: by service,
+		// whatever the group, up to a time) and NewestAtIn: without it each
+		// lookup walks every snapshot of every service.
+		{Version: 4, Name: "snapshot_service_created", SQL: `
+CREATE INDEX IF NOT EXISTS contract_snapshots_created ON contract_snapshots (service, grp, created_ms);
+`},
 	}})
 }
 
@@ -380,7 +386,7 @@ func (s *SnapshotStore) Prune(ctx context.Context, service string, keep int) err
 
 // PruneIn is Prune for (group, service).
 func (s *SnapshotStore) PruneIn(ctx context.Context, group, service string, keep int) error {
-	prot, err := s.protected(ctx)
+	prot, err := s.protected(ctx, service)
 	if err != nil {
 		return err
 	}
