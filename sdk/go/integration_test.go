@@ -124,6 +124,9 @@ func TestEndToEndWithFakeCore(t *testing.T) {
 
 	// The kill switch stops the capture; the application is not touched.
 	n := len(core.Events())
+	// tt-core may hold the events before the agent has read its answer: the kill
+	// switch would then abandon that batch and count it as dropped.
+	core.Eventually(10*time.Second, "first events counted as sent", func() bool { return a.Stats().EventsSent >= int64(n) })
 	core.Kill(true)
 	core.Eventually(10*time.Second, "capture stopped", func() bool { return !a.Capturing() })
 	order()
