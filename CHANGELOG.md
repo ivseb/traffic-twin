@@ -7,6 +7,20 @@ more detailed changelog in [`docs/spec/README.md`](docs/spec/README.md#changelog
 The project follows [Semantic Versioning](https://semver.org/). Before 1.0.0, minor
 versions may change interfaces; every such change is called out below.
 
+## [0.1.2] — 2026-11-08
+
+### Fixed
+
+- **Contract snapshots after a long history.** The prune after each snapshot looked up the
+  protected baselines of every service of every published pack, with a query that had no
+  suitable index. With a year of history (about 116,000 snapshots and 20 published packs) a
+  snapshot of one service took about 5 minutes; it now takes 0.05 s. A forward-only
+  migration adds the index `contract_snapshots (service, grp, created_ms)`, which also
+  speeds up the periodic snapshot compaction. Upgrading needs no action: the index is
+  created at the first start.
+- The weekly performance run follows queued and long jobs; flaky Go SDK integration test
+  made deterministic.
+
 ## [0.1.1] — 2026-10-28
 
 Maintenance release: no change to formats, APIs or the behaviour of the core and the SDKs.
@@ -106,5 +120,6 @@ that become stale until a reviewer confirms them again. This is intended.
   an empty mock namespace means tt-core's namespace; a real name typed by hand into a
   rule passes the detectors.
 
+[0.1.2]: https://github.com/ivseb/traffic-twin/releases/tag/v0.1.2
 [0.1.1]: https://github.com/ivseb/traffic-twin/releases/tag/v0.1.1
 [0.1.0]: https://github.com/ivseb/traffic-twin/releases/tag/v0.1.0

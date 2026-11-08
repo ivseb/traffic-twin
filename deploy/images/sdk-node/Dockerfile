@@ -5,7 +5,7 @@
 # application then starts with NODE_OPTIONS="--import /tt/sdk/node/dist/esm/register.js".
 #
 # Build from the repository root:
-#   docker build -f deploy/images/sdk-node/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-node:0.1.1 .
+#   docker build -f deploy/images/sdk-node/Dockerfile -t ghcr.io/ivseb/traffic-twin/sdk-node:0.1.2 .
 #
 # Base images are pinned by digest; bump tag and digest together.
 
